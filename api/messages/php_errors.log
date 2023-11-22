@@ -1,0 +1,13 @@
+[22-Nov-2023 11:35:26 UTC] PHP Warning:  require_once(connect.php): failed to open stream: No such file or directory in C:\Program Files\Ampps\www\playtimeAPI\api\messages\getList.php on line 5
+[22-Nov-2023 11:35:26 UTC] PHP Fatal error:  require_once(): Failed opening required 'connect.php' (include_path='.;C:\php\pear') in C:\Program Files\Ampps\www\playtimeAPI\api\messages\getList.php on line 5
+[22-Nov-2023 11:36:02 UTC] PHP Warning:  require_once(../environment.php): failed to open stream: No such file or directory in C:\Program Files\Ampps\www\playtimeAPI\api\connect.php on line 4
+[22-Nov-2023 11:36:02 UTC] PHP Fatal error:  require_once(): Failed opening required '../environment.php' (include_path='.;C:\php\pear') in C:\Program Files\Ampps\www\playtimeAPI\api\connect.php on line 4
+[22-Nov-2023 13:01:33 UTC] PHP Notice:  Trying to get property 'txtid' of non-object in C:\Program Files\Ampps\www\playtimeAPI\api\messages\post.php on line 9
+[22-Nov-2023 13:01:33 UTC] PHP Notice:  Trying to get property 'txtname' of non-object in C:\Program Files\Ampps\www\playtimeAPI\api\messages\post.php on line 33
+[22-Nov-2023 13:01:33 UTC] PHP Notice:  Trying to get property 'txtusername' of non-object in C:\Program Files\Ampps\www\playtimeAPI\api\messages\post.php on line 34
+[22-Nov-2023 13:01:33 UTC] PHP Notice:  Trying to get property 'txtid' of non-object in C:\Program Files\Ampps\www\playtimeAPI\api\messages\post.php on line 35
+[22-Nov-2023 13:01:33 UTC] PHP Notice:  Undefined variable: connect in C:\Program Files\Ampps\www\playtimeAPI\api\messages\post.php on line 44
+[22-Nov-2023 13:01:33 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\Program Files\Ampps\www\playtimeAPI\api\messages\post.php:44
+Stack trace:
+#0 {main}
+  thrown in C:\Program Files\Ampps\www\playtimeAPI\api\messages\post.php on line 44
