@@ -8,6 +8,32 @@ header('Content-Type: application/json');
 $maximumMessages = 25;
 $blacklistedNames = ["SYSTEM"];
 
+function sanitizeInput($input, $stricter) {
+    
+    if ($stricter) {
+        $input = trim($input, "'\"`");
+    } else {
+        $input = str_replace(['"', "'", '`'], ['&quot;', '&apos;', '&grave;'], $input);
+    }
+    // Remove emojis
+    $input = preg_replace('/[\x{1F600}-\x{1F64F}]/u', '', $input);
+
+    // Trim all special characters except numbers and underscores if $stricter is true
+    if ($stricter) {
+       $input = preg_replace('/[^\p{L}\p{N}_:;]/u', '', $input);
+    } else {
+        // Keep specific characters and remove others not suitable for SQL
+        $input = preg_replace('/[^\p{L}\p{N}_#\$\%\^\&\(\)\{\}\[\]!@:;"".,<>? ]/u', '', $input);
+    }
+
+    // Check if the resulting string is empty and return "Illegal_Chars" if it is
+    //if (empty($input)) {
+    //    return "Illegal_Characters";
+    //}
+    
+    return $input;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Assuming you'll be sending data in JSON format
     $data = $_POST ?: json_decode(file_get_contents("php://input"), true);
@@ -33,39 +59,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['error' => 'Invalid sessionToken format']);
         } else {
             // Validate and sanitize input data (you should customize this based on your requirements)
-            $content = isset($data['content']) ? trim(mysqli_real_escape_string($con, $data['content'])) : null;
-            $username = isset($data['username']) ? trim(mysqli_real_escape_string($con, $data['username'])) : null;
+            $content = isset($data['content']) ? mysqli_real_escape_string($con, sanitizeInput($data['content'], false)) : null;
+            $username = isset($data['username']) ? trim(mysqli_real_escape_string($con, sanitizeInput($data['username'], true))) : null;
             $sessionToken = isset($data['sessionToken']) ? trim(mysqli_real_escape_string($con, $data['sessionToken'])) : null;
+            
 
             // You may want to add additional validation and error handling here
-
-            // Insert the new message into the database
-            $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
-
-            if (mysqli_query($con, $insertSql)) {
-                // Check if the number of items in the database is more than limit
-                $countSql = "SELECT COUNT(*) as count FROM messages";
-                $result = mysqli_query($con, $countSql);
-                $row = mysqli_fetch_assoc($result);
-                $messageCount = $row['count'];
-
-                while ($messageCount > $maximumMessages) {
-                    // If more than the maximum, delete the oldest message
-                    $deleteSql = "DELETE FROM messages ORDER BY datetime ASC LIMIT 1";
-                    mysqli_query($con, $deleteSql);
-
-                    // Update the message count
+            if (empty($content) || empty($username)) {
+                http_response_code(422); // Unprocessable Content
+                echo json_encode(['error' => 'Content and/or username only consisted of illegal characters.',
+                                    'payload' => ['content' => $content, 'username' => $username]]);
+            } else {
+                // Insert the new message into the database
+                $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
+    
+                if (mysqli_query($con, $insertSql)) {
+                    // Check if the number of items in the database is more than limit
+                    $countSql = "SELECT COUNT(*) as count FROM messages";
                     $result = mysqli_query($con, $countSql);
                     $row = mysqli_fetch_assoc($result);
                     $messageCount = $row['count'];
+    
+                    while ($messageCount > $maximumMessages) {
+                        // If more than the maximum, delete the oldest message
+                        $deleteSql = "DELETE FROM messages ORDER BY datetime ASC LIMIT 1";
+                        mysqli_query($con, $deleteSql);
+    
+                        // Update the message count
+                        $result = mysqli_query($con, $countSql);
+                        $row = mysqli_fetch_assoc($result);
+                        $messageCount = $row['count'];
+                    }
+    
+                    http_response_code(201); // Created
+                    echo json_encode(['message' => 'Message created successfully']);
+                } else {
+                    http_response_code(500); // Internal Server Error
+                    echo json_encode(['error' => 'Error creating message']);
                 }
-
-                http_response_code(201); // Created
-                echo json_encode(['message' => 'Message created successfully']);
-            } else {
-                http_response_code(500); // Internal Server Error
-                echo json_encode(['error' => 'Error creating message']);
-            }
+            }   
         }
     } else {
         // Handle the case where required fields are not set
@@ -94,8 +126,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Check if the message's sessionToken matches the provided sessionToken
                 if ($row['sessionToken'] === $sessionToken) {
                     $message['type'] = 'yours';
-                } elseif ($row['sessionToken'] === $db_data['AdminToken']) {
+                } if ($row['sessionToken'] === $db_data['AdminToken']) {
                     $message['type'] = 'oldmartijntje';
+                }
+                
+                if (!isset($message['type'])) {
+                    $message['type'] = '';
                 }
 
                 $messages[] = $message;

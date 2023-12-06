@@ -18,39 +18,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             http_response_code(400); // Bad Request
             echo json_encode(['error' => 'Invalid sessionToken format']);
         } else {
-            // Retrieve messages newer than the given ID for the specific sessionToken
-            $sql = "SELECT id, content, username, datetime, sessionToken FROM messages WHERE id > $id AND sessionToken = '$sessionToken'";
-
-            $messages = [];
-            if ($result = mysqli_query($con, $sql)) {
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $message = [
-                        'id' => $row['id'],
-                        'content' => $row['content'],
-                        'username' => $row['username'],
-                        'datetime' => $row['datetime']
-                    ];
-
-                    // Check the type based on sessionToken
-                    if ($row['sessionToken'] === $sessionToken) {
-                        $message['type'] = 'yours';
-                    } elseif ($row['sessionToken'] === $db_data['AdminToken']) {
-                        $message['type'] = 'oldmartijntje';
-                    }
-
-                    $messages[] = $message;
-                }
-
-                // Strip sessionToken before sending the response
-                $strippedMessages = array_map(function ($message) {
-                    unset($message['sessionToken']);
-                    return $message;
-                }, $messages);
-
-                echo json_encode(['data' => $strippedMessages]);
+            $sessionToken = isset($data['sessionToken']) ? trim(mysqli_real_escape_string($con, $data['sessionToken'])) : null;
+            if (empty($sessionToken)) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'sessionToken cannot be empty or null']);
             } else {
-                http_response_code(500); // Internal Server Error
-                echo json_encode(['error' => 'Error retrieving messages']);
+                // Retrieve messages newer than the given ID for the specific sessionToken
+                $sql = "SELECT id, content, username, datetime, sessionToken FROM messages WHERE id > $id";
+    
+                $messages = [];
+                if ($result = mysqli_query($con, $sql)) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $message = [
+                            'id' => $row['id'],
+                            'content' => $row['content'],
+                            'username' => $row['username'],
+                            'datetime' => $row['datetime']
+                        ];
+    
+                        // Check the type based on sessionToken
+                        if ($row['sessionToken'] === $sessionToken) {
+                            $message['type'] = 'yours';
+                        } if ($row['sessionToken'] === $db_data['AdminToken']) {
+                            $message['type'] = 'oldmartijntje';
+                        }
+                        
+                        if (!isset($message['type'])) {
+                            $message['type'] = '';
+                        }
+    
+                        $messages[] = $message;
+                    }
+    
+                    // Strip sessionToken before sending the response
+                    $strippedMessages = array_map(function ($message) {
+                        unset($message['sessionToken']);
+                        return $message;
+                    }, $messages);
+    
+                    echo json_encode(['data' => $strippedMessages]);
+                } else {
+                    http_response_code(500); // Internal Server Error
+                    echo json_encode(['error' => 'Error retrieving messages']);
+                }
             }
         }
     } else {
