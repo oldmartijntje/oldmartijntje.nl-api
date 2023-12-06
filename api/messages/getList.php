@@ -1,8 +1,9 @@
 <?php
+header('Content-Type: application/json');
 /**
  * Returns the list of messages.
  */
-require_once 'connect.php';
+require_once '../connect.php';
 
 $messages = [];
 $sql = "SELECT id, content, username, datetime FROM messages";
