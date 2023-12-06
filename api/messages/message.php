@@ -6,7 +6,7 @@ require_once '../../environment.php';
 header('Content-Type: application/json');
 
 $maximumMessages = 25;
-$blacklistedNames = ["SYSTEM"];
+$blacklistedNames = ["SYSTEM", "SERVER"];
 
 function sanitizeInput($input, $stricter) {
     
@@ -41,16 +41,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Check if the required fields are set
     if ($data && isset($data['content'], $data['username'], $data['sessionToken'])) {
-        $usernameLength = mb_strlen($data['username']);
-        $contentLength = mb_strlen($data['content']);
+        $usernameLength = mb_strlen(sanitizeInput($data['username'], true));
+        $contentLength = mb_strlen(sanitizeInput($data['content'], false));
         $sessionToken = $data['sessionToken'];
 
         if ($usernameLength > 16 || $contentLength > 256) {
             http_response_code(400); // Bad Request
             echo json_encode(['error' => 'Username or content length exceeds the allowed limit']);
-        } elseif ($usernameLength < 4 || $contentLength < 2) {
+        } elseif ($usernameLength < 4) {
             http_response_code(400); // Bad Request
-            echo json_encode(['error' => 'Username or content length is too short']);
+            echo json_encode(['error' => 'Username length is too short, watch out for characters that are not allowed, The only characters allowed are letters, numbers, semicolons, and underscores. (a-z, A-Z, 0-9, :, ;, _)']);
+        } elseif ($contentLength < 2) {
+            http_response_code(400); // Bad Request
+            echo json_encode(['error' => 'Content length is too short, watch out for characters that are not allowed']);
         } elseif (in_array(trim($data['username']), $blacklistedNames)) {
             http_response_code(400); // Bad Request
             echo json_encode(['error' => 'Username \''. trim($data['username']) .'\' is blacklisted']);
