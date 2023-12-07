@@ -151,15 +151,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'datetime' => $row['datetime'],
                 ];
 
-                // Check if the message's sessionToken matches the provided sessionToken
-                if ($row['sessionToken'] === $sessionToken) {
-                    $message['type'] = 'yours';
-                } if ($row['sessionToken'] === $db_data['AdminToken']) {
-                    $message['type'] = 'oldmartijntje';
-                }
-                
-                if (!isset($message['type'])) {
-                    $message['type'] = '';
+                include_once '../users/users.php';
+                $sessionToken = $row['sessionToken'];
+                // Check if user data is already retrieved for this sessionToken
+                if (!isset($userList[$sessionToken])) {
+                    // Retrieve user data for the sessionToken
+                    $userData = getUserDataByToken($sessionToken, $con);
+                    // if ($userData) {
+                    //     $message["uid"] = $userData['id'];
+                    //     $message["type"] = $userData['type'];
+                    // } else {
+                    //     $message["uid"] = null;
+                    //     $message["type"] = null;
+                    // }
                 }
 
                 $messages[] = $message;
