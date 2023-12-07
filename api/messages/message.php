@@ -7,13 +7,24 @@ header('Content-Type: application/json');
 
 $maximumMessages = 25;
 $blacklistedNames = ["SYSTEM", "SERVER"];
+$commands = [
+    "#shrug" => "¯\\_(ツ)_/¯",
+    "#heart" => "♥",
+    "#bigHeart" => "❤",
+    "#uwu" => "(✿◡‿◡)",
+    "#owo" => "＼（〇_ｏ）／",
+    "#twt" => "〒▽〒",
+    "#tableflip" => "(╯°□°）╯︵ ┻━┻",
+    "#unflip" => "┬─┬ノ( º _ ºノ)",
+    "#rick" => "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    ];
 
 function sanitizeInput($input, $stricter) {
     
     if ($stricter) {
         $input = trim($input, "'\"`");
     } else {
-        $input = str_replace(['"', "'", '`'], ['&quot;', '&apos;', '&grave;'], $input);
+       $input = htmlspecialchars($input, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
     // Remove emojis
     $input = preg_replace('/[\x{1F600}-\x{1F64F}]/u', '', $input);
@@ -31,6 +42,19 @@ function sanitizeInput($input, $stricter) {
     //    return "Illegal_Characters";
     //}
     
+    return $input;
+}
+
+function checkForCommands($input) {
+    global $commands;
+
+    foreach ($commands as $command => $replacement) {
+        if (strpos($input, $command) !== false) {
+            // Replace the command with its corresponding value
+            $input = str_replace($command, $replacement, $input);
+        }
+    }
+
     return $input;
 }
 
@@ -73,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['error' => 'Content and/or username only consisted of illegal characters.',
                                     'payload' => ['content' => $content, 'username' => $username]]);
             } else {
+                $content = checkForCommands($content);
                 // Insert the new message into the database
                 $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
     
