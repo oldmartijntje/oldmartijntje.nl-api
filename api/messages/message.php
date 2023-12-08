@@ -76,32 +76,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['error' => 'Content and/or username only consisted of illegal characters.',
                                     'payload' => ['content' => $content, 'username' => $username]]);
             } else {
-                // Insert the new message into the database
-                $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
-    
-                if (mysqli_query($con, $insertSql)) {
-                    // Check if the number of items in the database is more than limit
-                    $countSql = "SELECT COUNT(*) as count FROM messages";
-                    $result = mysqli_query($con, $countSql);
-                    $row = mysqli_fetch_assoc($result);
-                    $messageCount = $row['count'];
-    
-                    while ($messageCount > $maximumMessages) {
-                        // If more than the maximum, delete the oldest message
-                        $deleteSql = "DELETE FROM messages ORDER BY datetime ASC LIMIT 1";
-                        mysqli_query($con, $deleteSql);
-    
-                        // Update the message count
+                include_once '../users/users.php';
+                $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
+                if ($userData["banned"] == 1) {
+                    http_response_code(403); // Forbidden
+                    echo json_encode(['error' => 'You are banned from sending messages']);
+                } else {
+                    // Insert the new message into the database
+                    $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
+        
+                    if (mysqli_query($con, $insertSql)) {
+                        // Check if the number of items in the database is more than limit
+                        $countSql = "SELECT COUNT(*) as count FROM messages";
                         $result = mysqli_query($con, $countSql);
                         $row = mysqli_fetch_assoc($result);
                         $messageCount = $row['count'];
+        
+                        while ($messageCount > $maximumMessages) {
+                            // If more than the maximum, delete the oldest message
+                            $deleteSql = "DELETE FROM messages ORDER BY datetime ASC LIMIT 1";
+                            mysqli_query($con, $deleteSql);
+        
+                            // Update the message count
+                            $result = mysqli_query($con, $countSql);
+                            $row = mysqli_fetch_assoc($result);
+                            $messageCount = $row['count'];
+                        }
+        
+                        http_response_code(201); // Created
+                        echo json_encode(['message' => 'Message created successfully']);
+                    } else {
+                        http_response_code(500); // Internal Server Error
+                        echo json_encode(['error' => 'Error creating message']);
                     }
-    
-                    http_response_code(201); // Created
-                    echo json_encode(['message' => 'Message created successfully']);
-                } else {
-                    http_response_code(500); // Internal Server Error
-                    echo json_encode(['error' => 'Error creating message']);
                 }
             }   
         }
