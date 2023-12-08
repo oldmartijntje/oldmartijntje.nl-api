@@ -15,8 +15,8 @@ $commands = [
     ":crown:" => "👑",
     ":sparkle:" => "✨",
     "genshin" => "genshit",
-    "Genshin" => "Genshrek",
-    "genshit impact" => "gayshit infect" 
+    "butterfly" => "🦋",
+    "fox" => "🦊",
 ];
 
 $typeMask = [

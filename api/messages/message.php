@@ -85,7 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Insert the new message into the database
                     $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
         
-                    if (mysqli_query($con, $insertSql)) {
+                    $result = mysqli_query($con, $insertSql);
+                    if ($result) {
                         // Check if the number of items in the database is more than limit
                         $countSql = "SELECT COUNT(*) as count FROM messages";
                         $result = mysqli_query($con, $countSql);
