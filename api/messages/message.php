@@ -130,11 +130,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
 
                 include_once '../users/users.php';
-                $sessionToken = $row['sessionToken'];
                 // Check if user data is already retrieved for this sessionToken
-                if (!isset($userList[$sessionToken])) {
+                if (!isset($userList[$row['sessionToken']])) {
                     // Retrieve user data for the sessionToken
-                    $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
+                    $userData = getUserDataByToken($row['sessionToken'], $con, $userdataBySessionToken);
                     $message["uid"] = $userData["id"];
                     $message["type"] = applyMask($userData["type"]);
                 }
@@ -144,8 +143,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $message['yours'] = false;
                 }
-
-
                 $messages[] = $message;
             }
 
