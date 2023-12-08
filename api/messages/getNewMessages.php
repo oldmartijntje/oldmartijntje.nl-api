@@ -1,8 +1,11 @@
 <?php
 
 require_once '../connect.php';
+include_once '../global.php';
 
 header('Content-Type: application/json');
+
+$userdataBySessionToken = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Assuming you'll be sending data in JSON format
@@ -35,18 +38,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'username' => $row['username'],
                             'datetime' => $row['datetime']
                         ];
-    
-                        // Check the type based on sessionToken
-                        if ($row['sessionToken'] === $sessionToken) {
-                            $message['type'] = 'yours';
-                        } if ($row['sessionToken'] === $db_data['AdminToken']) {
-                            $message['type'] = 'oldmartijntje';
-                        }
                         
-                        if (!isset($message['type'])) {
-                            $message['type'] = '';
+                        include_once '../users/users.php';
+                        $sessionToken = $row['sessionToken'];
+                        // Check if user data is already retrieved for this sessionToken
+                        if (!isset($userList[$sessionToken])) {
+                            // Retrieve user data for the sessionToken
+                            $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
+                            $message["uid"] = $userData["id"];
+                            $message["type"] = applyMask($userData["type"]);
                         }
-    
+                        $message['content'] = checkForCommands($message['content']);
+                        if ($row['sessionToken'] === $sessionToken) {
+                            $message['yours'] = true;
+                        } else {
+                            $message['yours'] = false;
+                        }
+
                         $messages[] = $message;
                     }
     

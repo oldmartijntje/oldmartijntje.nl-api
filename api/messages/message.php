@@ -2,22 +2,14 @@
 
 require_once '../connect.php';
 require_once '../../environment.php';
+include_once '../global.php';
 
 header('Content-Type: application/json');
 
 $maximumMessages = 25;
 $blacklistedNames = ["SYSTEM", "SERVER"];
-$commands = [
-    "#shrug" => "¯\\_(ツ)_/¯",
-    "#heart" => "♥",
-    "#bigHeart" => "❤",
-    "#uwu" => "(✿◡‿◡)",
-    "#owo" => "＼（〇_ｏ）／",
-    "#twt" => "〒▽〒",
-    "#tableflip" => "(╯°□°）╯︵ ┻━┻",
-    "#unflip" => "┬─┬ノ( º _ ºノ)",
-    "#rick" => "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    ];
+
+$userdataBySessionToken = [];
 
 function sanitizeInput($input, $stricter) {
     
@@ -42,19 +34,6 @@ function sanitizeInput($input, $stricter) {
     //    return "Illegal_Characters";
     //}
     
-    return $input;
-}
-
-function checkForCommands($input) {
-    global $commands;
-
-    foreach ($commands as $command => $replacement) {
-        if (strpos($input, $command) !== false) {
-            // Replace the command with its corresponding value
-            $input = str_replace($command, $replacement, $input);
-        }
-    }
-
     return $input;
 }
 
@@ -97,7 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['error' => 'Content and/or username only consisted of illegal characters.',
                                     'payload' => ['content' => $content, 'username' => $username]]);
             } else {
-                $content = checkForCommands($content);
                 // Insert the new message into the database
                 $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
     
@@ -156,15 +134,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Check if user data is already retrieved for this sessionToken
                 if (!isset($userList[$sessionToken])) {
                     // Retrieve user data for the sessionToken
-                    $userData = getUserDataByToken($sessionToken, $con);
-                    // if ($userData) {
-                    //     $message["uid"] = $userData['id'];
-                    //     $message["type"] = $userData['type'];
-                    // } else {
-                    //     $message["uid"] = null;
-                    //     $message["type"] = null;
-                    // }
+                    $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
+                    $message["uid"] = $userData["id"];
+                    $message["type"] = applyMask($userData["type"]);
                 }
+                $message['content'] = checkForCommands($message['content']);
+                if ($row['sessionToken'] === $sessionToken) {
+                    $message['yours'] = true;
+                } else {
+                    $message['yours'] = false;
+                }
+
 
                 $messages[] = $message;
             }
