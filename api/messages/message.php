@@ -37,6 +37,22 @@ function sanitizeInput($input, $stricter) {
     return $input;
 }
 
+function logMessage($con, $content, $username, $sessionToken) {
+    $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES (?, ?, NOW(), ?)";
+    $stmt = mysqli_prepare($con, $insertSql);
+
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "sss", $content, $username, $sessionToken);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
+    } else {
+        return false;
+    }
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Assuming you'll be sending data in JSON format
     $data = $_POST ?: json_decode(file_get_contents("php://input"), true);
@@ -44,74 +60,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Check if the required fields are set
     if ($data && isset($data['content'], $data['username'], $data['sessionToken'])) {
-        $usernameLength = mb_strlen(sanitizeInput($data['username'], true));
-        $contentLength = mb_strlen(sanitizeInput($data['content'], false));
-        $sessionToken = $data['sessionToken'];
-
-        if ($usernameLength > 16 || $contentLength > 256) {
-            http_response_code(400); // Bad Request
-            echo json_encode(['error' => 'Username or content length exceeds the allowed limit']);
-        } elseif ($usernameLength < 4) {
-            http_response_code(400); // Bad Request
-            echo json_encode(['error' => 'Username length is too short, watch out for characters that are not allowed, The only characters allowed are letters, numbers, semicolons, and underscores. (a-z, A-Z, 0-9, :, ;, _)']);
-        } elseif ($contentLength < 2) {
-            http_response_code(400); // Bad Request
-            echo json_encode(['error' => 'Content length is too short, watch out for characters that are not allowed']);
-        } elseif (in_array(trim($data['username']), $blacklistedNames)) {
-            http_response_code(400); // Bad Request
-            echo json_encode(['error' => 'Username \''. trim($data['username']) .'\' is blacklisted']);
-        } elseif (!preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $sessionToken)) {
-            http_response_code(400); // Bad Request
-            echo json_encode(['error' => 'Invalid sessionToken format']);
-        } else {
-            // Validate and sanitize input data (you should customize this based on your requirements)
-            $content = isset($data['content']) ? mysqli_real_escape_string($con, sanitizeInput($data['content'], false)) : null;
-            $username = isset($data['username']) ? trim(mysqli_real_escape_string($con, sanitizeInput($data['username'], true))) : null;
-            $sessionToken = isset($data['sessionToken']) ? trim(mysqli_real_escape_string($con, $data['sessionToken'])) : null;
-            
-
-            // You may want to add additional validation and error handling here
-            if (empty($content) || empty($username)) {
-                http_response_code(422); // Unprocessable Content
-                echo json_encode(['error' => 'Content and/or username only consisted of illegal characters.',
-                                    'payload' => ['content' => $content, 'username' => $username]]);
-            } else {
-                include_once '../users/users.php';
-                $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
-                if ($userData["banned"] == 1) {
-                    http_response_code(403); // Forbidden
-                    echo json_encode(['error' => 'You are banned from sending messages']);
-                } else {
-                    // Insert the new message into the database
-                    $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
+        if (isCommand($data['content'])) {
+            include_once '../users/users.php';
+            $userData = getUserDataByToken($data['sessionToken'], $con, $userdataBySessionToken);
         
-                    $result = mysqli_query($con, $insertSql);
+            if (isAdmin($data['sessionToken'], $con, $userdataBySessionToken)) {
+                $command = splitCommand($data['content']);
+        
+                if ($command[0] == "/ban" && is_numeric($command[1])) {
+                    $userId = $command[1];
+                    $result = updateUserStatus($con, $userId, 1);
+        
                     if ($result) {
-                        // Check if the number of items in the database is more than limit
-                        $countSql = "SELECT COUNT(*) as count FROM messages";
-                        $result = mysqli_query($con, $countSql);
-                        $row = mysqli_fetch_assoc($result);
-                        $messageCount = $row['count'];
+                        // Log the ban message
+                        logMessage($con, "User with ID $userId has been banned", "SYSTEM", $data['sessionToken']);
         
-                        while ($messageCount > $maximumMessages) {
-                            // If more than the maximum, delete the oldest message
-                            $deleteSql = "DELETE FROM messages ORDER BY datetime ASC LIMIT 1";
-                            mysqli_query($con, $deleteSql);
+                        http_response_code(200); // OK
+                        echo json_encode(['message' => 'User banned successfully']);
+                    } else {
+                        http_response_code(500); // Internal Server Error
+                        echo json_encode(['error' => 'Error banning user']);
+                    }
+                } elseif ($command[0] == "/unban" && is_numeric($command[1])) {
+                    $userId = $command[1];
+                    $result = updateUserStatus($con, $userId, 0);
         
-                            // Update the message count
+                    if ($result) {
+                        // Log the unban message
+                        logMessage($con, "User with ID $userId has been unbanned", "SYSTEM", $data['sessionToken']);
+        
+                        http_response_code(200); // OK
+                        echo json_encode(['message' => 'User unbanned successfully']);
+                    } else {
+                        http_response_code(500); // Internal Server Error
+                        echo json_encode(['error' => 'Error unbanning user']);
+                    }
+                } else {
+                    http_response_code(400); // Bad Request
+                    echo json_encode(['error' => 'Invalid command']);
+                }
+            } else {
+                http_response_code(403); // Forbidden
+                echo json_encode(['error' => 'You are not allowed to use this command']);
+            }
+        } else {
+            $usernameLength = mb_strlen(sanitizeInput($data['username'], true));
+            $contentLength = mb_strlen(sanitizeInput($data['content'], false));
+            $sessionToken = $data['sessionToken'];
+
+            if ($usernameLength > 16 || $contentLength > 256) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Username or content length exceeds the allowed limit']);
+            } elseif ($usernameLength < 4) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Username length is too short, watch out for characters that are not allowed, The only characters allowed are letters, numbers, semicolons, and underscores. (a-z, A-Z, 0-9, :, ;, _)']);
+            } elseif ($contentLength < 2) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Content length is too short, watch out for characters that are not allowed']);
+            } elseif (in_array(trim($data['username']), $blacklistedNames)) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Username \''. trim($data['username']) .'\' is blacklisted']);
+            } elseif (!preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $sessionToken)) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Invalid sessionToken format']);
+            } else {
+                // Validate and sanitize input data (you should customize this based on your requirements)
+                $content = isset($data['content']) ? mysqli_real_escape_string($con, sanitizeInput($data['content'], false)) : null;
+                $username = isset($data['username']) ? trim(mysqli_real_escape_string($con, sanitizeInput($data['username'], true))) : null;
+                $sessionToken = isset($data['sessionToken']) ? trim(mysqli_real_escape_string($con, $data['sessionToken'])) : null;
+                
+
+                // You may want to add additional validation and error handling here
+                if (empty($content) || empty($username)) {
+                    http_response_code(422); // Unprocessable Content
+                    echo json_encode(['error' => 'Content and/or username only consisted of illegal characters.',
+                                        'payload' => ['content' => $content, 'username' => $username]]);
+                } else {
+                    include_once '../users/users.php';
+                    $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
+                    if ($userData["banned"] == 1) {
+                        http_response_code(403); // Forbidden
+                        echo json_encode(['error' => 'You are banned from sending messages']);
+                    } else {
+                        // Insert the new message into the database
+                        $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
+            
+                        $result = mysqli_query($con, $insertSql);
+                        if ($result) {
+                            // Check if the number of items in the database is more than limit
+                            $countSql = "SELECT COUNT(*) as count FROM messages";
                             $result = mysqli_query($con, $countSql);
                             $row = mysqli_fetch_assoc($result);
                             $messageCount = $row['count'];
+            
+                            while ($messageCount > $maximumMessages) {
+                                // If more than the maximum, delete the oldest message
+                                $deleteSql = "DELETE FROM messages ORDER BY datetime ASC LIMIT 1";
+                                mysqli_query($con, $deleteSql);
+            
+                                // Update the message count
+                                $result = mysqli_query($con, $countSql);
+                                $row = mysqli_fetch_assoc($result);
+                                $messageCount = $row['count'];
+                            }
+            
+                            http_response_code(201); // Created
+                            echo json_encode(['message' => 'Message created successfully']);
+                        } else {
+                            http_response_code(500); // Internal Server Error
+                            echo json_encode(['error' => 'Error creating message']);
                         }
-        
-                        http_response_code(201); // Created
-                        echo json_encode(['message' => 'Message created successfully']);
-                    } else {
-                        http_response_code(500); // Internal Server Error
-                        echo json_encode(['error' => 'Error creating message']);
                     }
-                }
-            }   
+                }   
+            }
         }
     } else {
         // Handle the case where required fields are not set

@@ -38,6 +38,27 @@ function createUserIfNotExists($sessionToken, $conn) {
     $stmt->execute();
 }
 
+function updateUserStatus($con, $userId, $status) {
+    $sql = "UPDATE users SET banned = ? WHERE id = ?";
+    $stmt = mysqli_prepare($con, $sql);
+
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "ii", $status, $userId);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
+    } else {
+        return false;
+    }
+}
+
+function isAdmin($data, $con, $userdataBySessionToken) {
+    $userData = getUserDataByToken($data, $con, $userdataBySessionToken);
+    
+    return $userData["type"] === "admin";
+}
+
 
 
 

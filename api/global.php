@@ -19,6 +19,10 @@ $commands = [
     "fox" => "🦊",
 ];
 
+$commandsList = [
+    "ban", "unban"
+];
+
 $typeMask = [
     "admin" => "oldmartijntje",
     "visualAdmin" => "oldmartijntje"
@@ -45,6 +49,29 @@ function applyMask($input) {
     } else {
         return $input;
     }
+}
+
+function isCommand($data) {
+    global $commandsList;
+    
+    // Escape special characters in each command for use in regex
+    $escapedCommands = array_map('preg_quote', $commandsList);
+    
+    // Create a regex pattern to match any of the commands
+    $pattern = "/^\/(" . implode('|', $escapedCommands) . ")(?:\s|$)/";
+
+    // Check if $data starts with one of the commands followed by a space or the end of the string
+    $startsWithCommand = preg_match($pattern, $data) === 1;
+
+    return $startsWithCommand;
+}
+
+function splitCommand($data) {
+    // Use preg_split to split the command at the space character
+    $parts = preg_split('/\s+/', $data, 2);
+
+    // Return an array with the command and argument (if any)
+    return $parts;
 }
 
 ?>
