@@ -7,6 +7,10 @@ include_once '../global.php';
 header('Content-Type: application/json');
 
 $maximumMessages = 25;
+$maxNicknameLength = 16;
+$minNicknameLength = 4;
+$minMessageLength = 2;
+$maxMessageLength = 256;
 $blacklistedNames = ["SYSTEM", "SERVER"];
 
 $userdataBySessionToken = [];
@@ -108,15 +112,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $contentLength = mb_strlen(sanitizeInput($data['content'], false));
             $sessionToken = $data['sessionToken'];
 
-            if ($usernameLength > 16 || $contentLength > 256) {
+            if ($contentLength > $maxMessageLength) {
                 http_response_code(400); // Bad Request
-                echo json_encode(['error' => 'Username or content length exceeds the allowed limit']);
-            } elseif ($usernameLength < 4) {
+                echo json_encode(['error' => 'Content length exceeds the allowed limit: ' . $maxMessageLength . ' characters']);
+            } elseif ($usernameLength > $maxNicknameLength) {
                 http_response_code(400); // Bad Request
-                echo json_encode(['error' => 'Username length is too short, watch out for characters that are not allowed, The only characters allowed are letters, numbers, semicolons, and underscores. (a-z, A-Z, 0-9, :, ;, _)']);
-            } elseif ($contentLength < 2) {
+                echo json_encode(['error' => 'Username length exceeds the allowed limit: ' . $maxNicknameLength . ' characters']);
+            } elseif ($usernameLength < $minNicknameLength) {
                 http_response_code(400); // Bad Request
-                echo json_encode(['error' => 'Content length is too short, watch out for characters that are not allowed']);
+                echo json_encode(['error' => 'Username length is too short, Minimum length: '. $minNicknameLength .' characters. Watch out for characters that are not allowed, The only characters allowed are letters, numbers, semicolons, and underscores. (a-z, A-Z, 0-9, :, ;, _)']);
+            } elseif ($contentLength < $minMessageLength) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Content length is too short, watch out for characters that are not allowed. Minimum length: ' . $minMessageLength . ' characters']);
             } elseif (in_array(trim($data['username']), $blacklistedNames)) {
                 http_response_code(400); // Bad Request
                 echo json_encode(['error' => 'Username \''. trim($data['username']) .'\' is blacklisted']);
