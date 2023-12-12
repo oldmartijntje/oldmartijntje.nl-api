@@ -14,6 +14,7 @@ $maxMessageLength = 256;
 $blacklistedNames = ["SYSTEM", "SERVER"];
 
 $userdataBySessionToken = [];
+$ipAddress = $_SERVER['REMOTE_ADDR'];
 
 function sanitizeInput($input, $stricter) {
     
@@ -73,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
                 if ($command[0] == "/ban" && is_numeric($command[1])) {
                     $userId = $command[1];
-                    $result = updateUserStatus($con, $userId, 1);
+                    $result = banUser($con, $userId, 1);
         
                     if ($result) {
                         // Log the ban message
@@ -87,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } elseif ($command[0] == "/unban" && is_numeric($command[1])) {
                     $userId = $command[1];
-                    $result = updateUserStatus($con, $userId, 0);
+                    $result = banUser($con, $userId, 0);
         
                     if ($result) {
                         // Log the unban message
@@ -147,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
                     if ($userData["banned"] == 1) {
                         http_response_code(403); // Forbidden
-                        echo json_encode(['error' => 'You are banned from sending messages']);
+                        echo json_encode(['error' => 'You are banned from sending messages', "ip" => $ipAddress]);
                     } else {
                         // Insert the new message into the database
                         $insertSql = "INSERT INTO messages (content, username, datetime, sessionToken) VALUES ('$content', '$username', NOW(), '$sessionToken')";
