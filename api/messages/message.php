@@ -100,6 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         http_response_code(500); // Internal Server Error
                         echo json_encode(['error' => 'Error unbanning user']);
                     }
+                } elseif ($command[0] == "/getipbans") {
+                    $bans = getBannedIpIds($con);
+                    http_response_code(200); // OK
+                    echo json_encode(['data' => $bans, 'command'=> $command[0]]);
+                } elseif ($command[0] == "/getidbybans" && is_numeric($command[1])) {
+                    $bans = getUserIdsByIp($con, getIpByBanId($con, $command[1]));
+                    http_response_code(200); // OK
+                    echo json_encode(['data' => $bans, 'command'=> $command[0]]);
                 } else {
                     http_response_code(400); // Bad Request
                     echo json_encode(['error' => 'Invalid command']);

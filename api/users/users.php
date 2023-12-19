@@ -165,5 +165,29 @@ function getUserIdsByIp($conn, $ip) {
     return $userIds;
 }
 
+function getBannedIpIds($conn) {
+    $stmt = $conn->prepare("SELECT id FROM ipBan");
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $bannedIpIds = [];
+    while ($row = $result->fetch_assoc()) {
+        $bannedIpIds[] = $row['id'];
+    }
+
+    return $bannedIpIds;
+}
+
+function getIpByBanId($conn, $banId) {
+    $stmt = $conn->prepare("SELECT ipAddress FROM ipBan WHERE id = ?");
+    $stmt->bind_param("i", $banId);
+    $stmt->execute();
+    $stmt->bind_result($ipAddress);
+    $stmt->fetch();
+    $stmt->close();
+
+    return $ipAddress;
+}
+
 
 ?>

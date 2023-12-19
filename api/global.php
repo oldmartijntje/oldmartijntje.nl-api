@@ -70,7 +70,8 @@ $commands = [
 ];
 
 $commandsList = [
-    "ban", "unban"
+    "ban", "unban", "ipban", "ipunban", "getipbans", "getidbybans",
+    "checkip"
 ];
 
 $typeMask = [
