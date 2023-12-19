@@ -105,31 +105,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     banIp($con, $userId);
     
                     http_response_code(200); // OK
-                    echo json_encode(['message' => 'User banned successfully']);
+                    echo json_encode(['message' => 'User banned successfully', 'data' => $command[1], 'command'=> $command[0]]);
                     
                 } elseif ($command[0] == "/ipunban" && is_numeric($command[1])) {
                     $userId = $command[1];
                     unbanIp($con, $userId);
         
                     http_response_code(200); // OK
-                    echo json_encode(['message' => 'User unbanned successfully', 'command'=> $command[0]]);
+                    echo json_encode(['message' => 'User unbanned successfully', 'data' => $command[1], 'command'=> $command[0]]);
 
                 } elseif ($command[0] == "/getipbans") {
                     $bans = getBannedIpIds($con);
                     http_response_code(200); // OK
-                    echo json_encode(['data' => $bans, 'command'=> $command[0]]);
+                    echo json_encode(['data' => $bans, 'command'=> $command[0], 'message' => 'Bans retrieved successfully']);
                 } elseif ($command[0] == "/getidbybans" && is_numeric($command[1])) {
                     $bans = getUserIdsByIp($con, getIpByBanId($con, $command[1]));
                     http_response_code(200); // OK
-                    echo json_encode(['data' => $bans, 'command'=> $command[0]]);
+                    echo json_encode(['data' => $bans, 'command'=> $command[0], 'message' => 'Bans retrieved successfully']);
                 } elseif ($command[0] == "/checkuser" && is_numeric($command[1])) {
                     $bans = getUsersWithSameIp($con, $command[1]);
                     $isBanned = checkUserIpBanStatus($con, $command[1]);
                     http_response_code(200); // OK
                     echo json_encode(['data' => [
                         'sameIp' => $bans,
-                        'isBanned' => $isBanned
-                    ], 'command'=> $command[0]]);
+                        'isBanned' => $isBanned, 
+                        'userId' => $command[1]
+                    ], 'command'=> $command[0], 'message' => 'User checked successfully']);
                 } else {
                     http_response_code(400); // Bad Request
                     echo json_encode(['error' => 'Invalid command']);

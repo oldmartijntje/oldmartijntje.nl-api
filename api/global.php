@@ -66,6 +66,7 @@ $commands = [
     ":beginner:" => "🔰",
     ":magnefyR:" => "🔎",
     ":magnefyL:" => "🔍",
+    ":newline:" => "\n",
 
 ];
 
