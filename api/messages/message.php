@@ -10,7 +10,7 @@ $maximumMessages = 25;
 $maxNicknameLength = 16;
 $minNicknameLength = 4;
 $minMessageLength = 2;
-$maxMessageLength = 256;
+$maxMessageLength = 300;
 $blacklistedNames = ["SYSTEM", "SERVER"];
 
 $userdataBySessionToken = [];

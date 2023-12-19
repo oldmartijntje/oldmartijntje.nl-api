@@ -51,7 +51,13 @@ $commands = [
     "owo" => "OwO",
     "uwu" => "UwU",
     "twt" => "TwT",
-    ":adBee:"=> "https://oldmartijntje.nl/AdBee?nav="
+    ":adBee:"=> "https://oldmartijntje.nl/AdBee?nav=",
+    ":smallerThan:" => "<",
+    ":biggerThan:" => ">",
+    ":doubleQuote:" => '"',
+    ":and:" => "&",
+    ":singleQuote:" => "'",
+    ":backtick:" => "`",
 ];
 
 $commandsList = [
