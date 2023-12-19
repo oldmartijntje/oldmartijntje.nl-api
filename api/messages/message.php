@@ -152,8 +152,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         'payload' => ['content' => $content, 'username' => $username]]);
                 } else {
                     include_once '../users/users.php';
-                    $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken);
-                    if ($userData["banned"] == 1) {
+                    $userData = getUserDataByToken($sessionToken, $con, $userdataBySessionToken, $ipAddress);
+                    if ($userData == null) {
+                        http_response_code(403); // Forbidden
+                        echo json_encode(['error' => 'You are banned from sending messages', "ip" => $ipAddress]);
+                    } elseif ($userData["banned"] == 1) {
                         http_response_code(403); // Forbidden
                         echo json_encode(['error' => 'You are banned from sending messages', "ip" => $ipAddress]);
                     } else {

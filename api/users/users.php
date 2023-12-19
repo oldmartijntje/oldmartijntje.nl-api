@@ -1,16 +1,19 @@
 <?php
 
-function getUserDataByToken($sessionToken, $conn, $dict) {
+function getUserDataByToken($sessionToken, $conn, $dict, $ipAddress = null) {
    if (isset($dict[$sessionToken])) {
        return $dict[$sessionToken];
    } else {
-       $userData = getFromDatabase($sessionToken, $conn);
+       $userData = getFromDatabase($sessionToken, $conn, $ipAddress);
+       if ($userData == null) {
+           return null;
+       }
        $dict[$sessionToken] = $userData;
        return $userData;
    }
 }
 
-function getFromDatabase($sessionToken, $conn) {
+function getFromDatabase($sessionToken, $conn, $ipAddress = null) {
     // Use NOW() to update the lastAccessed column
     $stmt = $conn->prepare("SELECT *, NOW() as lastAccessed FROM users WHERE sessionToken = ? LIMIT 1");
     $stmt->bind_param("s", $sessionToken);
@@ -21,36 +24,88 @@ function getFromDatabase($sessionToken, $conn) {
         $row = $result->fetch_assoc();
 
         // If you want to update the lastAccessed column in the database as well, you can do it here
-        updateLastAccessed($sessionToken, $conn);
+        updateLastAccessed($sessionToken, $conn, $ipAddress);
 
         return $row;
     } else {
         // User does not exist, create a new user
-        createUserIfNotExists($sessionToken, $conn);
-        return getFromDatabase($sessionToken, $conn);
+        $returnValue = createUserIfNotExists($sessionToken, $conn, $ipAddress);
+        if ($returnValue == false) {
+            return null;
+        }
+        return getFromDatabase($sessionToken, $conn, $ipAddress);
     }
 }
 
 // Example function to update lastAccessed in the database
-function updateLastAccessed($sessionToken, $conn) {
+function updateLastAccessed($sessionToken, $conn, $ipAddress = null) {
+    // Update lastAccessed
     $updateStmt = $conn->prepare("UPDATE users SET lastAccessed = NOW() WHERE sessionToken = ?");
     $updateStmt->bind_param("s", $sessionToken);
     $updateStmt->execute();
+
+    // Check if ipAddress is provided and update it
+    if ($ipAddress !== null) {
+        $updateCreationIp = false;
+
+        // Check if creationIp is 0
+        $checkCreationIpStmt = $conn->prepare("SELECT creationIp FROM users WHERE sessionToken = ?");
+        $checkCreationIpStmt->bind_param("s", $sessionToken);
+        $checkCreationIpStmt->execute();
+        $checkCreationIpStmt->bind_result($creationIp);
+        $checkCreationIpStmt->fetch();
+        $checkCreationIpStmt->close();
+
+        if ($creationIp == 0) {
+            $updateCreationIp = true;
+        }
+
+        // Update ipAddress
+        $updateStmt = $conn->prepare("UPDATE users SET ipAddress = ? WHERE sessionToken = ?");
+        $updateStmt->bind_param("ss", $ipAddress, $sessionToken);
+        $updateStmt->execute();
+
+        // Update creationIp if needed
+        if ($updateCreationIp) {
+            $updateCreationIpStmt = $conn->prepare("UPDATE users SET creationIp = ? WHERE sessionToken = ?");
+            $updateCreationIpStmt->bind_param("ss", $ipAddress, $sessionToken);
+            $updateCreationIpStmt->execute();
+        }
+    }
 }
 
-function createUserIfNotExists($sessionToken, $conn) {
+function createUserIfNotExists($sessionToken, $conn, $ipAddress = null) {
+    if ($ipAddress === null) {
+        $ipAddress = "";
+    }
+
+    // Check if the current IP is banned
+    if (isIpBanned($conn, $ipAddress)) {
+        // Handle the case where the IP is banned, for example, throw an exception or log an error
+        return false;
+    }
 
     // Set default values for the new user
     $type = '';
     $banned = 0;
-    $ipAdress = '';
-    $calls = 0;
     $neverExpire = 0;
 
     // Insert a new user with the provided session token
-    $stmt = $conn->prepare("INSERT INTO users (type, sessionToken, banned, neverExpire, lastAccessed, ipAdress, calls) VALUES (?, ?, ?, ?, NOW(), ?, ?)");
-    $stmt->bind_param("ssssss", $type, $sessionToken, $banned, $neverExpire, $ipAdress, $calls);
+    $stmt = $conn->prepare("INSERT INTO users (type, sessionToken, banned, neverExpire, lastAccessed, ipAddress, creationIp) VALUES (?, ?, ?, ?, NOW(), ?, ?)");
+    $stmt->bind_param("ssssss", $type, $sessionToken, $banned, $neverExpire, $ipAddress, $ipAddress);
     $stmt->execute();
+    return true;
+}
+
+function isIpBanned($conn, $ipAddress) {
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM ipBan WHERE ipAddress = ?");
+    $stmt->bind_param("s", $ipAddress);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return $count > 0;
 }
 
 function banUser($con, $userId, $status) {
@@ -70,6 +125,9 @@ function banUser($con, $userId, $status) {
 
 function isAdmin($data, $con, $userdataBySessionToken) {
     $userData = getUserDataByToken($data, $con, $userdataBySessionToken);
+    if ($userData == null) {
+        return false;
+    }
     
     return $userData["type"] === "admin";
 }
@@ -93,7 +151,19 @@ function deleteInactiveUsers($conn) {
     return $rowsAffected;
 }
 
+function getUserIdsByIp($conn, $ip) {
+    $stmt = $conn->prepare("SELECT id FROM users WHERE ipAddress = ? OR creationIp = ?");
+    $stmt->bind_param("ss", $ip, $ip);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
+    $userIds = [];
+    while ($row = $result->fetch_assoc()) {
+        $userIds[] = $row['id'];
+    }
+
+    return $userIds;
+}
 
 
 ?>
