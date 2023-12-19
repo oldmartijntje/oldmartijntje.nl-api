@@ -216,5 +216,83 @@ function getUsersWithSameIp($conn, $userId) {
     return $matchingUserIds;
 }
 
+function checkUserIpBanStatus($conn, $userId) {
+    // Retrieve ipAddress and creationIp of the specified user
+    $stmt = $conn->prepare("SELECT ipAddress, creationIp FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($ipAddress, $creationIp);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Check if ipAddress is banned
+    $isIpBanned = isIpBanned($conn, $ipAddress);
+
+    // Check if creationIp is banned
+    $isCreationIpBanned = isIpBanned($conn, $creationIp);
+
+    // Determine the ban status
+    if ($isIpBanned && $isCreationIpBanned) {
+        return "both"; // Both ipAddress and creationIp are banned
+    } elseif ($isIpBanned) {
+        return "ipAddress"; // Only ipAddress is banned
+    } elseif ($isCreationIpBanned) {
+        return "creationIp"; // Only creationIp is banned
+    } else {
+        return "none"; // Neither ipAddress nor creationIp is banned
+    }
+}
+
+function banIp($conn, $userId) {
+    // Retrieve ipAddress and creationIp of the specified user
+    $stmt = $conn->prepare("SELECT ipAddress, creationIp FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($ipAddress, $creationIp);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Check if ipAddress is already banned
+    if (!isIpBanned($conn, $ipAddress)) {
+        // Insert a new entry into ipBan table for ipAddress
+        $stmt = $conn->prepare("INSERT INTO ipBan (ipAddress, banned) VALUES (?, 1)");
+        $stmt->bind_param("s", $ipAddress);
+        $stmt->execute();
+    }
+
+    // Check if creationIp is already banned
+    if (!isIpBanned($conn, $creationIp)) {
+        // Insert a new entry into ipBan table for creationIp
+        $stmt = $conn->prepare("INSERT INTO ipBan (ipAddress, banned) VALUES (?, 1)");
+        $stmt->bind_param("s", $creationIp);
+        $stmt->execute();
+    }
+}
+
+function unbanIp($conn, $userId) {
+    // Retrieve ipAddress and creationIp of the specified user
+    $stmt = $conn->prepare("SELECT ipAddress, creationIp FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($ipAddress, $creationIp);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Check if ipAddress is already banned
+    if (isIpBanned($conn, $ipAddress)) {
+        // Delete the entry from ipBan table for ipAddress
+        $stmt = $conn->prepare("DELETE FROM ipBan WHERE ipAddress = ?");
+        $stmt->bind_param("s", $ipAddress);
+        $stmt->execute();
+    }
+
+    // Check if creationIp is already banned
+    if (isIpBanned($conn, $creationIp)) {
+        // Delete the entry from ipBan table for creationIp
+        $stmt = $conn->prepare("DELETE FROM ipBan WHERE ipAddress = ?");
+        $stmt->bind_param("s", $creationIp);
+        $stmt->execute();
+    }
+}
 
 ?>
