@@ -48,7 +48,7 @@ function createUserIfNotExists($sessionToken, $conn) {
     $neverExpire = 0;
 
     // Insert a new user with the provided session token
-    $stmt = $conn->prepare("INSERT INTO users (type, sessionToken, banned, neverExpire, datetime, ipAdress, calls) VALUES (?, ?, ?, ?, NOW(), ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO users (type, sessionToken, banned, neverExpire, lastAccessed, ipAdress, calls) VALUES (?, ?, ?, ?, NOW(), ?, ?)");
     $stmt->bind_param("ssssss", $type, $sessionToken, $banned, $neverExpire, $ipAdress, $calls);
     $stmt->execute();
 }

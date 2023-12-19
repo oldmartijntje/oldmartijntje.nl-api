@@ -2,9 +2,9 @@ import requests
 import random
 url = 'http://oldmartijntje.000webhostapp.com/api//messages/message.php'
 data = {
-    'content': 'hehehe haw', 
-    'username': 'garry' + str(random.randint(0,1000)), 
-    'sessionToken': '2df31Ce3-7577-4f49-9e7a-b139985e8000'
+    'content': 'This is a test to see if i fixed a bug.', 
+    'username': 'Martijn Tester', 
+    'sessionToken': '2df31Ce3-7577-4f49-9e7a-b139985e800a'
     }
 
 # for i in range(10):
