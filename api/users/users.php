@@ -189,5 +189,32 @@ function getIpByBanId($conn, $banId) {
     return $ipAddress;
 }
 
+function getUsersWithSameIp($conn, $userId) {
+    $stmt = $conn->prepare("SELECT id, ipAddress, creationIp FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($id, $ipAddress, $creationIp);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($id === null) {
+        // User not found
+        return [];
+    }
+
+    // Search for other users with the same ipAddress or creationIp
+    $stmt = $conn->prepare("SELECT id FROM users WHERE (ipAddress = ? OR creationIp = ?) AND id != ?");
+    $stmt->bind_param("ssi", $ipAddress, $creationIp, $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $matchingUserIds = [];
+    while ($row = $result->fetch_assoc()) {
+        $matchingUserIds[] = $row['id'];
+    }
+
+    return $matchingUserIds;
+}
+
 
 ?>
