@@ -103,8 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ($command[0] == "/ipban" && is_numeric($command[1])) {
                     $userId = $command[1];
                     banIp($con, $userId);
-
-                    logMessage($con, "User with ID $userId has been banned", "SYSTEM", $data['sessionToken']);
     
                     http_response_code(200); // OK
                     echo json_encode(['message' => 'User banned successfully']);
