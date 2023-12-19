@@ -58,6 +58,15 @@ $commands = [
     ":and:" => "&",
     ":singleQuote:" => "'",
     ":backtick:" => "`",
+    ":dancer:" => "💃",
+    ":nails:" => "💅",
+    ":hungary:" => "🇭🇺",
+    ":netherlands:" => "🇳🇱",
+    ":japan:" => "🇯🇵",
+    ":beginner:" => "🔰",
+    ":magnefyR:" => "🔎",
+    ":magnefyL:" => "🔍",
+
 ];
 
 $commandsList = [

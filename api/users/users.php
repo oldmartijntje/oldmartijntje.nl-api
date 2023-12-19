@@ -74,7 +74,24 @@ function isAdmin($data, $con, $userdataBySessionToken) {
     return $userData["type"] === "admin";
 }
 
+function deleteInactiveUsers($conn) {
+    // Calculate the date one week ago and one month ago
+    $oneWeekAgo = date('Y-m-d H:i:s', strtotime('-1 week'));
+    $oneMonthAgo = date('Y-m-d H:i:s', strtotime('-1 month'));
 
+    // Delete users based on the specified conditions
+    $stmt = $conn->prepare("DELETE FROM users WHERE 
+                           (lastAccessed < ? AND type = '' AND neverExpire = 0) OR 
+                           (lastAccessed < ? AND type != '' AND neverExpire = 0)");
+
+    $stmt->bind_param("ss", $oneWeekAgo, $oneMonthAgo);
+    $stmt->execute();
+    
+    // Check if any rows were affected
+    $rowsAffected = $stmt->affected_rows;
+
+    return $rowsAffected;
+}
 
 
 

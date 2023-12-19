@@ -10,7 +10,7 @@ $maximumMessages = 25;
 $maxNicknameLength = 16;
 $minNicknameLength = 4;
 $minMessageLength = 2;
-$maxMessageLength = 300;
+$maxMessageLength = 256;
 $blacklistedNames = ["SYSTEM", "SERVER"];
 
 $userdataBySessionToken = [];
@@ -111,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $usernameLength = mb_strlen(sanitizeInput($data['username'], true));
             $contentLength = mb_strlen(sanitizeInput($data['content'], false));
+            $contentLengthWithEmoji = mb_strlen(checkForCommands(sanitizeInput($data['content'], false)));
             $sessionToken = $data['sessionToken'];
 
             if ($contentLength > $maxMessageLength) {
@@ -125,6 +126,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($contentLength < $minMessageLength) {
                 http_response_code(400); // Bad Request
                 echo json_encode(['error' => 'Content length is too short, watch out for characters that are not allowed. Minimum length: ' . $minMessageLength . ' characters']);
+            } elseif ($contentLengthWithEmoji > $maxMessageLength) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Content length (when applying emoji\'s) exceeds the allowed limit: ' . $maxMessageLength . ' characters']);
+            } elseif ($contentLengthWithEmoji < $minMessageLength) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'Content length (when applying emoji\'s) is too short, watch out for characters that are not allowed. Minimum length: ' . $minMessageLength . ' characters']);
             } elseif (in_array(trim($data['username']), $blacklistedNames)) {
                 http_response_code(400); // Bad Request
                 echo json_encode(['error' => 'Username \''. trim($data['username']) .'\' is blacklisted']);
@@ -155,6 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
                         $result = mysqli_query($con, $insertSql);
                         if ($result) {
+                            deleteInactiveUsers($con);
                             // Check if the number of items in the database is more than limit
                             $countSql = "SELECT COUNT(*) as count FROM messages";
                             $result = mysqli_query($con, $countSql);
