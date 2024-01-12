@@ -71,8 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
             if (isAdmin($data['sessionToken'], $con, $userdataBySessionToken)) {
                 $command = splitCommand($data['content']);
-        
-                if ($command[0] == "/ban" && is_numeric($command[1])) {
+
+                if ($command[0] == "/admintest") {
+                    http_response_code(200); // OK
+                    echo json_encode(['message' => 'Admin test successful']);
+                } elseif ($command[0] == "/ban" && is_numeric($command[1])) {
                     $userId = $command[1];
                     $result = banUser($con, $userId, 1);
         
