@@ -110,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = mysqli_stmt_get_result($stmt);
 
             if ($result) {
+                $last = "";
                 while ($row = mysqli_fetch_assoc($result)) {
                     $message = [
                         'id' => $row['id'],
@@ -118,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'sessionToken' => $row['sessionToken'],
                         'counterName' => $row['counterName'],
                     ];
+                    $last = $row['whenIsItSent'];
                     $messages[] = $message;
                 }
 
@@ -129,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 http_response_code(200); // OK
-                echo json_encode(['counter' => $counter, 'amountOfInserts' => $amountOfInserts, 'totalMinutes' => $totalMinutes, 'result'=> $result]);
+                echo json_encode(['counter' => $counter, 'amountOfInserts' => $amountOfInserts, 'totalMinutes' => $totalMinutes, 'result'=> $result, 'last' => $last]);
             } else {
                 http_response_code(404);
             }
