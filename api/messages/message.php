@@ -239,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $adminToken = "your_admin_token_here"; // Replace with your actual admin token
 
     if ($sessionToken && preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $sessionToken)) {
-        $sql = "SELECT id, content, username, datetime, sessionToken FROM messages";
+        $sql = "SELECT id, content, username, (datetime + INTERVAL $hour_diff HOUR) AS datetime_in_ist, sessionToken FROM messages";
         $result = mysqli_query($con, $sql);
 
         if ($result) {
@@ -248,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'id' => $row['id'],
                     'content' => $row['content'],
                     'username' => $row['username'],
-                    'datetime' => $row['datetime'],
+                    'datetime' => $row['datetime_in_ist'],
                 ];
 
                 include_once '../users/users.php';

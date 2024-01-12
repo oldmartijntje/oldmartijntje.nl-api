@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['error' => 'sessionToken cannot be empty or null']);
             } else {
                 // Retrieve messages newer than the given ID for the specific sessionToken
-                $sql = "SELECT id, content, username, datetime, sessionToken FROM messages WHERE id > $id";
+                $sql = "SELECT id, content, username, (datetime + INTERVAL $hour_diff HOUR) AS datetime_in_ist, sessionToken FROM messages WHERE id > $id";
     
                 $messages = [];
                 if ($result = mysqli_query($con, $sql)) {
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'id' => $row['id'],
                             'content' => $row['content'],
                             'username' => $row['username'],
-                            'datetime' => $row['datetime']
+                            'datetime' => $row['datetime_in_ist']
                         ];
                         
                         include_once '../users/users.php';

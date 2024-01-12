@@ -1,5 +1,7 @@
 <?php
 
+$hour_diff = 1; 
+
 $commands = [
     ":shrug:" => "¯\\_(ツ)_/¯",
     ":heart:" => "♥",
