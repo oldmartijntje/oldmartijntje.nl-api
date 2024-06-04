@@ -1,0 +1,3 @@
+{
+    "MONGO_URI": "mongodb+srv://<username>:<dbPassword>@mytestcluster0.nbclvmp.mongodb.net/databaseNameGoBrrrr?retryWrites=true&w=majority&appName=MyTestCluster0"
+}

@@ -1,0 +1,4 @@
+{
+    "apiPort": 5202,
+    "sessionTokenExpirationMinutes": 120
+}
