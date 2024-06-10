@@ -1,3 +1,4 @@
 environment.php
 env.json
 node_modules/
+.env
