@@ -8,7 +8,7 @@ require('dotenv').config();
 const { loginRouter } = require("./authentication/login.routes.js");
 
 const MONGO_URI = process.env.DB_URL;
-const port = settings["apiPort"];
+const port = process.env.API_PORT
 
 var visit = 0;
 
