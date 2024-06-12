@@ -93,3 +93,7 @@ nav ul:first-child {
     text-align: center;
     margin-top: 0;
 }
+
+.icon {
+    margin-left: 1rem;
+}
