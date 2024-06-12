@@ -39,11 +39,15 @@ function addEndpoint(name, url, type, header) {
     } else {
         // Create a new header and list
         const headerElement = document.createElement('div');
+        const headerInfoElement = document.createElement('div');
         const headerHeaderElement = document.createElement('h2');
         headerElement.id = header;
         headerHeaderElement.textContent = header;
         apiList.appendChild(headerElement);
         headerElement.appendChild(headerHeaderElement);
+
+        headerInfoElement.id = `${header}-info`;
+        headerElement.appendChild(headerInfoElement);
 
         const list = document.createElement('ul');
         list.id = `${header}-list`;
