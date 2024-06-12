@@ -1,5 +1,7 @@
 const cors = require("cors");
+const path = require('path');
 const express = require("express");
+const expressStatic = require('express').static;
 const { connect, users, sessionTokens } = require("./database.js");
 const { exit } = require("process");
 const settings = require("./settings");
@@ -9,6 +11,7 @@ const { loginRouter } = require("./authentication/login.routes.js");
 
 const MONGO_URI = process.env.DB_URL;
 const port = process.env.API_PORT
+const staticHtmlPath = path.join(__dirname, './homepage');
 
 var visit = 0;
 
@@ -37,6 +40,7 @@ connect(MONGO_URI)
 
         const app = express();
         app.use(cors());
+        app.use(expressStatic(staticHtmlPath));
         app.use("/login", loginRouter);
         app.use("/test", testRouter);
         // start the Express server
