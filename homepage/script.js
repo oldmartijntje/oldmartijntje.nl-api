@@ -45,7 +45,7 @@ function addEndpoint(name, url, type, header, hoverText) {
         const headerElementList = document.getElementById(`${header}-list`);
         // Header already exists, append to it
         const listItem = document.createElement('li');
-        listItem.innerHTML = `<span><b>${type}</b> - </span><span><b>${name}</b>: </span><a href="${url}">${url}</a><b style="cursor:hover" class="icon" title="${hoverText}" onclick="alert('${hoverText}')">ⓘ</b>`;
+        listItem.innerHTML = `<span><b>${type}</b> - </span><span><b>${name}</b>: </span><a href="${url}">${url}</a><b style="cursor:pointer" class="icon" title="${hoverText}" onclick="alert('${hoverText}')">ⓘ</b>`;
 
         headerElementList.appendChild(listItem);
     } else {
@@ -66,7 +66,7 @@ function addEndpoint(name, url, type, header, hoverText) {
         headerElement.appendChild(list);
 
         const listItem = document.createElement('li');
-        listItem.innerHTML = `<span><b>${type}</b> - </span><span><b>${name}</b>: </span><a href="${url}">${url}</a><b style="cursor:hover" class="icon" title="${hoverText}" onclick="alert('${hoverText}')">ⓘ</b>`;
+        listItem.innerHTML = `<span><b>${type}</b> - </span><span><b>${name}</b>: </span><a href="${url}">${url}</a><b style="cursor:pointer" class="icon" title="${hoverText}" onclick="alert('${hoverText}')">ⓘ</b>`;
         list.appendChild(listItem);
     }
 }
