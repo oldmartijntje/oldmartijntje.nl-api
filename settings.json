@@ -1,4 +1,8 @@
 {
     "apiPort": 3000,
-    "sessionTokenExpirationMinutes": 120
+    "sessionTokenExpirationMinutes": 120,
+    "sessionRateLimitPerMinute": 60,
+    "sessionBlacklistLimitPerMinute": 90,
+    "resetLimitAfterMinutes": 10,
+    "defaultAmountToGet": 42
 }

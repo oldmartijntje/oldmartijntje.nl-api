@@ -1,5 +1,12 @@
 const endpoints = [
     {
+        name: 'projects',
+        url: 'https://api.oldmartijntje.nl/getData/projects',
+        type: 'POST',
+        header: 'GetData',
+        hoverText: 'This endpoint is used to get all my projects.',
+    },
+    {
         name: 'isOnline',
         url: 'https://api.oldmartijntje.nl/test/isOnline',
         type: 'GET',
@@ -33,6 +40,7 @@ const tabInfo = {
     "user": "these endpoints require the user to be logged in. And currently I am the only one with an account.",
     "admin": "these endpoints require the logged in user to have admin privilages.",
     "Random": "This is just for testing purposes and should not be used in production.",
+    "GetData": "These are used to get up-to-date json data from the server.",
     "Authorization": "These endpoints are for authorization purposes. This can be for actual accounts or <a href=''>single use tokens</a>."
 }
 
