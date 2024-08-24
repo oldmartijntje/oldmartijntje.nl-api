@@ -40,6 +40,7 @@ connect(MONGO_URI)
     .then(async () => {
 
         const app = express();
+        app.set('trust proxy', true);
         app.use(cors());
         app.use(expressStatic(staticHtmlPath));
         app.use("/login", loginRouter);

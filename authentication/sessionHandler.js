@@ -12,10 +12,12 @@ class SessionHandler {
 
     async rateLimitMiddleware(req, res, next) {
         const ip = req.ip || req.connection.remoteAddress;
+        const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        console.log(userIp, ip);
         const limit = 100;  // Example limit, e.g., 100 requests
         const windowMs = settings.resetLimitAfterMinutes;  // Example time window, e.g., 1 minute
 
-        let session = await sessions.findOne({ ipAdress: ip });
+        let session = await sessions.findOne({ ipAdress: userIp });
 
         if (session) {
             if (session.rateLimitedAt) {
