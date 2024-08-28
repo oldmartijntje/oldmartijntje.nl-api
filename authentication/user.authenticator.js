@@ -21,23 +21,6 @@ class UserAuthenticator {
     }
 
     /**
-     * Gets all tenants this selected user has access to and checks if the tenantId is in the list.
-     * Only works if the user is authenticated.
-     * 
-     * @param tenantIdString - the tenantId string
-     * @param res - the response object
-     * @returns `Boolean` - data about if it was succesfull or not.
-     */
-    canThisTenantBeAccessedByThisUser(tenantIdString, res) {
-        const tenantsFound = this.getUserData().tenantIdentifiers;
-        if (!this.checkForMongoObjectInList(tenantsFound, tenantIdString)) {
-            res.status(401).send({ "message": "You don't have access to this tenant, or it does not exist." });
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * Sets the `isAuthenticated` boolean to `false`
      */
     #unAuthorise() {
@@ -86,7 +69,7 @@ class UserAuthenticator {
         }
         const authenticationResponse = await this.authenticateBySessionToken(sessionTokenString);
         if (!authenticationResponse) {
-            res.status(403).send({ "message": "Invalid SessionToken" });
+            res.status(401).send({ "message": "Invalid SessionToken" });
             return false;
         }
         return true;
@@ -129,7 +112,7 @@ class UserAuthenticator {
         }
         const success = await this.authenticateByLogin(username, password)
         if (!success) {
-            res.status(403).send({ "message": "Invalid username and password combination." });
+            res.status(401).send({ "message": "Invalid username and password combination." });
             return false;
         }
         return true;
@@ -280,21 +263,6 @@ class UserAuthenticator {
             JSON.parse(dataStringObject);
             return true;
         } catch (e) {
-            return false;
-        }
-    }
-
-    /**
-     * Checks if your list of mongoDB ObjectIds contains the objectId you want to access.
-     * @param {Array} tenantList - The list of ObjectIds
-     * @param {String} tenantIdString - The tenantId String you want to access
-     * @returns `boolean` - Wether the tenantIdString is in the tenantList or not.
-     */
-    checkForMongoObjectInList(tenantList, tenantIdString) {
-        try {
-            const tenantId = new mongodb.ObjectId(tenantIdString);
-            return tenantList.some((objectId) => objectId.equals(tenantId))
-        } catch {
             return false;
         }
     }

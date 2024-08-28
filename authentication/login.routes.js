@@ -7,7 +7,6 @@ loginRouter.use(express.json());
 /**
  * Get the sessiontoken by using your password and username.
  * 
- * Also returns the tenants that the user is part of.
  */
 loginRouter.post("/", async (_req, res) => {
     try {
@@ -21,10 +20,6 @@ loginRouter.post("/", async (_req, res) => {
         const sessionToken = auth.getSessionToken();
         if (sessionToken) {
             const response = { "message": "Logged in succesfully", success: true };
-            if (!response.success) {
-                res.status(500).send({ "message": "Error while fetching tenants", error: response.error });
-                return;
-            }
             response["sessionToken"] = sessionToken;
             res.status(200).send(response);
             return;
@@ -38,7 +33,6 @@ loginRouter.post("/", async (_req, res) => {
 /**
  * check if your sessiontoken is valid.
  * 
- * Also returns the tenants that the user is part of.
  */
 loginRouter.post("/validateToken", async (_req, res) => {
     try {
@@ -49,10 +43,6 @@ loginRouter.post("/validateToken", async (_req, res) => {
             return;
         }
         const response = { "message": "Logged in succesfully", success: true };
-        if (!response.success) {
-            res.status(500).send({ "message": "Error while fetching tenants", error: response.error });
-            return;
-        }
         res.status(200).send(response)
     } catch (error) {
         res.status(500).send(error.message);
