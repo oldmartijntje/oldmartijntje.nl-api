@@ -1,8 +1,6 @@
 const { Schema } = require("mongoose");
 const settings = require('../settings.json');
 
-const sessiontokenExpireTime = settings['sessionTokenExpirationMinutes'];
-
 const sessionTokenJsonSchema = {
     userId: {
         type: Schema.Types.ObjectId,
@@ -14,6 +12,7 @@ const sessionTokenJsonSchema = {
         type: Date,
         required: true,
         description: "'expirationDate' is required and is a date",
+        index: { expires: 10080 } // 10080 minutes = 7 days
     }
 };
 
