@@ -3,6 +3,6 @@
     "sessionTokenExpirationMinutes": 120,
     "sessionRateLimitPerMinute": 60,
     "sessionBlacklistLimitPerMinute": 90,
-    "resetLimitAfterMinutes": 10,
+    "resetLimitAfterMinutes": 2,
     "defaultAmountToGet": 42
 }

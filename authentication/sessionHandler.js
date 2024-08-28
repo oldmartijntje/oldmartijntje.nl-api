@@ -14,7 +14,7 @@ class SessionHandler {
         const ip = req.ip || req.connection.remoteAddress;
         const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         console.log(userIp, ip);
-        const limit = 100;  // Example limit, e.g., 100 requests
+        const limit = settings.sessionRateLimitPerMinute;  // Example limit, e.g., 100 requests
         const windowMs = settings.resetLimitAfterMinutes;  // Example time window, e.g., 1 minute
 
         let session = await sessions.findOne({ ipAdress: userIp });
@@ -24,7 +24,7 @@ class SessionHandler {
                 return res.status(429).json({ message: "Rate limit exceeded by A lot. Try again in 24 hours." });
             }
             const now = new Date();
-            if (now.getMinutes() - session.firstCall.getMinutes() > windowMs) {
+            if (now - session.firstCall > windowMs * 60000) {
                 // Reset the rate limit for a new window
                 session.calls = 1;
                 session.firstCall = now;
@@ -43,18 +43,6 @@ class SessionHandler {
                 return res.status(429).json({ message: "Rate limit exceeded. Try again later." });
             }
 
-
-            // Check if the user is rate limited
-            if (session.calls >= limit) {
-                if (session.rateLimitedAt) {
-                    return res.status(429).json({ message: "Rate limit exceeded. Try again later." });
-                }
-                // Set rate limited time
-                session.rateLimitedAt = now;
-                session.lastCall = now;
-                await session.save();
-                return res.status(429).json({ message: "Rate limit exceeded. Try again later." });
-            }
             // Increment the number of calls
             session.calls++;
             session.lastCall = now;
