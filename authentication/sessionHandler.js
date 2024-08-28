@@ -24,7 +24,6 @@ class SessionHandler {
                 return res.status(429).json({ message: "Rate limit exceeded by A lot. Try again in 24 hours." });
             }
             const now = new Date();
-            console.log(now - session.firstCall, windowMs * 60000)
             if (now - session.firstCall > windowMs * 60000) {
                 // Reset the rate limit for a new window
                 session.calls = 1;
