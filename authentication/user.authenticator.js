@@ -76,6 +76,7 @@ class UserAuthenticator {
         }
         if (username === false) {
             res.status(401).send({ "message": "Invalid SessionToken" });
+            return false;
         }
         res.status(401).send({ "message": "Invalid SessionToken and username combination" });
         return false;
