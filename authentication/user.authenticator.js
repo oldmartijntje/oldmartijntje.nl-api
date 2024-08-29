@@ -223,6 +223,21 @@ class UserAuthenticator {
     }
 
     /**
+     * Check if the user has the required clearance level.
+     * @param requiredLevel - the required clearance level.
+     * @returns `boolean` - wether the user has the required clearance level.
+     */
+    checkAuthorityLevel(requiredLevel) {
+        if (!this.#user || !this.#user.clearanceLevel) {
+            return false;
+        }
+        if (this.#user.clearanceLevel >= requiredLevel) {
+            return true;
+        }
+        return false
+    }
+
+    /**
      * List of required things formatter.
      * 
      * @param requiredDict - A dict of things, if any is undefined, will return a message.
