@@ -181,6 +181,19 @@ class UserAuthenticator {
     }
 
     /**
+     * Refreshes the sessionToken.
+     * @return `string` - the new sessionToken
+     */
+    refreshSessionToken() {
+        if (!this.#user) {
+            return;
+        }
+        const sessionToken = this.#userHandlerInstance.createSingularSessionToken();
+        this.#sessionToken = sessionToken;
+        return sessionToken;
+    }
+
+    /**
      * Returns the userHandler
      * @returns `UserHandler` - the userhandler the class uses.
      */

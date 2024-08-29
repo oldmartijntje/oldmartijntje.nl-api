@@ -56,6 +56,34 @@ loginRouter.post("/validateToken", async (_req, res) => {
     }
 });
 
+/**
+ * refresh your sessiontoken for a new one.
+ * 
+ */
+loginRouter.post("/refreshToken", async (_req, res) => {
+    try {
+        const sessionTokenString = _req.body.sessionToken;
+        const sessionH = new SessionHandler();
+        sessionH.rateLimitMiddleware(_req, res, async () => {
+            const auth = new UserAuthenticator();
+            const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, res);
+            if (!authenticationSuccess) {
+                return;
+            }
+            const sessionToken = auth.refreshSessionToken();
+            if (sessionToken) {
+                const response = { "message": "Logged in succesfully", success: true };
+                response["sessionToken"] = sessionToken;
+                res.status(200).send(response);
+                return;
+            }
+            res.status(501).send({ "message": "Unexpected logic escape: How did this occur?" });
+        });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
 module.exports = {
     loginRouter: loginRouter
 }

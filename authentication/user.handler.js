@@ -15,6 +15,15 @@ function uuidv4BasedOnTime() {
     return uuid;
 }
 
+function stripCredentials(user) {
+    if (!user) {
+        return undefined;
+    }
+    const strippedUser = { ...user };
+    delete strippedUser.password;
+    return strippedUser;
+}
+
 /**
  * The UserHandler class is used to handle user data.
  * 
@@ -44,7 +53,7 @@ class UserHandler {
                 return false;
             } else {
                 this.#selectedUsers = [];
-                this.#selectedUsers.push(user);
+                this.#selectedUsers.push(stripCredentials(user));
                 return true;
             }
         } catch (error) {
@@ -280,7 +289,7 @@ class UserHandler {
                 return false;
             } else {
                 this.#selectedUsers = [];
-                this.#selectedUsers.push(user);
+                this.#selectedUsers.push(stripCredentials(user));
                 return true;
             }
         } catch (error) {
