@@ -40,11 +40,12 @@ loginRouter.post("/", async (_req, res) => {
  */
 loginRouter.post("/validateToken", async (_req, res) => {
     try {
+        const username = _req.body.username;
         const sessionTokenString = _req.body.sessionToken;
         const sessionH = new SessionHandler();
         sessionH.rateLimitMiddleware(_req, res, async () => {
             const auth = new UserAuthenticator();
-            const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, res);
+            const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, username, res);
             if (!authenticationSuccess) {
                 return;
             }

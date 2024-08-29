@@ -35,8 +35,9 @@ class UserAuthenticator {
     }
 
     /**
-     * Login with a sessionToken and response object.
+     * Login with a sessionToken + username and response object.
      * @param sessionTokenString - the sessionToken
+     * @param username - the username
      * @param res - the response object
      * @param requiredDict - A dict of things, if any is undefined, the user will be unauthorised. 
      * @returns `boolean` - wether it's a valid token or not.
@@ -60,19 +61,21 @@ class UserAuthenticator {
      * }
      * ```
      */
-    async authenticateBySessionTokenWithResponseHandling(sessionTokenString, res, requiredList = {}) {
+    async authenticateBySessionTokenWithResponseHandling(sessionTokenString, username, res, requiredList = {}) {
         requiredList["sessionToken"] = sessionTokenString;
         const message = this.requiredListFormatter(requiredList);
         if (message !== undefined) {
             res.status(400).send({ "message": message });
             return false;
         }
-        const authenticationResponse = await this.authenticateBySessionToken(sessionTokenString);
-        if (!authenticationResponse) {
-            res.status(401).send({ "message": "Invalid SessionToken" });
-            return false;
+        const authenticationResponse = await this.#authenticateBySessionToken(sessionTokenString);
+        if (authenticationResponse) {
+            if (this.#user.username === username) {
+                return true;
+            }
         }
-        return true;
+        res.status(401).send({ "message": "Invalid SessionToken and username combination" });
+        return false;
     }
 
     /**
@@ -122,8 +125,9 @@ class UserAuthenticator {
      * Tries to login with sessionToken.
      * @param sessionTokenString - the sessionToken
      * @returns `boolean` - wether it's a valid token or not.
+     * @private
      */
-    async authenticateBySessionToken(sessionTokenString) {
+    async #authenticateBySessionToken(sessionTokenString) {
         const validSessionToken = await this.#userHandlerInstance.validateSessionToken(sessionTokenString);
         if (validSessionToken === false) {
             // The sessiontoken is invalid
