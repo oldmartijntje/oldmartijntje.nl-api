@@ -46,10 +46,15 @@ registerRouter.post("/generate", async (_req, res) => {
                 return;
             }
             const parsed = parseInt(clearanceLevel)
-            if (typeof parsed != typeof 0 || !auth.checkAuthorityLevel(parsed + 1) || parsed < 0) {
+            if (typeof parsed != typeof 0 || parsed < 0) {
+                res.status(400).send({ "message": "Invalid clearance level." });
+                return;
+            }
+            if (!auth.checkAuthorityLevel(parsed + 1)) {
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
+
             await auth.createRegistratonCodeHandling(clearanceLevel, role, textNote, res);
 
 
@@ -117,7 +122,7 @@ registerRouter.post("/delete", async (_req, res) => {
             }
             const codes = await handler.findAllRegistrationCodes();
             if (!codes) {
-                res.status(404).send({ "message": "Deleted Code!" });
+                res.status(200).send({ "message": "Deleted Code!" });
                 return;
             }
             res.status(200).send({ "message": "Deleted Code!", "codes": codes });
