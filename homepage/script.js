@@ -32,13 +32,48 @@ const endpoints = [
         url: 'https://api.oldmartijntje.nl/login/validateToken',
         type: 'POST',
         header: 'Authorization',
-        hoverText: 'This endpoint is used to check if a session token is still valid.',
+        hoverText: 'This endpoint is used to check if a session token is still valid. Does require a username and sessiontoken.',
+    },
+    {
+        name: 'Refresh SessionToken',
+        url: 'https://api.oldmartijntje.nl/login/refreshToken',
+        type: 'POST',
+        header: 'Authorization',
+        hoverText: 'This endpoint is used to get a new sessiontoken with an old one.',
+    },
+    {
+        name: 'Register Account',
+        url: 'https://api.oldmartijntje.nl/register',
+        type: 'POST',
+        header: 'Authorization',
+        hoverText: 'This endpoint is used to create an account with a registration code.',
+    },
+    {
+        name: 'Generate Register Code',
+        url: 'https://api.oldmartijntje.nl/register/generate',
+        type: 'POST',
+        header: 'admin',
+        hoverText: 'This endpoint is used to create a registration code.',
+    },
+    {
+        name: 'Find Register Code',
+        url: 'https://api.oldmartijntje.nl/register/find',
+        type: 'POST',
+        header: 'admin',
+        hoverText: 'This endpoint is used to find all usable registration codes.',
+    },
+    {
+        name: 'Delete Register Code',
+        url: 'https://api.oldmartijntje.nl/register/delete',
+        type: 'POST',
+        header: 'admin',
+        hoverText: 'This endpoint is used to delete a registration code.',
     },
 ];
 
 const tabInfo = {
     "user": "these endpoints require the user to be logged in. And currently I am the only one with an account.",
-    "admin": "these endpoints require the logged in user to have admin privilages.",
+    "admin": "these endpoints require the logged in user to have admin privilages / a high clearance level.",
     "Random": "This is just for testing purposes and should not be used in production.",
     "GetData": "These are used to get up-to-date json data from the server.",
     "Authorization": "These endpoints are for authorization purposes. This can be for actual accounts or <a href=''>single use tokens</a>."

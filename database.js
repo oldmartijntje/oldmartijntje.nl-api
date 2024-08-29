@@ -4,6 +4,7 @@ const { sessionTokenJsonSchema } = require("./schemas/sessionToken.schema");
 const { hash } = require('bcrypt');
 const { projectsJsonSchema } = require("./schemas/projects.schema");
 const { sessionJsonSchema } = require("./schemas/session.schema");
+const { registrationCodeJsonSchema } = require("./schemas/registrationCode.schema");
 
 
 
@@ -14,6 +15,9 @@ const sessionTokens = mongoose.model('sessionToken', sessionTokenSchema);
 
 const projectsSchema = new mongoose.Schema(projectsJsonSchema);
 const projects = mongoose.model('projects', projectsSchema);
+
+const registrationCodeSchema = new mongoose.Schema(registrationCodeJsonSchema);
+const registrationCodes = mongoose.model('registrationCode', registrationCodeSchema);
 
 const sessionSchema = new mongoose.Schema(sessionJsonSchema);
 sessionSchema.index({ lastCall: 1 }, { expireAfterSeconds: 60 * 60 });
@@ -43,5 +47,6 @@ module.exports = {
     users: users,
     sessionTokens: sessionTokens,
     projects: projects,
-    sessions: sessions
+    sessions: sessions,
+    registrationCodes: registrationCodes
 };

@@ -1,4 +1,4 @@
-const { users, sessionTokens } = require("../database");
+const { users, sessionTokens, registrationCodes } = require("../database");
 const { compare } = require('bcrypt');
 const mongodb = require("mongodb");
 const settings = require('../settings.json');
@@ -28,6 +28,114 @@ class UserHandler {
     #selectedUsers; //UserInterface[] = [];
 
     constructor() {
+    }
+
+    /**
+     * Creates a new user. 
+     * Automatically selects the user after creation.
+     * 
+     * @param {UserInterface} userData - the user data to create the user with
+     */
+    async createUser(userData) {
+        try {
+            const nameExists = await users.findOne({ username: userData.username }).lean();
+            if (nameExists) {
+                return false;
+            }
+            const user = await users.create(userData);
+            user.save();
+            this.#selectedUsers = [];
+            this.#selectedUsers.push(user);
+            return true;
+        } catch (error) {
+            console.error('Error creating user:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Create a new registration code.
+     * @param {string} role - the role of the user that will be created with this code
+     * @param {number} clearanceLevel - the clearance level of the user that will be created with this code
+     * @returns `string | undefined` - the code if it was created
+     */
+    async createRegistrationCode(role, clearanceLevel) {
+        try {
+            const code = uuidv4BasedOnTime();
+            const codeObject = await registrationCodes.create({ role: role, clearanceLevel: clearanceLevel, code: code });
+            codeObject.save();
+            return code;
+        } catch (error) {
+            console.error('Error creating registration code:', error);
+            return undefined;
+        }
+    }
+
+    /**
+     * Find all registration codes.
+     */
+    async findAllRegistrationCodes() {
+        if (!this.#selectedUsers || this.#selectedUsers.length === 0) {
+            return [];
+        }
+        try {
+            const codes = await registrationCodes.find({ clearanceLevel: { $lte: this.#selectedUsers[0].clearanceLevel } }).lean();
+            return codes;
+        } catch (error) {
+            console.error('Error finding registration codes:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Delete a registration code.
+     * @param {string} code - the code to delete
+     */
+    async deleteRegistrationCode(code) {
+        try {
+            await registrationCodes.deleteOne({
+                code
+            });
+            return true;
+        }
+        catch (error) {
+            console.error('Error deleting registration code:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Check wether an authentication code is valid.
+     * 
+     * @param {string} code - the code to check
+     * @param {boolean} delete - wether to delete the code after checking
+     * @returns `boolean | object` - false or the token data if the code is valid
+     */
+    async validateActivationCode(code, deleteCode = false) {
+        try {
+            const codeObject = await registrationCodes.findOne({ code: code }).lean();
+            if (!codeObject) {
+                return false;
+            }
+            if (deleteCode) {
+                await this.deleteActivationCode(code);
+            }
+            return codeObject;
+        } catch (error) {
+            console.error('Error checking authentication code:', error);
+            return false;
+        }
+    }
+
+    async deleteActivationCode(code) {
+        try {
+            await registrationCodes.deleteOne({ code: code });
+            return true;
+        }
+        catch (error) {
+            console.error('Error deleting authentication code:', error);
+            return false;
+        }
     }
 
     /**

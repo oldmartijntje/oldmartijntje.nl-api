@@ -70,9 +70,12 @@ class UserAuthenticator {
         }
         const authenticationResponse = await this.#authenticateBySessionToken(sessionTokenString);
         if (authenticationResponse) {
-            if (this.#user.username === username) {
+            if (this.#user.username === username || username === false) {
                 return true;
             }
+        }
+        if (username === false) {
+            res.status(401).send({ "message": "Invalid SessionToken" });
         }
         res.status(401).send({ "message": "Invalid SessionToken and username combination" });
         return false;
@@ -119,6 +122,58 @@ class UserAuthenticator {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Create and Handle the creation of an account.
+     * @param username - the username
+     * @param password - the password
+     * @param activationCode - the activationCode
+     * @param res - the response object
+     */
+    async createAccount(username, password, activationCode, res) {
+        if (!username || !password || !activationCode) {
+            res.status(400).send({ "message": "username, password and activationCode are required" });
+            return;
+        }
+        const validActivationCode = await this.#userHandlerInstance.validateActivationCode(activationCode, false);
+        if (!validActivationCode) {
+            res.status(400).send({ "message": "Invalid activation code." });
+            return;
+        }
+        const successfullCreation = await this.#userHandlerInstance.createUser({
+            username: username,
+            password: password,
+            clearanceLevel: validActivationCode.clearanceLevel,
+            role: validActivationCode.role
+        });
+        if (!successfullCreation) {
+            res.status(400).send({ "message": "Unable to create the user, try a different username." });
+            return;
+        }
+        this.#userHandlerInstance.deleteActivationCode(activationCode);
+        res.status(200).send({ "message": "User created successfully." });
+    }
+
+    /**
+     * Generate a registration code and handle the response.
+     * @param sessionTokenString - the sessionToken
+     * @param clearanceLevel - the clearanceLevel
+     * @param role - the role
+     * @param res - the response object
+     * @returns `boolean` - wether it's a valid token or not.
+     */
+    async createRegistratonCodeHandling(clearanceLevel, role, res) {
+        if (!clearanceLevel) {
+            res.status(400).send({ "message": "sessionToken and clearanceLevel are required" });
+            return;
+        }
+        const createdCode = await this.#userHandlerInstance.createRegistrationCode(role, clearanceLevel);
+        if (!createdCode) {
+            res.status(400).send({ "message": "Unable to create the code." });
+            return;
+        }
+        res.status(200).send({ "message": "Code created successfully.", "code": createdCode.code });
     }
 
     /**
