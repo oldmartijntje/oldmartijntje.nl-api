@@ -166,6 +166,10 @@ class UserAuthenticator {
             res.status(400).send({ "message": "Username must be between " + minUsernameLength + " and " + maxUsernameLength + " characters." });
             return;
         }
+        if (password.length < minPasswordLength || password.length > maxPasswordLength) {
+            res.status(400).send({ "message": "Password must be between " + minPasswordLength + " and " + maxPasswordLength + " characters." });
+            return;
+        }
         const validActivationCode = await this.#userHandlerInstance.validateActivationCode(activationCode, false);
         if (!validActivationCode) {
             res.status(400).send({ "message": "Invalid activation code." });
