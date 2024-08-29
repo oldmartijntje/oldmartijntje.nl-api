@@ -114,7 +114,12 @@ registerRouter.post("/delete", async (_req, res) => {
                 res.status(404).send({ "message": "No code found." });
                 return;
             }
-            res.status(200).send({ "message": "Code deleted." });
+            const codes = await handler.findAllRegistrationCodes();
+            if (!codes) {
+                res.status(404).send({ "message": "Deleted Code!" });
+                return;
+            }
+            res.status(200).send({ "message": "Deleted Code!", "codes": codes });
 
         });
     } catch (error) {
