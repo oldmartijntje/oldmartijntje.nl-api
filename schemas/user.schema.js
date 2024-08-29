@@ -45,6 +45,11 @@ const userJsonSchema = {
         required: false,
         description: "'guestAccountIdentifier' is optional and is a string",
     },
+    textNote: {
+        type: String,
+        required: false,
+        description: "'notes' is optional and is a string",
+    },
     banned: {
         type: Boolean,
         required: false,

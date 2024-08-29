@@ -193,12 +193,12 @@ class UserAuthenticator {
      * @param res - the response object
      * @returns `boolean` - wether it's a valid token or not.
      */
-    async createRegistratonCodeHandling(clearanceLevel, role, res) {
+    async createRegistratonCodeHandling(clearanceLevel, role, textNote, res) {
         if (typeof clearanceLevel != typeof 0) {
             res.status(400).send({ "message": "sessionToken and clearanceLevel are required" });
             return;
         }
-        const createdCode = await this.#userHandlerInstance.createRegistrationCode(role, clearanceLevel);
+        const createdCode = await this.#userHandlerInstance.createRegistrationCode(role, clearanceLevel, textNote);
         if (!createdCode) {
             res.status(400).send({ "message": "Unable to create the code." });
             return;

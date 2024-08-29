@@ -9,11 +9,11 @@ const registrationCodeJsonSchema = {
         required: false,
         description: "'role' is optional and is a string",
     },
-    // textNote: {
-    //     type: String,
-    //     required: false,
-    //     description: "'notes' is optional and is a string",
-    // },
+    textNote: {
+        type: String,
+        required: false,
+        description: "'notes' is optional and is a string",
+    },
     code: {
         type: String,
         required: true,

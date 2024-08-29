@@ -33,6 +33,7 @@ registerRouter.post("/generate", async (_req, res) => {
         const sessionTokenString = _req.body.sessionToken;
         const clearanceLevel = _req.body.clearanceLevel;
         const role = _req.body.role;
+        const textNote = _req.body.textNote;
         const sessionH = new SessionHandler();
         sessionH.rateLimitMiddleware(_req, res, async () => {
             const auth = new UserAuthenticator();
@@ -49,7 +50,7 @@ registerRouter.post("/generate", async (_req, res) => {
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
-            await auth.createRegistratonCodeHandling(clearanceLevel, role, res);
+            await auth.createRegistratonCodeHandling(clearanceLevel, role, textNote, res);
 
 
         });

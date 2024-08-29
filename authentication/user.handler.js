@@ -59,10 +59,10 @@ class UserHandler {
      * @param {number} clearanceLevel - the clearance level of the user that will be created with this code
      * @returns `string | undefined` - the code if it was created
      */
-    async createRegistrationCode(role, clearanceLevel) {
+    async createRegistrationCode(role, clearanceLevel, textNote) {
         try {
             const code = uuidv4BasedOnTime();
-            const codeObject = await registrationCodes.create({ role: role, clearanceLevel: clearanceLevel, code: code });
+            const codeObject = await registrationCodes.create({ role: role, clearanceLevel: clearanceLevel, code: code, textNote: textNote });
             codeObject.save();
             return code;
         } catch (error) {
