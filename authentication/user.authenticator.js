@@ -174,7 +174,12 @@ class UserAuthenticator {
             res.status(400).send({ "message": "Unable to create the code." });
             return;
         }
-        res.status(200).send({ "message": "Code created successfully.", "code": createdCode.code });
+        const codes = await this.#userHandlerInstance.findAllRegistrationCodes();
+        if (!codes) {
+            res.status(200).send({ "message": "Code created successfully.", "code": createdCode.code });
+            return;
+        }
+        res.status(200).send({ "message": "Code created successfully.", "code": createdCode.code, "codes": codes });
     }
 
     /**
