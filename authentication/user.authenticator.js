@@ -1,6 +1,23 @@
 const { UserHandler } = require("./user.handler");
 const mongodb = require('mongodb');
 
+const allowedCharactersUsername = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.🌵✨";
+const formattedAllowedCharactersUsername = "a-z, A-Z, 0-9, '._🌵✨'"
+const allowedCharactersPassword = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+const formattedAllowedCharactersPassword = "a-z, A-Z, 0-9, '!@#$%^&*()_+-=[]{}|;:,.<>?'"
+const minUsernameLength = 3;
+const maxUsernameLength = 20;
+const minPasswordLength = 8;
+const maxPasswordLength = 50;
+
+function checkStringForIllegalCharacters(string, allowedCharacterSet) {
+    for (let i = 0; i < string.length; i++) {
+        if (!allowedCharacterSet.includes(string[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 
 /**
  * The UserAuthenticator class is used to authenticate users.
@@ -135,6 +152,18 @@ class UserAuthenticator {
     async createAccount(username, password, activationCode, res) {
         if (!username || !password || !activationCode) {
             res.status(400).send({ "message": "username, password and activationCode are required" });
+            return;
+        }
+        if (!checkStringForIllegalCharacters(username, allowedCharactersUsername)) {
+            res.status(400).send({ "message": "Illegal characters in username. You are only allowed to use " + formattedAllowedCharactersUsername });
+            return;
+        }
+        if (!checkStringForIllegalCharacters(password, allowedCharactersPassword)) {
+            res.status(400).send({ "message": "Illegal characters in password. You are only allowed to use " + formattedAllowedCharactersPassword });
+            return;
+        }
+        if (username.length < minUsernameLength || username.length > maxUsernameLength) {
+            res.status(400).send({ "message": "Username must be between " + minUsernameLength + " and " + maxUsernameLength + " characters." });
             return;
         }
         const validActivationCode = await this.#userHandlerInstance.validateActivationCode(activationCode, false);
