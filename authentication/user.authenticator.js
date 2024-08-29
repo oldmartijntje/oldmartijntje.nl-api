@@ -165,7 +165,7 @@ class UserAuthenticator {
      * @returns `boolean` - wether it's a valid token or not.
      */
     async createRegistratonCodeHandling(clearanceLevel, role, res) {
-        if (!clearanceLevel) {
+        if (typeof clearanceLevel != typeof 0) {
             res.status(400).send({ "message": "sessionToken and clearanceLevel are required" });
             return;
         }

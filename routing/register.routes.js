@@ -45,7 +45,7 @@ registerRouter.post("/generate", async (_req, res) => {
                 return;
             }
             const parsed = parseInt(clearanceLevel)
-            if (parsed && !auth.checkAuthorityLevel(parsed + 1) && parsed > 0) {
+            if (typeof parsed != typeof 0 || !auth.checkAuthorityLevel(parsed + 1) || parsed < 0) {
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
