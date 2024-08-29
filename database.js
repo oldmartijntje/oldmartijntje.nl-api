@@ -25,10 +25,13 @@ const sessions = mongoose.model('session', sessionSchema);
 
 const userSchema = new mongoose.Schema(userJsonSchema);
 userSchema.pre('save', async function (next) {
-    const hashedPassword = await hash(this.password, 10)
-    this.password = hashedPassword
-    next()
-})
+    // Check if the password field is modified
+    if (this.isModified('password')) {
+        const hashedPassword = await hash(this.password, 10);
+        this.password = hashedPassword;
+    }
+    next();
+});
 const users = mongoose.model('user', userSchema);
 
 async function connectToDatabase(uri) {

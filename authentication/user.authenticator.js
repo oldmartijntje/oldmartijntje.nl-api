@@ -179,7 +179,8 @@ class UserAuthenticator {
             username: username,
             password: password,
             clearanceLevel: validActivationCode.clearanceLevel,
-            role: validActivationCode.role
+            role: validActivationCode.role,
+            textNote: validActivationCode.textNote,
         });
         if (!successfullCreation) {
             res.status(400).send({ "message": "Unable to create the user, try a different username." });
