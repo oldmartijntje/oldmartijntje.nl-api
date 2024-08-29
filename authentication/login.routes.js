@@ -22,7 +22,7 @@ loginRouter.post("/", async (_req, res) => {
             }
             const sessionToken = auth.getSessionToken();
             if (sessionToken) {
-                const response = { "message": "Logged in succesfully", success: true };
+                const response = { "message": "Logged in succesfully", success: true, "data": auth.getUserData() };
                 response["sessionToken"] = sessionToken;
                 res.status(200).send(response);
                 return;
@@ -48,7 +48,7 @@ loginRouter.post("/validateToken", async (_req, res) => {
             if (!authenticationSuccess) {
                 return;
             }
-            const response = { "message": "Logged in succesfully", success: true };
+            const response = { "message": "Logged in succesfully", success: true, "data": auth.getUserData() };
             res.status(200).send(response)
         });
     } catch (error) {
@@ -72,12 +72,14 @@ loginRouter.post("/refreshToken", async (_req, res) => {
             }
             const sessionToken = auth.refreshSessionToken();
             if (sessionToken) {
-                const response = { "message": "Logged in succesfully", success: true };
+                const response = { "message": "Logged in succesfully", success: true, "data": auth.getUserData() };
                 response["sessionToken"] = sessionToken;
                 res.status(200).send(response);
                 return;
             }
-            res.status(501).send({ "message": "Unexpected logic escape: How did this occur?" });
+            // Guest accounts cannot refresh their token.
+
+            res.status(403).send({ "message": "Guest accounts cannot refresh their token." });
         });
     } catch (error) {
         res.status(500).send(error.message);

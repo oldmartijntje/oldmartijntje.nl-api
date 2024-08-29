@@ -209,9 +209,13 @@ class UserHandler {
     async validateSessionToken(sessionToken) {
         try {
             // check if the session token is valid by checking if it exists and if it's not expired
-            const sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
+            let sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
             if (!sessionTokenObject) {
-                return false;
+                sessionTokenObject = await users.findOne({ guestAccountIdentifier: sessionToken }).lean()
+                if (!sessionTokenObject) {
+                    return false;
+                }
+                return true;
             }
             if (sessionTokenObject.expirationDate < new Date()) {
                 this.removeSessionToken(sessionToken);
@@ -306,9 +310,10 @@ class UserHandler {
      */
     async getUserIdBySessionToken(sessionToken) {
         try {
-            const sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
+            let sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
             if (!sessionTokenObject) {
-                return;
+                sessionTokenObject = await users.findOne({ guestAccountIdentifier: sessionToken }).lean()
+                sessionTokenObject.userId = sessionTokenObject._id;
             }
             return `${sessionTokenObject.userId}`;
         } catch (error) {

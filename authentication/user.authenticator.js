@@ -185,7 +185,7 @@ class UserAuthenticator {
      * @return `string` - the new sessionToken
      */
     refreshSessionToken() {
-        if (!this.#user) {
+        if (!this.#user || this.#user.guestAccountIdentifier) {
             return;
         }
         const sessionToken = this.#userHandlerInstance.createSingularSessionToken();

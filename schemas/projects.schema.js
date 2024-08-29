@@ -36,6 +36,11 @@ const projectsJsonSchema = {
         required: false,
         description: "'hidden' is optional and is a boolean",
     },
+    tags: {
+        type: Array,
+        required: false,
+        description: "'tags' is optional and is a array",
+    },
 
 };
 
