@@ -5,6 +5,16 @@ const settings = require('../settings.json');
 
 const sessiontokenExpireTime = settings['sessionTokenExpirationMinutes'];
 
+function uuidv4BasedOnTime() {
+    var dt = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (dt + Math.random() * 16) % 16 | 0;
+        dt = Math.floor(dt / 16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+    return uuid;
+}
+
 /**
  * The UserHandler class is used to handle user data.
  * 
@@ -166,11 +176,11 @@ class UserHandler {
             try {
                 const expirationDate = new Date(Date.now());
                 expirationDate.setMinutes(expirationDate.getMinutes() + sessiontokenExpireTime);
-
-                const sessionToken = await sessionTokens.create({ userId: user._id, expirationDate: expirationDate });
+                const token = uuidv4BasedOnTime()
+                const sessionToken = await sessionTokens.create({ userId: user._id, expirationDate: expirationDate, identifier: token });
                 sessionToken.save();
 
-                tokens.push(sessionToken._id.toString());
+                tokens.push(token);
             } catch (error) {
                 console.error(error);
             }
@@ -188,16 +198,9 @@ class UserHandler {
      * 
      */
     async validateSessionToken(sessionToken) {
-        var sessionTokenId = undefined;
-        try {
-            sessionTokenId = new mongodb.ObjectId(sessionToken);
-        } catch (error) {
-            console.error(error);
-            return false;
-        }
         try {
             // check if the session token is valid by checking if it exists and if it's not expired
-            const sessionTokenObject = await sessionTokens.findOne({ _id: sessionTokenId }).lean();
+            const sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
             if (!sessionTokenObject) {
                 return false;
             }
@@ -219,14 +222,8 @@ class UserHandler {
      * @returns `boolean` - wether the session token was removed or not
      */
     async removeSessionToken(sessionToken) {
-        var sessionTokenId = undefined;
         try {
-            sessionTokenId = new mongodb.ObjectId(sessionToken);
-        } catch (error) {
-            return false;
-        }
-        try {
-            const deleteResult = await sessionTokens.deleteOne({ _id: sessionTokenId });
+            const deleteResult = await sessionTokens.deleteOne({ identifier: sessionToken });
             if (deleteResult.deletedCount === 1) {
                 return true;
             } else {
@@ -299,14 +296,8 @@ class UserHandler {
      * @returns `string | undefined` - the userid if it is a valid sessiontoken.
      */
     async getUserIdBySessionToken(sessionToken) {
-        var sessionTokenId = undefined;
         try {
-            sessionTokenId = new mongodb.ObjectId(sessionToken);
-        } catch (error) {
-            return;
-        }
-        try {
-            const sessionTokenObject = await sessionTokens.findOne({ _id: sessionTokenId }).lean();
+            const sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
             if (!sessionTokenObject) {
                 return;
             }

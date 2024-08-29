@@ -13,6 +13,12 @@ const sessionTokenJsonSchema = {
         required: true,
         description: "'expirationDate' is required and is a date",
         index: { expires: 10080 } // 10080 minutes = 7 days
+    },
+    identifier: {
+        type: String,
+        required: true,
+        unique: true,
+        description: "'identifier' is required and is a string",
     }
 };
 
