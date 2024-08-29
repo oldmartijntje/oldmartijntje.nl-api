@@ -1,8 +1,8 @@
 const { UserHandler } = require("./user.handler");
 const mongodb = require('mongodb');
 
-const allowedCharactersUsername = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.🌵✨";
-const formattedAllowedCharactersUsername = "a-z, A-Z, 0-9, '._🌵✨'"
+const allowedCharactersUsername = "abcdefghijklmnopqrstuvwxyz0123456789_.🌵✨";
+const formattedAllowedCharactersUsername = "a-z, 0-9, '._🌵✨'"
 const allowedCharactersPassword = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
 const formattedAllowedCharactersPassword = "a-z, A-Z, 0-9, '!@#$%^&*()_+-=[]{}|;:,.<>?'"
 const minUsernameLength = 3;
