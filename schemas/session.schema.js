@@ -1,7 +1,7 @@
 const { Schema } = require("mongoose");
 
 const sessionJsonSchema = {
-    ipAdress: {
+    ipAddress: {
         type: String,
         required: true,
     },

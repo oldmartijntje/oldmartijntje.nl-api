@@ -1,65 +1,42 @@
-const { sessions } = require("../database");
-const { compare } = require('bcrypt');
-const mongodb = require("mongodb");
+// rateLimitMiddleware.js
+const { getSession, createSession, updateSession } = require('../helpers/rateLimitUtils');
 const settings = require('../settings.json');
 
-
-
 class SessionHandler {
-
-    constructor() {
-    }
+    constructor() { }
 
     async rateLimitMiddleware(req, res, next) {
-        const ip = req.ip || req.connection.remoteAddress;
-        const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log(userIp, ip);
-        const limit = settings.sessionRateLimitPerMinute;  // Example limit, e.g., 100 requests
-        const windowMs = settings.resetLimitAfterMinutes;  // Example time window, e.g., 1 minute
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const now = new Date();
+        const limit = settings.sessionRateLimitPerMinute;
+        const blacklistLimit = settings.sessionBlacklistLimitPerMinute;
+        const resetMinutes = settings.resetLimitAfterMinutes;
 
-        let session = await sessions.findOne({ ipAdress: userIp });
-
-        if (session) {
-            if (session.rateLimitedAt) {
-                return res.status(429).json({ message: "Rate limit exceeded by A lot. Try again in 24 hours." });
-            }
-            const now = new Date();
-            if (now - session.firstCall > windowMs * 60000) {
-                // Reset the rate limit for a new window
-                session.calls = 1;
-                session.firstCall = now;
-                session.lastCall = now;
-            } else if (settings.sessionRateLimitPerMinute < session.calls) {
-                if (settings.sessionBlacklistLimitPerMinute < session.calls) {
-                    // Set rate limited time
-                    session.rateLimitedAt = now;
-                    session.lastCall = now;
-                    await session.save();
-                    return res.status(429).json({ message: "Rate limit exceeded by A lot. Try again in 24 hours." });
+        try {
+            let session = await getSession(ip);
+            if (!session) {
+                session = await createSession(ip);
+            } else {
+                if (session.rateLimitedAt) {
+                    return res.status(429).json({ message: "Rate limit exceeded by a lot. Try again in 24 hours." });
                 }
-                session.calls++;
-                session.lastCall = now;
-                await session.save();
-                return res.status(429).json({ message: "Rate limit exceeded. Try again later." });
+
+                session = await updateSession(session, now, limit, blacklistLimit, resetMinutes);
+
+                if (session.rateLimitedAt) {
+                    return res.status(429).json({ message: "Rate limit exceeded by a lot. Try again in 24 hours." });
+                } else if (session.calls >= limit) {
+                    return res.status(429).json({ message: "Rate limit exceeded. Try again in a minute." });
+                }
             }
-
-            // Increment the number of calls
-            session.calls++;
-            session.lastCall = now;
-
-
-            await session.save();
-        } else {
-            // Create a new session for the IP
-            session = new sessions({ ipAdress: ip });
-            await session.save();
+            next();
+        } catch (error) {
+            console.error("Error in rate limiting middleware:", error);
+            res.status(500).json({ message: "Internal server error." });
         }
-
-        next();
     }
-
 }
 
 module.exports = {
-    SessionHandler: SessionHandler
+    SessionHandler
 };
