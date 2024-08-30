@@ -38,7 +38,9 @@ class UserHandler {
      */
     async createUser(userData) {
         try {
-            const nameExists = await users.findOne({ username: userData.username }).lean();
+            const nameExists = await users.findOne({
+                username: new RegExp(`^${userData.username}$`, 'i')
+            }).lean();
             if (nameExists) {
                 return false;
             }

@@ -1,8 +1,8 @@
 const { UserHandler } = require("./user.handler");
 const mongodb = require('mongodb');
 
-const allowedCharactersUsername = "abcdefghijklmnopqrstuvwxyz0123456789_.🌵✨";
-const formattedAllowedCharactersUsername = "a-z, 0-9, '._🌵✨'"
+const allowedCharactersUsername = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.🌵✨🗿";
+const formattedAllowedCharactersUsername = "a-z, A-Z, 0-9, '._🌵✨🗿'"
 const allowedCharactersPassword = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
 const formattedAllowedCharactersPassword = "a-z, A-Z, 0-9, '!@#$%^&*()_+-=[]{}|;:,.<>?'"
 const minUsernameLength = 3;
@@ -183,7 +183,7 @@ class UserAuthenticator {
             textNote: validActivationCode.textNote,
         });
         if (!successfullCreation) {
-            res.status(400).send({ "message": "Unable to create the user, try a different username." });
+            res.status(400).send({ "message": "Unable to create the user, username is probably already taken." });
             return;
         }
         this.#userHandlerInstance.deleteActivationCode(activationCode);
