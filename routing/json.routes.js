@@ -15,9 +15,18 @@ jsonRouter.post("/projects", async (_req, res) => {
     try {
         const amount = _req.body.amount ? _req.body.amount : settings.defaultAmountToGet;
         const from = _req.body.from ? _req.body.from : 0;
+        const showHidden = _req.body.hidden ? _req.body.hidden : false;
+        if (typeof showHidden !== "boolean") {
+            res.status(400).send({ message: "Invalid 'hidden' value" });
+            return;
+        }
         const auth = new SessionHandler();
         auth.rateLimitMiddleware(_req, res, () => {
-            projects.find({}).skip(from).limit(amount).then((result) => {
+            let query = {}
+            if (!showHidden) {
+                query = { hidden: false }
+            }
+            projects.find(query).skip(from).limit(amount).then((result) => {
                 if (!result) {
                     res.status(404).send({ message: "No projects found" });
                 }
