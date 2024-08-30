@@ -1,7 +1,28 @@
 const endpoints = [
     {
-        name: 'projects',
+        name: 'create project',
         url: 'https://api.oldmartijntje.nl/getData/projects',
+        type: 'POST',
+        header: 'admin',
+        hoverText: 'This endpoint is used to create a new project.',
+    },
+    {
+        name: 'delete project',
+        url: 'https://api.oldmartijntje.nl/getData/projects',
+        type: 'DELETE',
+        header: 'admin',
+        hoverText: 'This endpoint is used to delete a project.',
+    },
+    {
+        name: 'update project',
+        url: 'https://api.oldmartijntje.nl/getData/projects',
+        type: 'PUT',
+        header: 'admin',
+        hoverText: 'This endpoint is used to update a project.',
+    },
+    {
+        name: 'get projects',
+        url: 'https://api.oldmartijntje.nl/getData/getProjects',
         type: 'POST',
         header: 'GetData',
         hoverText: 'This endpoint is used to get all my projects.',

@@ -33,8 +33,8 @@ const projectsJsonSchema = {
     },
     hidden: {
         type: Boolean,
-        required: false,
-        description: "'hidden' is optional and is a boolean",
+        required: true,
+        description: "'hidden' is required and is a boolean",
     },
     tags: {
         type: Array,
