@@ -27,7 +27,7 @@ jsonRouter.post("/getProjects", async (_req, res) => {
             }
             projects.find(query).skip(from).limit(amount).then((result) => {
                 if (!result) {
-                    res.status(404).send({ message: "No projects found" });
+                    res.status(200).send({ message: "No projects found", "projects": [] });
                 }
                 res.status(200).send({
                     "projects": result
@@ -68,8 +68,6 @@ jsonRouter.delete("/projects", async (req, res) => {
             return res.status(200).send({ message: "Project deleted" });
         }).catch((error) => {
             return res.status(500).send(error.message);
-
-
         });
     });
 });
