@@ -6,16 +6,6 @@ const displayItemJsonSchema = {
         required: true,
         description: "'title' is required and is a string",
     },
-    images: {
-        type: Array,
-        required: false, // remove later
-        description: "'images' is depricated and is a array",
-    },
-    tumbnailImageId: {
-        type: Number,
-        required: false, // remove later
-        description: "'tumbnailImageId' is depricated and is a number",
-    },
     tumbnailImage: {
         type: String,
         required: false,
@@ -31,14 +21,9 @@ const displayItemJsonSchema = {
         required: false,
         description: "'link' is optional and is a string",
     },
-    info: {
-        type: String,
-        required: false, // remove later
-        description: "'info' is depricated and is a string",
-    },
     infoPages: {
-        type: Array,
-        required: false, // set to true later
+        type: Array, // {title: string, content: string}
+        required: true,
         description: "'infoPages' is required and is a array",
     },
     lastUpdated: {
@@ -63,13 +48,13 @@ const displayItemJsonSchema = {
     },
     tags: {
         type: Array,
-        required: false,
-        description: "'tags' is optional and is a array",
+        required: true,
+        description: "'tags' is required and is a array",
     },
     displayItemType: {
         type: String,
-        required: false,
-        description: "'displayItemType' is optional and is a string",
+        required: true,
+        description: "'displayItemType' is required and is a string",
     },
 
 };

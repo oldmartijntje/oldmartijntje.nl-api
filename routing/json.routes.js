@@ -84,31 +84,25 @@ jsonRouter.post("/displayItems", async (_req, res) => {
         const sessionTokenString = _req.body.sessionToken;
         const data = {
             title: _req.body.title,
-            tumbnailImageId: _req.body.tumbnailImageId,
-            info: _req.body.info,
-            images: _req.body.images
+            infoPages: _req.body.infoPages,
+            displayItemType: _req.body.displayItemType
         };
         const sessionH = new SessionHandler();
         const requiredData = {
             title: undefined,
-            tumbnailImageId: undefined,
-            info: undefined,
-            images: undefined,
+            infoPages: undefined,
+            displayItemType: undefined
         }
         if (_req.body.tags != undefined) {
             data.tags = _req.body.tags
+        } else {
+            data.tags = [];
         }
         if (_req.body.link != undefined) {
             data.link = _req.body.link;
         }
-        if (_req.body.displayItemType != undefined) {
-            data.displayItemType = _req.body.displayItemType;
-        }
         if (_req.body.description != undefined) {
             data.description = _req.body.description;
-        }
-        if (_req.body.infoPages != undefined) {
-            data.infoPages = _req.body.infoPages;
         }
         if (_req.body.tumbnailImage != undefined) {
             data.tumbnailImage = _req.body.tumbnailImage;
@@ -129,10 +123,6 @@ jsonRouter.post("/displayItems", async (_req, res) => {
             data.nsfw = _req.body.nsfw;
         }
         data.lastUpdated = new Date();
-        if (typeof data.images != "object" || data.images.length == 0) {
-            res.status(400).send({ message: "Invalid 'images' value" });
-            return;
-        }
         sessionH.rateLimitMiddleware(_req, res, async () => {
             const auth = new UserAuthenticator();
             const mergdedData = { ...requiredData, ...data };
@@ -168,20 +158,20 @@ jsonRouter.put("/displayItems", async (req, res) => {
     const sessionToken = req.body.sessionToken;
     const data = {
         title: req.body.title,
-        tumbnailImageId: req.body.tumbnailImageId,
-        info: req.body.info,
-        images: req.body.images,
-        _id: req.body._id
+        _id: req.body._id,
+        infoPages: req.body.infoPages,
+        displayItemType: req.body.displayItemType
     };
     const requiredData = {
         title: undefined,
-        tumbnailImageId: undefined,
-        info: undefined,
-        images: undefined,
-        _id: undefined
+        _id: undefined,
+        infoPages: undefined,
+        displayItemType: undefined
     }
     if (req.body.tags != undefined) {
         data.tags = req.body.tags
+    } else {
+        data.tags = [];
     }
     if (req.body.link != undefined) {
         data.link = req.body.link;
@@ -189,14 +179,8 @@ jsonRouter.put("/displayItems", async (req, res) => {
     if (req.body.hidden != undefined) {
         data.hidden = req.body.hidden;
     }
-    if (req.body.displayItemType != undefined) {
-        data.displayItemType = req.body.displayItemType;
-    }
     if (req.body.description != undefined) {
         data.description = req.body.description;
-    }
-    if (req.body.infoPages != undefined) {
-        data.infoPages = req.body.infoPages;
     }
     if (req.body.tumbnailImage != undefined) {
         data.tumbnailImage = req.body.tumbnailImage;
