@@ -118,6 +118,16 @@ jsonRouter.post("/displayItems", async (_req, res) => {
         } else {
             data.hidden = _req.body.hidden;
         }
+        if (_req.body.spoiler == undefined) {
+            data.spoiler = false;
+        } else {
+            data.spoiler = _req.body.spoiler;
+        }
+        if (_req.body.nsfw == undefined) {
+            data.nsfw = false;
+        } else {
+            data.nsfw = _req.body.nsfw;
+        }
         data.lastUpdated = new Date();
         if (typeof data.images != "object" || data.images.length == 0) {
             res.status(400).send({ message: "Invalid 'images' value" });
@@ -190,6 +200,16 @@ jsonRouter.put("/displayItems", async (req, res) => {
     }
     if (req.body.tumbnailImage != undefined) {
         data.tumbnailImage = req.body.tumbnailImage;
+    }
+    if (req.body.spoiler == undefined) {
+        data.spoiler = false;
+    } else {
+        data.spoiler = req.body.spoiler;
+    }
+    if (req.body.nsfw == undefined) {
+        data.nsfw = false;
+    } else {
+        data.nsfw = req.body.nsfw;
     }
     data.lastUpdated = new Date();
     const sessionH = new SessionHandler();

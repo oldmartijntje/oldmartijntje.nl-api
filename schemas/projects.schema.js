@@ -51,6 +51,16 @@ const displayItemJsonSchema = {
         required: true,
         description: "'hidden' is required and is a boolean",
     },
+    spoiler: {
+        type: Boolean,
+        required: true,
+        description: "'spoiler' is required and is a boolean",
+    },
+    nsfw: {
+        type: Boolean,
+        required: true,
+        description: "'nsfw' is required and is a boolean",
+    },
     tags: {
         type: Array,
         required: false,
