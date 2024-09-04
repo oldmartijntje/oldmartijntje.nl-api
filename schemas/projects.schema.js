@@ -37,12 +37,12 @@ const displayItemJsonSchema = {
         description: "'hidden' is required and is a boolean",
     },
     spoiler: {
-        type: Boolean,
+        type: Boolean, // default = false
         required: true,
         description: "'spoiler' is required and is a boolean",
     },
     nsfw: {
-        type: Boolean,
+        type: Boolean, // default = false
         required: true,
         description: "'nsfw' is required and is a boolean",
     },
@@ -52,7 +52,7 @@ const displayItemJsonSchema = {
         description: "'tags' is required and is a array",
     },
     displayItemType: {
-        type: String,
+        type: String, // default = Project
         required: true,
         description: "'displayItemType' is required and is a string",
     },
