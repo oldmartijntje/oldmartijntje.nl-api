@@ -1,6 +1,6 @@
 const express = require("express");
 const { SessionHandler } = require("../authentication/sessionHandler");
-const { projects } = require("../database");
+const { displayItems } = require("../database");
 const settings = require('../settings.json');
 const { UserAuthenticator } = require("../authentication/user.authenticator");
 
@@ -8,13 +8,14 @@ const jsonRouter = express.Router();
 jsonRouter.use(express.json());
 
 /**
- * Get all projects.
+ * Get all displayItems.
  */
-jsonRouter.post("/getProjects", async (_req, res) => {
+jsonRouter.post("/getDisplayItems", async (_req, res) => {
     try {
         const amount = _req.body.amount ? _req.body.amount : settings.defaultAmountToGet;
         const from = _req.body.from ? _req.body.from : 0;
         const showHidden = _req.body.hidden ? _req.body.hidden : false;
+        const displayItemType = _req.body.displayItemType ? _req.body.displayItemType : undefined;
         if (typeof showHidden !== "boolean") {
             res.status(400).send({ message: "Invalid 'hidden' value" });
             return;
@@ -23,14 +24,17 @@ jsonRouter.post("/getProjects", async (_req, res) => {
         auth.rateLimitMiddleware(_req, res, () => {
             let query = {}
             if (!showHidden) {
-                query = { hidden: false }
+                query["hidden"] = false
             }
-            projects.find(query).skip(from).limit(amount).then((result) => {
+            if (displayItemType) {
+                query[displayItemType] = displayItemType;
+            }
+            displayItems.find(query).skip(from).limit(amount).then((result) => {
                 if (!result) {
-                    res.status(200).send({ message: "No projects found", "projects": [] });
+                    res.status(200).send({ message: "No displayItems found", "displayItems": [] });
                 }
                 res.status(200).send({
-                    "projects": result
+                    "displayItems": result
                 });
             }).catch((error) => {
                 res.status(500).send(error.message);
@@ -45,7 +49,7 @@ jsonRouter.post("/getProjects", async (_req, res) => {
 /**
  * Delete a project.
  */
-jsonRouter.delete("/projects", async (req, res) => {
+jsonRouter.delete("/displayItems", async (req, res) => {
     const { sessionToken, id } = req.query;
     const sessionH = new SessionHandler();
     sessionH.rateLimitMiddleware(req, res, async () => {
@@ -61,7 +65,7 @@ jsonRouter.delete("/projects", async (req, res) => {
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
         }
-        projects.deleteOne({ _id: id }).then((result) => {
+        displayItems.deleteOne({ _id: id }).then((result) => {
             if (!result) {
                 return res.status(404).send({ message: "Project not found" });
             }
@@ -75,7 +79,7 @@ jsonRouter.delete("/projects", async (req, res) => {
 /**
  * Create a project.
  */
-jsonRouter.post("/projects", async (_req, res) => {
+jsonRouter.post("/displayItems", async (_req, res) => {
     try {
         const sessionTokenString = _req.body.sessionToken;
         const data = {
@@ -96,6 +100,18 @@ jsonRouter.post("/projects", async (_req, res) => {
         }
         if (_req.body.link != undefined) {
             data.link = _req.body.link;
+        }
+        if (_req.body.displayItemType != undefined) {
+            data.displayItemType = _req.body.displayItemType;
+        }
+        if (_req.body.description != undefined) {
+            data.description = _req.body.description;
+        }
+        if (_req.body.infoPages != undefined) {
+            data.infoPages = _req.body.infoPages;
+        }
+        if (_req.body.tumbnailImage != undefined) {
+            data.tumbnailImage = _req.body.tumbnailImage;
         }
         if (_req.body.hidden == undefined) {
             data.hidden = true;
@@ -119,7 +135,7 @@ jsonRouter.post("/projects", async (_req, res) => {
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
-            const project = new projects(data);
+            const project = new displayItems(data);
             project.save().then((result) => {
                 res.status(200).send({ message: "Project created", project: result });
                 return;
@@ -138,7 +154,7 @@ jsonRouter.post("/projects", async (_req, res) => {
 /**
  * Update a project.
  */
-jsonRouter.put("/projects", async (req, res) => {
+jsonRouter.put("/displayItems", async (req, res) => {
     const sessionToken = req.body.sessionToken;
     const data = {
         title: req.body.title,
@@ -163,6 +179,18 @@ jsonRouter.put("/projects", async (req, res) => {
     if (req.body.hidden != undefined) {
         data.hidden = req.body.hidden;
     }
+    if (req.body.displayItemType != undefined) {
+        data.displayItemType = req.body.displayItemType;
+    }
+    if (req.body.description != undefined) {
+        data.description = req.body.description;
+    }
+    if (req.body.infoPages != undefined) {
+        data.infoPages = req.body.infoPages;
+    }
+    if (req.body.tumbnailImage != undefined) {
+        data.tumbnailImage = req.body.tumbnailImage;
+    }
     data.lastUpdated = new Date();
     const sessionH = new SessionHandler();
     sessionH.rateLimitMiddleware(req, res, async () => {
@@ -179,7 +207,7 @@ jsonRouter.put("/projects", async (req, res) => {
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
         }
-        projects.updateOne({ _id: data._id }, data).then((result) => {
+        displayItems.updateOne({ _id: data._id }, data).then((result) => {
             if (!result) {
                 return res.status(404).send({ message: "Project not found" });
             }

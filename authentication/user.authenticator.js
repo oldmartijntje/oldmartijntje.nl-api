@@ -339,7 +339,7 @@ class UserAuthenticator {
     /**
      * List of required things formatter.
      * 
-     * @param requiredDict - A dict of things, if any is undefined, will return a message.
+     * @param requiredDict - A dict of things, if any is null, will return a message.
      * @returns `string | undefined` - the message if any is undefined.
      * 
      * @example

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { userJsonSchema } = require("./schemas/user.schema");
 const { sessionTokenJsonSchema } = require("./schemas/sessionToken.schema");
 const { hash } = require('bcrypt');
-const { projectsJsonSchema } = require("./schemas/projects.schema");
+const { displayItemJsonSchema } = require("./schemas/projects.schema");
 const { sessionJsonSchema } = require("./schemas/session.schema");
 const { registrationCodeJsonSchema } = require("./schemas/registrationCode.schema");
 
@@ -13,8 +13,8 @@ const { registrationCodeJsonSchema } = require("./schemas/registrationCode.schem
 const sessionTokenSchema = new mongoose.Schema(sessionTokenJsonSchema);
 const sessionTokens = mongoose.model('sessionToken', sessionTokenSchema);
 
-const projectsSchema = new mongoose.Schema(projectsJsonSchema);
-const projects = mongoose.model('projects', projectsSchema);
+const displayItemSchema = new mongoose.Schema(displayItemJsonSchema);
+const displayItems = mongoose.model('displayItems', displayItemSchema);
 
 const registrationCodeSchema = new mongoose.Schema(registrationCodeJsonSchema);
 const registrationCodes = mongoose.model('registrationCode', registrationCodeSchema);
@@ -49,7 +49,7 @@ module.exports = {
     connect: connectToDatabase,
     users: users,
     sessionTokens: sessionTokens,
-    projects: projects,
+    displayItems: displayItems,
     sessions: sessions,
     registrationCodes: registrationCodes
 };
