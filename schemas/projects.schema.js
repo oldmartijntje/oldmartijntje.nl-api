@@ -6,10 +6,10 @@ const displayItemJsonSchema = {
         required: true,
         description: "'title' is required and is a string",
     },
-    tumbnailImage: {
+    thumbnailImage: {
         type: String,
         required: false,
-        description: "'tumbnailImage' is optional and is a string",
+        description: "'thumbnailImage' is optional and is a string",
     },
     description: {
         type: String,
