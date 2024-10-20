@@ -26,7 +26,7 @@ projectDataRouter.post("/getProjectData", async (_req, res) => {
                 // No session token, just get the data for clearance level 0
                 projectData.find({
                     projectId: projectId,
-                    clearanceLevel: { $lte: 0 }
+                    clearanceLevelNeeded: { $lte: 0 }
                 }).skip(from).limit(amount).then((result) => {
                     if (!result) {
                         res.status(200).send({ message: "No projectData found", "projectData": [] });
