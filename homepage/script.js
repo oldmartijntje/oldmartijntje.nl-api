@@ -90,6 +90,13 @@ const endpoints = [
         header: 'admin',
         hoverText: 'This endpoint is used to delete a registration code.',
     },
+    {
+        name: 'Get project data',
+        url: 'https://api.oldmartijntje.nl/projectData/getProjectData',
+        type: 'POST',
+        header: 'admin',
+        hoverText: 'This endpoint is used to get all the data from a specific project.',
+    },
 ];
 
 const tabInfo = {

@@ -5,6 +5,7 @@ const { hash } = require('bcrypt');
 const { displayItemJsonSchema } = require("./schemas/projects.schema");
 const { sessionJsonSchema } = require("./schemas/session.schema");
 const { registrationCodeJsonSchema } = require("./schemas/registrationCode.schema");
+const { projectDataJsonSchema } = require("./schemas/projectsData.schema");
 
 
 
@@ -15,6 +16,9 @@ const sessionTokens = mongoose.model('sessionToken', sessionTokenSchema);
 
 const displayItemSchema = new mongoose.Schema(displayItemJsonSchema);
 const displayItems = mongoose.model('displayItems', displayItemSchema);
+
+const projectDataSchema = new mongoose.Schema(projectDataJsonSchema);
+const projectData = mongoose.model('projectData', projectDataSchema);
 
 const registrationCodeSchema = new mongoose.Schema(registrationCodeJsonSchema);
 const registrationCodes = mongoose.model('registrationCode', registrationCodeSchema);
@@ -51,5 +55,6 @@ module.exports = {
     sessionTokens: sessionTokens,
     displayItems: displayItems,
     sessions: sessions,
-    registrationCodes: registrationCodes
+    registrationCodes: registrationCodes,
+    projectData: projectData
 };

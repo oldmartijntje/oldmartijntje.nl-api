@@ -66,7 +66,7 @@ jsonRouter.delete("/displayItems", async (req, res) => {
             return;
         }
         displayItems.deleteOne({ _id: id }).then((result) => {
-            if (!result) {
+            if (result.deletedCount == 0) {
                 return res.status(404).send({ message: "Project not found" });
             }
             return res.status(200).send({ message: "Project deleted" });
@@ -126,7 +126,6 @@ jsonRouter.post("/displayItems", async (_req, res) => {
         sessionH.rateLimitMiddleware(_req, res, async () => {
             const auth = new UserAuthenticator();
             const mergdedData = { ...requiredData, ...data };
-            console.log(mergdedData);
             const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, false, res, mergdedData);
             if (!authenticationSuccess) {
                 return;

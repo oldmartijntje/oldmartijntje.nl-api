@@ -10,6 +10,7 @@ require('dotenv').config();
 const { loginRouter } = require("./authentication/login.routes.js");
 const { jsonRouter } = require("./routing/json.routes.js");
 const { registerRouter } = require("./routing/register.routes.js");
+const { projectDataRouter } = require("./routing/projectData.routes.js");
 
 const MONGO_URI = process.env.DB_URL;
 const port = process.env.API_PORT
@@ -48,6 +49,7 @@ connect(MONGO_URI)
         app.use("/register", registerRouter);
         app.use("/getData", jsonRouter);
         app.use("/test", testRouter);
+        app.use("/projectData", projectDataRouter);
         // start the Express server
         app.listen(port, () => {
             console.log(`Server running at http://localhost:${port}...`);
