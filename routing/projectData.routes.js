@@ -16,7 +16,7 @@ projectDataRouter.post("/getProjectData", async (_req, res) => {
         const from = _req.body.from ? _req.body.from : 0;
         const projectId = _req.body.projectId;
         const sessionTokenString = _req.body.sessionToken;
-        if (!projectId) {
+        if (projectId == undefined) {
             res.status(400).send({ message: "No Project Specified." });
             return;
         }
