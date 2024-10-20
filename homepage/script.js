@@ -94,8 +94,36 @@ const endpoints = [
         name: 'Get project data',
         url: 'https://api.oldmartijntje.nl/projectData/getProjectData',
         type: 'POST',
-        header: 'admin',
+        header: 'GetData',
         hoverText: 'This endpoint is used to get all the data from a specific project.',
+    },
+    {
+        name: 'Get all projectId\'s',
+        url: 'https://api.oldmartijntje.nl/projectData/getAllProjectIds',
+        type: 'POST',
+        header: 'GetData',
+        hoverText: 'This endpoint is used to get all the projectId\'s.',
+    },
+    {
+        name: 'Create project data',
+        url: 'https://api.oldmartijntje.nl/projectData/',
+        type: 'POST',
+        header: 'admin',
+        hoverText: 'This endpoint is used to create a new projectData object.',
+    },
+    {
+        name: 'Delete project data',
+        url: 'https://api.oldmartijntje.nl/projectData/',
+        type: 'DELETE',
+        header: 'admin',
+        hoverText: 'This endpoint is used to delete a projectData object.',
+    },
+    {
+        name: 'Edit project data',
+        url: 'https://api.oldmartijntje.nl/projectData/',
+        type: 'PUT',
+        header: 'admin',
+        hoverText: 'This endpoint is used to edit a projectData object.',
     },
 ];
 
