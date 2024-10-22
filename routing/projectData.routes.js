@@ -226,6 +226,34 @@ projectDataRouter.post("/getAllProjectIds", async (_req, res) => {
     }
 });
 
+/**
+ * Get all project data. But always unauthorised.
+ */
+projectDataRouter.get("/getProjectData", async (_req, res) => {
+    try {
+        const amount = 999;
+        const projectId = _req.query.projectId ? _req.query.projectId : "kaas";
+        const sessionH = new SessionHandler();
+        sessionH.rateLimitMiddleware(_req, res, () => {
+            projectData.find({
+                projectId: projectId,
+                clearanceLevelNeeded: { $lte: 0 }
+            }).limit(amount).then((result) => {
+                if (!result) {
+                    res.status(200).send({ message: "No projectData found", "projectData": [] });
+                }
+                res.status(200).send({
+                    "projectData": result
+                });
+            }).catch((error) => {
+                res.status(500).send(error.message);
+            });
+        });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
 module.exports = {
     projectDataRouter: projectDataRouter
 }

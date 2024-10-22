@@ -125,6 +125,13 @@ const endpoints = [
         header: 'admin',
         hoverText: 'This endpoint is used to edit a projectData object.',
     },
+    {
+        name: 'Get project data',
+        url: 'https://api.oldmartijntje.nl/projectData/getProjectData',
+        type: 'GET',
+        header: 'GetData',
+        hoverText: 'This endpoint is used to get all the data from a specific project (unauth only).',
+    },
 ];
 
 const tabInfo = {
