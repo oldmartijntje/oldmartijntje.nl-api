@@ -202,7 +202,15 @@ jsonRouter.put("/displayItems", async (req, res) => {
     } else {
         data.nsfw = req.body.nsfw;
     }
-    data.lastUpdated = new Date();
+    if (_req.body.lastUpdated == undefined || _req.body.lastUpdated == null) {
+        data.lastUpdated = new Date();
+    } else {
+        try {
+            data.lastUpdated = new Date(_req.body.lastUpdated);
+        } catch (e) {
+            data.lastUpdated = new Date();
+        }
+    }
     const sessionH = new SessionHandler();
     sessionH.rateLimitMiddleware(req, res, async () => {
         if (!sessionToken) {
