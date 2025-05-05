@@ -122,7 +122,15 @@ jsonRouter.post("/displayItems", async (_req, res) => {
         } else {
             data.nsfw = _req.body.nsfw;
         }
-        data.lastUpdated = new Date();
+        if (_req.body.lastUpdated == undefined || _req.body.lastUpdated == null) {
+            data.lastUpdated = new Date();
+        } else {
+            try {
+                data.lastUpdated = new Date(_req.body.lastUpdated);
+            } catch (e) {
+                data.lastUpdated = new Date();
+            }
+        }
         sessionH.rateLimitMiddleware(_req, res, async () => {
             const auth = new UserAuthenticator();
             const mergdedData = { ...requiredData, ...data };
