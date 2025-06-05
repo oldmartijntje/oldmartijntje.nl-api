@@ -40,7 +40,6 @@ if (!MONGO_URI) {
 // console.log(encodeURIComponent(''))
 connect(MONGO_URI)
     .then(async () => {
-
         const app = express();
         app.set('trust proxy', true);
         app.use(cors());

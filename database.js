@@ -7,9 +7,6 @@ const { sessionJsonSchema } = require("./schemas/session.schema");
 const { registrationCodeJsonSchema } = require("./schemas/registrationCode.schema");
 const { projectDataJsonSchema } = require("./schemas/projectsData.schema");
 
-
-
-
 // This has to be done for all collections that we want to have JSON schema validation on
 const sessionTokenSchema = new mongoose.Schema(sessionTokenJsonSchema);
 const sessionTokens = mongoose.model('sessionToken', sessionTokenSchema);
