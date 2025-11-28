@@ -5,146 +5,213 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuartzForums</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;700&family=Source+Sans+Pro:ital,wght@0,400;0,600;1,400;1,600&family=IBM+Plex+Mono:wght@400;600&display=swap" />
     <style>
+        :root {
+            --dark: #1a1a1a;
+            --darkgray: #2d2d2d;
+            --gray: #646464;
+            --lightgray: #d4af37;
+            --light: #efefef;
+            --highlight: #fff4a3;
+            --secondary: #284b63;
+            --tertiary: #353535;
+            --accent: #d4af37;
+            --text-primary: #efefef;
+            --text-secondary: #a8a8a8;
+            --border: #484848;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --bg: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --border: #475569;
-            --success: #22c55e;
-            --error: #ef4444;
-            --accent: #ec4899;
+        html {
+            font-size: 16px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
-                Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg);
+            font-family: "Source Sans Pro", sans-serif;
+            background-color: var(--dark);
             color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
         a {
-            color: var(--primary);
+            color: var(--lightgray);
             text-decoration: none;
+            transition: color 0.2s;
         }
 
         a:hover {
-            color: var(--primary-dark);
+            color: var(--accent);
             text-decoration: underline;
         }
 
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: "Schibsted Grotesk", sans-serif;
+            font-weight: 700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+        }
+
+        code {
+            font-family: "IBM Plex Mono", monospace;
+            background-color: var(--darkgray);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: var(--darkgray);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
         button {
-            background-color: var(--primary);
-            color: var(--text-primary);
-            border: none;
+            background-color: var(--secondary);
+            color: var(--light);
+            border: 1px solid var(--border);
             padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
+            border-radius: 5px;
             cursor: pointer;
+            font-family: inherit;
             font-size: 1rem;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
         }
 
         button:hover {
-            background-color: var(--primary-dark);
+            background-color: var(--lightgray);
+            color: var(--dark);
         }
 
         button:disabled {
-            background-color: var(--bg-tertiary);
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
         input,
         textarea,
         select {
-            background-color: var(--bg-secondary);
+            background-color: var(--darkgray);
             color: var(--text-primary);
             border: 1px solid var(--border);
-            padding: 0.5rem;
-            border-radius: 0.375rem;
+            padding: 0.75rem;
+            border-radius: 5px;
             font-family: inherit;
+            font-size: 1rem;
         }
 
         input:focus,
         textarea:focus,
         select:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            border-color: var(--lightgray);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
         }
 
-        .container {
+        /* Layout */
+        #app {
             display: flex;
-            height: 100vh;
+            min-height: 100vh;
         }
 
-        /* Navigation */
-        nav {
-            width: 250px;
-            background-color: var(--bg-secondary);
+        /* Sidebar */
+        .left.sidebar {
+            width: 300px;
+            background-color: var(--darkgray);
             border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 2rem 0;
+            padding: 2rem 1.5rem;
             overflow-y: auto;
+            max-height: 100vh;
+            position: sticky;
+            top: 0;
         }
 
-        nav .logo {
-            padding: 0 2rem 2rem;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 1rem;
+        .left.sidebar h2.page-title {
             font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary);
+            margin-bottom: 2rem;
+            color: var(--lightgray);
         }
 
-        nav ul {
-            list-style: none;
-        }
-
-        nav li {
-            padding: 0;
-        }
-
-        nav a {
+        .left.sidebar a {
             display: block;
-            padding: 0.75rem 2rem;
+            padding: 0.75rem 0;
             color: var(--text-secondary);
-            transition: all 0.2s;
             border-left: 3px solid transparent;
+            padding-left: 0.75rem;
+            transition: all 0.2s;
         }
 
-        nav a:hover,
-        nav a.active {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            border-left-color: var(--primary);
+        .left.sidebar a:hover,
+        .left.sidebar a.active {
+            color: var(--lightgray);
+            border-left-color: var(--lightgray);
+            padding-left: 1rem;
         }
 
-        nav .auth-section {
-            margin-top: auto;
-            padding-top: 1rem;
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .nav-section:first-child .nav-section-title {
+            margin-top: 0;
+        }
+
+        .auth-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
             border-top: 1px solid var(--border);
-            padding: 1rem 2rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
-        nav button {
+        .auth-section button {
             width: 100%;
-            padding: 0.75rem;
-            font-size: 0.9rem;
         }
 
         /* Main Content */
@@ -159,34 +226,37 @@
             display: none;
             flex: 1;
             overflow-y: auto;
-            padding: 2rem;
+            padding: 3rem 4rem;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         .page.active {
-            display: flex;
-            flex-direction: column;
+            display: block;
         }
 
         .page-header {
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
         }
 
         .page-header h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            margin-top: 0;
+            color: var(--light);
         }
 
         .page-header p {
             color: var(--text-secondary);
+            font-size: 1.1rem;
         }
 
         /* Cards */
         .card {
-            background-color: var(--bg-secondary);
+            background-color: var(--darkgray);
             border: 1px solid var(--border);
-            border-radius: 0.5rem;
+            border-radius: 5px;
             padding: 1.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .card-header {
@@ -200,12 +270,12 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--secondary), var(--lightgray));
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: white;
+            color: var(--dark);
             flex-shrink: 0;
             font-size: 1.2rem;
         }
@@ -215,16 +285,17 @@
         }
 
         .card-header-info h3 {
-            margin-bottom: 0.25rem;
+            margin: 0 0 0.25rem 0;
         }
 
         .card-header-info p {
             color: var(--text-secondary);
             font-size: 0.9rem;
+            margin: 0;
         }
 
         .card-content {
-            color: var(--text-secondary);
+            color: var(--text-primary);
             line-height: 1.8;
         }
 
@@ -242,7 +313,8 @@
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--light);
         }
 
         .form-group input,
@@ -252,7 +324,7 @@
         }
 
         .form-group textarea {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
 
@@ -272,21 +344,23 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background-color: var(--bg);
+            background-color: var(--dark);
             padding: 1rem;
         }
 
         .auth-box {
-            background-color: var(--bg-secondary);
+            background-color: var(--darkgray);
             border: 1px solid var(--border);
-            border-radius: 0.75rem;
-            padding: 2rem;
+            border-radius: 5px;
+            padding: 2.5rem;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
         }
 
         .auth-box h1 {
-            font-size: 1.75rem;
+            margin-top: 0;
+            color: var(--light);
+            font-size: 2rem;
             margin-bottom: 0.5rem;
         }
 
@@ -298,43 +372,45 @@
         .auth-box button {
             width: 100%;
             padding: 0.75rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
         }
 
         .auth-link {
             text-align: center;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             color: var(--text-secondary);
         }
 
         .auth-link a {
-            color: var(--primary);
+            color: var(--lightgray);
         }
 
         .key-display {
-            background-color: var(--bg-tertiary);
+            background-color: var(--dark);
             border: 1px solid var(--border);
             padding: 1rem;
-            border-radius: 0.375rem;
+            border-radius: 3px;
             margin: 1rem 0;
-            font-family: 'Courier New', monospace;
+            font-family: "IBM Plex Mono", monospace;
             word-break: break-all;
-            color: var(--success);
-            font-size: 0.9rem;
+            color: var(--lightgray);
+            font-size: 0.85rem;
+            line-height: 1.6;
         }
 
         .copy-btn {
             padding: 0.5rem 1rem;
             font-size: 0.9rem;
-            margin-top: 0.5rem;
+            width: 100%;
         }
 
-        /* Message */
+        /* Messages */
         .message {
             padding: 1rem;
-            border-radius: 0.375rem;
+            border-radius: 5px;
             margin-bottom: 1rem;
             display: none;
+            font-weight: 500;
         }
 
         .message.show {
@@ -342,22 +418,23 @@
         }
 
         .message.success {
-            background-color: rgba(34, 197, 94, 0.1);
-            border: 1px solid var(--success);
-            color: var(--success);
+            background-color: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            color: #34d399;
         }
 
         .message.error {
             background-color: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--error);
-            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #ef4444;
         }
 
         /* Profile */
         .profile-header {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--secondary), var(--darkgray));
+            border: 1px solid var(--border);
             padding: 2rem;
-            border-radius: 0.75rem;
+            border-radius: 5px;
             margin-bottom: 2rem;
             text-align: center;
         }
@@ -366,21 +443,23 @@
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, var(--secondary), var(--lightgray));
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 3rem;
             margin: 0 auto 1rem;
-        }
-
-        .profile-info {
-            text-align: center;
+            color: var(--dark);
+            font-weight: bold;
         }
 
         .profile-info h2 {
-            font-size: 1.75rem;
-            margin-bottom: 0.5rem;
+            margin-top: 0;
+            color: var(--light);
+        }
+
+        .profile-info p {
+            color: var(--text-secondary);
         }
 
         .profile-footer {
@@ -389,106 +468,102 @@
             font-size: 0.95rem;
         }
 
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .profile-stat {
+            text-align: center;
+        }
+
+        .profile-stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--lightgray);
+        }
+
+        .profile-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* No Data */
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            background-color: var(--darkgray);
+            border: 1px dashed var(--border);
+            border-radius: 5px;
+        }
+
         /* Responsive */
+        @media (max-width: 1024px) {
+            .left.sidebar {
+                width: 250px;
+                padding: 1.5rem;
+            }
+
+            .page {
+                padding: 2rem 2.5rem;
+            }
+        }
+
         @media (max-width: 768px) {
-            .container {
+            #app {
                 flex-direction: column;
             }
 
-            nav {
+            .left.sidebar {
                 width: 100%;
-                height: auto;
+                max-height: auto;
+                position: static;
                 border-right: none;
                 border-bottom: 1px solid var(--border);
                 padding: 1rem;
-                flex-direction: row;
-                overflow-x: auto;
-            }
-
-            nav .logo {
-                padding: 0 1rem 0 0;
-                border-bottom: none;
-                border-right: 1px solid var(--border);
-                margin-bottom: 0;
-                margin-right: 1rem;
-                flex-shrink: 0;
-            }
-
-            nav ul {
-                display: flex;
-                gap: 0;
-            }
-
-            nav a {
-                padding: 0.75rem 1rem;
-                border-left: none;
-                border-bottom: 3px solid transparent;
-            }
-
-            nav a:hover,
-            nav a.active {
-                border-left-color: transparent;
-                border-bottom-color: var(--primary);
-            }
-
-            nav .auth-section {
-                border-top: none;
-                border-left: 1px solid var(--border);
-                padding-left: 1rem;
-                margin-left: auto;
-                margin-top: 0;
-                flex-direction: row;
-                gap: 0.5rem;
-            }
-
-            nav button {
-                width: auto;
-                padding: 0.5rem 1rem;
-                font-size: 0.85rem;
             }
 
             .page {
                 padding: 1.5rem;
+                max-width: 100%;
             }
 
             .page-header h1 {
-                font-size: 1.5rem;
+                font-size: 1.75rem;
             }
 
             .auth-box {
-                max-width: 100%;
+                padding: 1.5rem;
             }
-        }
-
-        .comment-section {
-            margin-top: 1rem;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
         }
     </style>
 </head>
 
 <body>
-    <div class="container" id="app">
-        <!-- Navigation -->
-        <nav id="navbar">
-            <div class="logo">◆ QuartzForums</div>
-            <ul id="nav-menu">
-                <li><a href="#" data-page="dashboard" class="nav-link active">Dashboard</a></li>
-                <li><a href="#" data-page="my-comments" class="nav-link">My Comments</a></li>
-                <li><a href="#" data-page="following-feed" class="nav-link">Following Feed</a></li>
-                <li><a href="#" data-page="user-inspector" class="nav-link">User Inspector</a></li>
-                <li><a href="#" data-page="profile" class="nav-link">My Profile</a></li>
-            </ul>
-            <div class="auth-section" id="auth-section">
+    <div id="app">
+        <!-- Left Sidebar -->
+        <div class="left sidebar">
+            <h2 class="page-title">◆ QuartzForums</h2>
+
+            <nav id="nav-menu">
+                <div class="nav-section" id="main-nav" style="display: none;">
+                    <div class="nav-section-title">Navigation</div>
+                    <a href="#" data-page="dashboard" class="nav-link active">Dashboard</a>
+                    <a href="#" data-page="my-comments" class="nav-link">My Comments</a>
+                    <a href="#" data-page="following-feed" class="nav-link">Following Feed</a>
+                    <a href="#" data-page="user-inspector" class="nav-link">User Inspector</a>
+                    <a href="#" data-page="profile" class="nav-link">My Profile</a>
+                </div>
+            </nav>
+
+            <div class="auth-section">
                 <button id="logout-btn" style="display: none;">Logout</button>
-                <button id="login-nav-btn">Login</button>
+                <button id="login-nav-btn">Login / Sign Up</button>
             </div>
-        </nav>
+        </div>
 
         <!-- Main Content -->
         <div class="main-content">
@@ -496,25 +571,26 @@
             <div id="auth-page" class="auth-container">
                 <!-- Login Page -->
                 <div id="login-form" class="auth-box">
-                    <h1>Welcome Back</h1>
+                    <h1>Welcome</h1>
                     <p>Log in to QuartzForums</p>
                     <div id="login-message" class="message"></div>
                     <div class="form-group">
                         <label for="login-username">Username</label>
-                        <input type="text" id="login-username" placeholder="Enter username">
+                        <input type="text" id="login-username" placeholder="Enter your username">
                     </div>
                     <div class="form-group">
                         <label for="login-password">Password</label>
-                        <input type="password" id="login-password" placeholder="Enter password">
+                        <input type="password" id="login-password" placeholder="Enter your password">
                     </div>
-                    <button onclick="handleLogin()">Login</button>
-                    <p class="auth-link">Don't have an account? <a href="#" onclick="showSignup(event)">Sign up</a></p>
+                    <button onclick="app.handleLogin()">Sign In</button>
+                    <p class="auth-link">Don't have an account? <a href="#" onclick="app.showSignup(event)">Create
+                            one</a></p>
                 </div>
 
                 <!-- Signup Page -->
                 <div id="signup-form" class="auth-box" style="display: none;">
                     <h1>Create Account</h1>
-                    <p>Join QuartzForums today</p>
+                    <p>Join QuartzForums</p>
                     <div id="signup-message" class="message"></div>
                     <div class="form-group">
                         <label for="signup-username">Username</label>
@@ -526,10 +602,11 @@
                     </div>
                     <div class="form-group">
                         <label for="signup-confirm">Confirm Password</label>
-                        <input type="password" id="signup-confirm" placeholder="Confirm password">
+                        <input type="password" id="signup-confirm" placeholder="Confirm your password">
                     </div>
-                    <button onclick="handleSignup()">Create Account</button>
-                    <p class="auth-link">Already have an account? <a href="#" onclick="showLogin(event)">Login</a></p>
+                    <button onclick="app.handleSignup()">Create Account</button>
+                    <p class="auth-link">Already have an account? <a href="#" onclick="app.showLogin(event)">Sign in</a>
+                    </p>
                 </div>
 
                 <!-- Account Key Page -->
@@ -537,9 +614,8 @@
                     <h1>Account Created!</h1>
                     <p>Save your account key to log in later</p>
                     <div class="key-display" id="account-key-display"></div>
-                    <button class="copy-btn" onclick="copyAccountKey()">Copy to Clipboard</button>
-                    <button onclick="completeSignup()" style="width: 100%; margin-top: 1rem;">Continue to
-                        Dashboard</button>
+                    <button class="copy-btn" onclick="app.copyAccountKey()">Copy to Clipboard</button>
+                    <button onclick="app.completeSignup()">Continue to Dashboard</button>
                 </div>
             </div>
 
@@ -576,10 +652,13 @@
                     <h1>User Inspector</h1>
                     <p>Search and view user profiles</p>
                 </div>
-                <div class="form-group" style="max-width: 400px; margin-bottom: 2rem;">
-                    <input type="text" id="search-username" placeholder="Enter username..."
-                        onkeypress="if(event.key==='Enter') searchUser()">
-                    <button onclick="searchUser()" style="width: 100%; margin-top: 0.5rem;">Search</button>
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="search-username">Search Username</label>
+                        <input type="text" id="search-username" placeholder="Enter username..."
+                            onkeypress="if(event.key==='Enter') app.searchUser()">
+                    </div>
+                    <button onclick="app.searchUser()" style="width: 100%; margin-top: 0.75rem;">Search</button>
                 </div>
                 <div id="user-inspector-content"></div>
             </div>
@@ -588,7 +667,7 @@
             <div id="profile" class="page">
                 <div class="page-header">
                     <h1>My Profile</h1>
-                    <p>Customize your profile</p>
+                    <p>Customize your profile and account settings</p>
                 </div>
                 <div id="profile-content"></div>
             </div>
@@ -596,12 +675,12 @@
     </div>
 
     <script>
-        // ===== DATA MANAGEMENT =====
         class QuartzForumsApp {
             constructor() {
                 this.currentUser = this.loadUser();
                 this.users = this.loadUsers();
                 this.comments = this.loadComments();
+                this.setupEventListeners();
                 this.init();
             }
 
@@ -611,7 +690,6 @@
                 } else {
                     this.showAuthPage();
                 }
-                this.setupEventListeners();
             }
 
             setupEventListeners() {
@@ -632,11 +710,77 @@
                 });
             }
 
-            // ===== AUTH METHODS =====
+            // Auth Methods
             generateAccountKey() {
                 return 'QF-' + Math.random().toString(36).substr(2, 9).toUpperCase() +
                     '-' + Math.random().toString(36).substr(2, 9).toUpperCase() +
                     '-' + Date.now().toString(36).toUpperCase();
+            }
+
+            handleLogin() {
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                const messageDiv = document.getElementById('login-message');
+
+                const result = this.login(username, password);
+
+                if (result.success) {
+                    this.showDashboard();
+                } else {
+                    this.showMessage(result.error, 'error', messageDiv);
+                }
+            }
+
+            handleSignup() {
+                const username = document.getElementById('signup-username').value;
+                const password = document.getElementById('signup-password').value;
+                const confirm = document.getElementById('signup-confirm').value;
+                const messageDiv = document.getElementById('signup-message');
+
+                if (password !== confirm) {
+                    this.showMessage('Passwords do not match', 'error', messageDiv);
+                    return;
+                }
+
+                const result = this.signup(username, password);
+
+                if (result.success) {
+                    document.getElementById('signup-form').style.display = 'none';
+                    document.getElementById('account-key-form').style.display = 'block';
+                    document.getElementById('account-key-display').textContent = result.accountKey;
+                } else {
+                    this.showMessage(result.error, 'error', messageDiv);
+                }
+            }
+
+            completeSignup() {
+                this.currentUser = this.users[this.users.length - 1];
+                this.saveUser();
+                this.showDashboard();
+            }
+
+            copyAccountKey() {
+                const key = document.getElementById('account-key-display').textContent;
+                navigator.clipboard.writeText(key);
+
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = originalText, 2000);
+            }
+
+            showLogin(e) {
+                e.preventDefault();
+                document.getElementById('signup-form').style.display = 'none';
+                document.getElementById('account-key-form').style.display = 'none';
+                document.getElementById('login-form').style.display = 'block';
+            }
+
+            showSignup(e) {
+                e.preventDefault();
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('account-key-form').style.display = 'none';
+                document.getElementById('signup-form').style.display = 'block';
             }
 
             signup(username, password) {
@@ -692,7 +836,7 @@
                 this.showAuthPage();
             }
 
-            // ===== USER METHODS =====
+            // User Methods
             updateProfile(updates) {
                 if (this.currentUser) {
                     Object.assign(this.currentUser, updates);
@@ -707,7 +851,7 @@
                 return this.users.find(u => u.username.toLowerCase() === username.toLowerCase());
             }
 
-            // ===== COMMENT METHODS =====
+            // Comment Methods
             addComment(content, forum = 'General') {
                 if (!this.currentUser) return null;
 
@@ -726,7 +870,7 @@
                 return comment;
             }
 
-            getRecentComments(limit = 10) {
+            getRecentComments(limit = 15) {
                 return this.comments
                     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                     .slice(0, limit);
@@ -737,7 +881,7 @@
                     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             }
 
-            // ===== STORAGE METHODS =====
+            // Storage Methods
             saveUser() {
                 localStorage.setItem('quartzForumsUser', JSON.stringify(this.currentUser));
             }
@@ -755,13 +899,12 @@
                 const users = localStorage.getItem('quartzForumsUsers');
                 if (users) return JSON.parse(users);
 
-                // Seed with demo users
                 return [
                     {
                         id: '1',
                         username: 'DemoUser',
                         password: 'demo123',
-                        accountKey: 'QF-DEMO001',
+                        accountKey: 'QF-DEMO001-DEMO001-DEMO001',
                         avatar: 'D',
                         bio: 'Welcome to QuartzForums!',
                         footer: 'Tech enthusiast and forum member',
@@ -780,13 +923,12 @@
                 const comments = localStorage.getItem('quartzForumsComments');
                 if (comments) return JSON.parse(comments);
 
-                // Seed with demo comments
                 return [
                     {
                         id: '1',
                         userId: '1',
                         username: 'DemoUser',
-                        content: 'Welcome to QuartzForums! Looking forward to great discussions.',
+                        content: 'Welcome to QuartzForums! This is a great place for discussions.',
                         forum: 'General',
                         likes: 2,
                         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
@@ -794,7 +936,7 @@
                 ];
             }
 
-            // ===== UI METHODS =====
+            // Navigation Methods
             navigateTo(page) {
                 if (!this.currentUser) {
                     this.showAuthPage();
@@ -807,30 +949,41 @@
                 document.getElementById(page).classList.add('active');
                 document.querySelector(`[data-page="${page}"]`).classList.add('active');
 
-                const renderMethod = `render${page.replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
-                if (this[renderMethod]) {
-                    this[renderMethod]();
+                const methodName = `render${this.toCamelCase(page)}`;
+                if (this[methodName]) {
+                    this[methodName]();
                 }
+            }
+
+            toCamelCase(str) {
+                return str.split('-').map((word, index) =>
+                    index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) :
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                ).join('');
             }
 
             showAuthPage() {
                 document.getElementById('auth-page').style.display = 'flex';
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById('login-nav-btn').style.display = 'inline-block';
+                document.getElementById('main-nav').style.display = 'none';
+                document.getElementById('login-nav-btn').style.display = 'block';
                 document.getElementById('logout-btn').style.display = 'none';
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('signup-form').style.display = 'none';
+                document.getElementById('account-key-form').style.display = 'none';
             }
 
             showDashboard() {
                 document.getElementById('auth-page').style.display = 'none';
+                document.getElementById('main-nav').style.display = 'block';
                 document.getElementById('login-nav-btn').style.display = 'none';
-                document.getElementById('logout-btn').style.display = 'inline-block';
+                document.getElementById('logout-btn').style.display = 'block';
                 document.getElementById('dashboard').classList.add('active');
                 document.querySelector('[data-page="dashboard"]').classList.add('active');
                 this.renderDashboard();
             }
 
-            // ===== RENDER METHODS =====
+            // Render Methods
             renderDashboard() {
                 const container = document.getElementById('dashboard-content');
                 const recentComments = this.getRecentComments(15);
@@ -845,7 +998,7 @@
                         <div class="card-header">
                             <div class="avatar">${comment.username.charAt(0).toUpperCase()}</div>
                             <div class="card-header-info">
-                                <h3><a href="#" onclick="app.viewUser('${comment.username}')">${comment.username}</a></h3>
+                                <h3><a href="#" onclick="app.viewUser('${comment.username}'); return false;">${comment.username}</a></h3>
                                 <p>${comment.forum}</p>
                             </div>
                         </div>
@@ -919,7 +1072,7 @@
                     </div>
 
                     <div class="card">
-                        <h3 style="margin-bottom: 1.5rem;">Edit Profile</h3>
+                        <h3 style="margin-top: 0;">Edit Profile</h3>
                         <div class="form-group">
                             <label for="profile-avatar">Avatar (Single Character)</label>
                             <input type="text" id="profile-avatar" maxlength="1" value="${user.avatar}">
@@ -938,8 +1091,8 @@
                     </div>
 
                     <div class="card">
-                        <h3 style="margin-bottom: 1rem;">Account Information</h3>
-                        <p style="margin-bottom: 1rem;"><strong>Account Key:</strong></p>
+                        <h3 style="margin-top: 0;">Account Information</h3>
+                        <p style="margin-bottom: 1rem; color: var(--text-secondary);">Your account key:</p>
                         <div class="key-display">${user.accountKey}</div>
                         <button class="copy-btn" onclick="app.copyAccountKeyFromProfile()">Copy Account Key</button>
                     </div>
@@ -952,14 +1105,15 @@
                 const footer = document.getElementById('profile-footer').value;
 
                 this.updateProfile({ avatar, bio, footer });
-                this.showMessage('Profile updated successfully!', 'success', 'profile-content');
+                this.showMessage('Profile updated successfully!', 'success', document.getElementById('profile-content'));
                 this.renderProfile();
             }
 
             viewUser(username) {
                 const user = this.getUser(username);
                 if (!user) {
-                    this.showMessage('User not found', 'error', 'user-inspector-content');
+                    const container = document.getElementById('user-inspector-content');
+                    this.showMessage('User not found', 'error', container);
                     return;
                 }
 
@@ -972,14 +1126,14 @@
                         <div class="profile-info">
                             <h2>${user.username}</h2>
                             <p>Member since ${new Date(user.createdAt).toLocaleDateString()}</p>
-                            <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 2rem;">
-                                <div>
-                                    <div style="font-size: 1.5rem; font-weight: bold;">${userComments.length}</div>
-                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Comments</div>
+                            <div class="profile-stats">
+                                <div class="profile-stat">
+                                    <div class="profile-stat-number">${userComments.length}</div>
+                                    <div class="profile-stat-label">Comments</div>
                                 </div>
-                                <div>
-                                    <div style="font-size: 1.5rem; font-weight: bold;">${user.followerCount}</div>
-                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Followers</div>
+                                <div class="profile-stat">
+                                    <div class="profile-stat-number">${user.followerCount}</div>
+                                    <div class="profile-stat-label">Followers</div>
                                 </div>
                             </div>
                         </div>
@@ -988,8 +1142,8 @@
                     ${user.bio ? `<div class="card"><strong>Bio:</strong> ${this.escapeHtml(user.bio)}</div>` : ''}
                     ${user.footer ? `<div class="card"><div class="profile-footer">${this.escapeHtml(user.footer)}</div></div>` : ''}
 
-                    <div style="margin-top: 2rem;">
-                        <h3 style="margin-bottom: 1rem;">Recent Comments</h3>
+                    <div>
+                        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Recent Comments</h3>
                         ${userComments.length === 0 ?
                         '<div class="no-data">No comments from this user yet.</div>' :
                         userComments.slice(0, 10).map(comment => `
@@ -1009,17 +1163,22 @@
             searchUser() {
                 const username = document.getElementById('search-username').value;
                 if (username) {
+                    this.navigateTo('user-inspector');
                     this.viewUser(username);
                 }
             }
 
             copyAccountKeyFromProfile() {
                 navigator.clipboard.writeText(this.currentUser.accountKey);
-                this.showMessage('Account key copied to clipboard!', 'success', 'profile-content');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message success show';
+                messageDiv.textContent = 'Account key copied!';
+                const container = document.getElementById('profile-content');
+                container.insertBefore(messageDiv, container.firstChild);
+                setTimeout(() => messageDiv.remove(), 2000);
             }
 
-            showMessage(text, type, containerId) {
-                const container = document.getElementById(containerId);
+            showMessage(text, type, container) {
                 const message = document.createElement('div');
                 message.className = `message ${type} show`;
                 message.textContent = text;
@@ -1045,83 +1204,9 @@
             }
         }
 
-        // ===== AUTH HANDLERS =====
+        // Initialize app
         let app;
-
-        function handleLogin() {
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
-            const messageDiv = document.getElementById('login-message');
-
-            const result = app.login(username, password);
-
-            if (result.success) {
-                messageDiv.textContent = '';
-                app.showDashboard();
-            } else {
-                showMessage(result.error, 'error', messageDiv);
-            }
-        }
-
-        function handleSignup() {
-            const username = document.getElementById('signup-username').value;
-            const password = document.getElementById('signup-password').value;
-            const confirm = document.getElementById('signup-confirm').value;
-            const messageDiv = document.getElementById('signup-message');
-
-            if (password !== confirm) {
-                showMessage('Passwords do not match', 'error', messageDiv);
-                return;
-            }
-
-            const result = app.signup(username, password);
-
-            if (result.success) {
-                document.getElementById('signup-form').style.display = 'none';
-                document.getElementById('account-key-form').style.display = 'block';
-                document.getElementById('account-key-display').textContent = result.accountKey;
-            } else {
-                showMessage(result.error, 'error', messageDiv);
-            }
-        }
-
-        function completeSignup() {
-            app.currentUser = app.users[app.users.length - 1];
-            app.saveUser();
-            app.showDashboard();
-        }
-
-        function copyAccountKey() {
-            const key = document.getElementById('account-key-display').textContent;
-            navigator.clipboard.writeText(key);
-
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = 'Copied!';
-            setTimeout(() => btn.textContent = originalText, 2000);
-        }
-
-        function showLogin(e) {
-            e.preventDefault();
-            document.getElementById('signup-form').style.display = 'none';
-            document.getElementById('account-key-form').style.display = 'none';
-            document.getElementById('login-form').style.display = 'block';
-        }
-
-        function showSignup(e) {
-            e.preventDefault();
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('account-key-form').style.display = 'none';
-            document.getElementById('signup-form').style.display = 'block';
-        }
-
-        function showMessage(text, type, element) {
-            element.className = `message ${type} show`;
-            element.textContent = text;
-        }
-
-        // Initialize App
-        window.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             app = new QuartzForumsApp();
         });
     </script>
