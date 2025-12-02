@@ -2,7 +2,7 @@ const cors = require("cors");
 const path = require('path');
 const express = require("express");
 const expressStatic = require('express').static;
-const { connect, users, sessionTokens } = require("./database.js");
+const { connect, users, sessionTokens, implementationKeys, quartzForumAccounts, quartzForumForums, quartzForumMessages } = require("./database.js");
 const { exit } = require("process");
 const settings = require("./settings");
 require('dotenv').config();
