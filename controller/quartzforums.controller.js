@@ -445,6 +445,28 @@ async function getAllForums(req, res) {
     }
 }
 
+// Get implementation key details
+async function getImplementationKey(req, res) {
+    try {
+        const key = req.params.key;
+
+        const implementationKeyData = await implementationKeys.findOne({ implementationKey: key });
+
+        if (!implementationKeyData) {
+            return res.status(404).json({ message: 'Implementation key not found' });
+        }
+
+        res.status(200).json({
+            implementationKey: implementationKeyData.implementationKey,
+            domain: implementationKeyData.domain,
+            disabled: implementationKeyData.disabled
+        });
+    } catch (error) {
+        console.error('Get implementation key error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 module.exports = {
     createAccount,
     login,
@@ -455,5 +477,6 @@ module.exports = {
     deleteMessage,
     getForum,
     getRecentForums,
-    getAllForums
+    getAllForums,
+    getImplementationKey
 };

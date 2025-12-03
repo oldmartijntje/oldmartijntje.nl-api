@@ -10,10 +10,9 @@ const {
     deleteMessage,
     getForum,
     getRecentForums,
-    getAllForums
-} = require("../controller/quartzforums.controller");
-
-const quartzforumsRouter = express.Router();
+    getAllForums,
+    getImplementationKey
+} = require("../controller/quartzforums.controller"); const quartzforumsRouter = express.Router();
 quartzforumsRouter.use(express.json());
 
 // Account Management Routes
@@ -31,6 +30,9 @@ quartzforumsRouter.delete("/message/:messageId", authenticateAccessKey, deleteMe
 quartzforumsRouter.get("/forum", validateImplementationKey, checkRequesterLimbo, getForum);
 quartzforumsRouter.get("/forums/recent", checkRequesterLimbo, getRecentForums);
 quartzforumsRouter.get("/forums", checkRequesterLimbo, getAllForums);
+
+// Implementation Key Routes
+quartzforumsRouter.get("/implementation-key/:key", getImplementationKey);
 
 module.exports = {
     quartzforumsRouter: quartzforumsRouter

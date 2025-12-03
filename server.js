@@ -51,6 +51,10 @@ connect(MONGO_URI)
         app.use("/test", testRouter);
         app.use("/projectData", projectDataRouter);
         app.use("/forums", quartzforumsRouter);
+
+        // Serve QuartzForums frontend
+        app.use('/forums', express.static(path.join(__dirname, 'homepage/quartzforums')));
+
         // start the Express server
         app.listen(port, () => {
             console.log(`Server running at http://localhost:${port}...`);
