@@ -137,6 +137,7 @@ class QuartzForumsApp {
     showAllForums() {
         this.navigationHistory.push(this.currentPage);
         this.showPage('allForumsPage');
+        this.loadImplementationKeyOptions();
         this.loadAllForums();
     }
 
@@ -314,6 +315,65 @@ class QuartzForumsApp {
         }
     }
 
+    // Load implementation key options for the dropdown
+    async loadImplementationKeyOptions() {
+        try {
+            // Get all forums to extract unique implementation keys
+            const response = await fetch(`${this.apiBase}/forums?limit=1000`);
+            const data = await response.json();
+            
+            if (response.ok && data.forums) {
+                // Extract unique implementation keys
+                const uniqueKeys = [...new Set(data.forums.map(forum => forum.implementationKey))];
+                
+                // Load domains for each implementation key
+                const keyDetails = await Promise.all(
+                    uniqueKeys.map(async (key) => {
+                        try {
+                            const keyResponse = await fetch(`${this.apiBase}/implementation-key/${key}`);
+                            if (keyResponse.ok) {
+                                const keyData = await keyResponse.json();
+                                return { key, domain: keyData.domain };
+                            }
+                            return { key, domain: key }; // fallback to key as domain
+                        } catch (error) {
+                            return { key, domain: key }; // fallback
+                        }
+                    })
+                );
+                
+                // Populate the dropdown
+                this.populateImplementationKeyDropdown(keyDetails);
+            }
+        } catch (error) {
+            console.error('Failed to load implementation keys:', error);
+        }
+    }
+
+    populateImplementationKeyDropdown(keyDetails) {
+        const select = document.getElementById('implementationKeyFilter');
+        if (!select) return;
+        
+        // Clear existing options except "All Websites"
+        select.innerHTML = '<option value="">All Websites</option>';
+        
+        // Sort by domain for better UX
+        keyDetails.sort((a, b) => a.domain.localeCompare(b.domain));
+        
+        // Add options
+        keyDetails.forEach(({ key, domain }) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = domain;
+            select.appendChild(option);
+        });
+        
+        // Add change event listener
+        select.addEventListener('change', () => {
+            this.loadAllForums(0);
+        });
+    }
+
     async loadAllForums(page = 0) {
         const container = document.getElementById('allForumsList');
         container.innerHTML = '<div class="loading"><i class="bi bi-arrow-clockwise"></i> Loading forums...</div>';
@@ -330,6 +390,11 @@ class QuartzForumsApp {
             const searchTerm = document.getElementById('forumSearch')?.value;
             if (searchTerm) {
                 url.searchParams.append('subpage', searchTerm);
+            }
+
+            const implementationKeyFilter = document.getElementById('implementationKeyFilter')?.value;
+            if (implementationKeyFilter) {
+                url.searchParams.append('implementationKey', implementationKeyFilter);
             }
 
             const response = await fetch(url);
