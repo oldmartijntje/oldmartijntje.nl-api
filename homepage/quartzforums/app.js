@@ -321,11 +321,11 @@ class QuartzForumsApp {
             // Get all forums to extract unique implementation keys
             const response = await fetch(`${this.apiBase}/forums?limit=1000`);
             const data = await response.json();
-            
+
             if (response.ok && data.forums) {
                 // Extract unique implementation keys
                 const uniqueKeys = [...new Set(data.forums.map(forum => forum.implementationKey))];
-                
+
                 // Load domains for each implementation key
                 const keyDetails = await Promise.all(
                     uniqueKeys.map(async (key) => {
@@ -341,7 +341,7 @@ class QuartzForumsApp {
                         }
                     })
                 );
-                
+
                 // Populate the dropdown
                 this.populateImplementationKeyDropdown(keyDetails);
             }
@@ -353,13 +353,13 @@ class QuartzForumsApp {
     populateImplementationKeyDropdown(keyDetails) {
         const select = document.getElementById('implementationKeyFilter');
         if (!select) return;
-        
+
         // Clear existing options except "All Websites"
         select.innerHTML = '<option value="">All Websites</option>';
-        
+
         // Sort by domain for better UX
         keyDetails.sort((a, b) => a.domain.localeCompare(b.domain));
-        
+
         // Add options
         keyDetails.forEach(({ key, domain }) => {
             const option = document.createElement('option');
@@ -367,7 +367,7 @@ class QuartzForumsApp {
             option.textContent = domain;
             select.appendChild(option);
         });
-        
+
         // Add change event listener
         select.addEventListener('change', () => {
             this.loadAllForums(0);
