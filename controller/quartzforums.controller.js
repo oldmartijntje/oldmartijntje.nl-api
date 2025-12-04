@@ -416,6 +416,11 @@ async function postMessage(req, res) {
             return res.status(400).json({ message: 'Message content cannot be empty or contain only HTML' });
         }
 
+        // Check message length limit (1000 characters)
+        if (content.length > 1000) {
+            return res.status(400).json({ message: 'Message content cannot exceed 1000 characters' });
+        }
+
         // Check for profanity and update user limbo status
         await checkProfanityAndUpdateLimbo(content, user);
 
