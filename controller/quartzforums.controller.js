@@ -203,6 +203,7 @@ async function validateAccessKey(req, res) {
                 userId: user._id,
                 username: user.name,
                 limbo: user.limbo,
+                admin: user.admin || false,
                 createdAt: user.createdAt,
                 lastUsage: user.lastUsage
             }
@@ -244,7 +245,8 @@ async function login(req, res) {
         res.status(200).json({
             userId: user._id,
             username: user.name,
-            accessKey: user.accessKey
+            accessKey: user.accessKey,
+            admin: user.admin || false
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -465,6 +467,33 @@ async function deleteMessage(req, res) {
     }
 }
 
+async function adminDeleteMessage(req, res) {
+    try {
+        const messageId = req.params.messageId;
+        const user = req.quartzUser; // Set by auth middleware
+
+        // Check if user is admin
+        if (!user.admin) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        const message = await quartzForumMessages.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+
+        // Admin delete: completely remove from database
+        await quartzForumMessages.findByIdAndDelete(messageId);
+
+        res.status(200).json({
+            message: 'Message permanently deleted by admin'
+        });
+    } catch (error) {
+        console.error('Admin delete message error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 // Forum Management
 async function getForum(req, res) {
     try {
@@ -473,7 +502,6 @@ async function getForum(req, res) {
 
         // Check if requester is admin
         let isAdmin = false;
-        console.log(requesterAccessKey)
         if (requesterAccessKey) {
             const requesterUser = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
             isAdmin = requesterUser?.admin || false;
@@ -711,6 +739,7 @@ module.exports = {
     getUserProfile,
     postMessage,
     deleteMessage,
+    adminDeleteMessage,
     getForum,
     getRecentForums,
     getAllForums,

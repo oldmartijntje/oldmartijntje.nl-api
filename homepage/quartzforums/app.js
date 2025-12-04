@@ -603,25 +603,50 @@ class QuartzForumsApp {
             return;
         }
 
-        const html = messages.map(message => `
+        // Debug admin status (temporary)
+        console.log('=== ADMIN DEBUG START ===');
+        console.log('Current user object:', this.currentUser);
+        if (this.currentUser) {
+            console.log('User admin status:', this.currentUser.admin);
+            console.log('User admin type:', typeof this.currentUser.admin);
+        }
+        console.log('Total messages to render:', messages.length);
+
+        const html = messages.map(message => {
+            const isOwner = this.currentUser && message.accountId === this.currentUser.userId;
+            const isAdmin = this.currentUser && this.currentUser.admin === true;
+            const showAdminButton = isAdmin && !isOwner;
+
+            console.log(`Message ${message.messageId}: accountId=${message.accountId}, currentUserId=${this.currentUser?.userId}, isOwner=${isOwner}, isAdmin=${isAdmin}, showAdminButton=${showAdminButton}`);
+
+            return `
             <div class="message-content ${message.limbo ? 'limbo-message' : ''}">
                 <div class="message-meta">
                     <div class="user-avatar me-2">${this.getUserAvatar(message.username)}</div>
                     ${message.username ?
-                `<strong class="username-link" onclick="app.viewUserProfile('${message.accountId}', '${message.username}')" style="cursor: pointer; color: #58a6ff;">${message.username}</strong>` :
-                '<strong>[Deleted User]</strong>'
-            }
+                    `<strong class="username-link" onclick="app.viewUserProfile('${message.accountId}', '${message.username}')" style="cursor: pointer; color: #58a6ff;">${message.username}</strong>` :
+                    '<strong>[Deleted User]</strong>'
+                }
                     <span class="text-muted ms-2">${this.formatDate(message.createdAt)}</span>
                     ${message.limbo ? '<span class="badge bg-warning ms-2">Limbo</span>' : ''}
-                    ${this.currentUser && message.accountId === this.currentUser.userId ? `
-                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="app.deleteMessage('${message.messageId}')">
+                    ${isOwner ? `
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="app.deleteMessage('${message.messageId}')" title="Delete your message">
                             <i class="bi bi-trash"></i>
+                        </button>
+                    ` : ''}
+                    ${showAdminButton ? `
+                        <button class="btn btn-sm btn-danger ms-2" onclick="app.adminDeleteMessage('${message.messageId}')" title="Admin: Permanently delete message">
+                            <i class="bi bi-trash-fill"></i> Admin
                         </button>
                     ` : ''}
                 </div>
                 <div class="message-text">${this.markdownToHtml(message.content)}</div>
             </div>
-        `).join('');
+            `;
+        }).join('');
+
+        console.log('Generated HTML length:', html.length);
+        console.log('=== ADMIN DEBUG END ===');
 
         container.innerHTML = html;
     }
@@ -834,6 +859,33 @@ class QuartzForumsApp {
 
             if (response.ok) {
                 this.showToast('Message deleted successfully', 'success');
+                // Reload the forum
+                this.loadForum(this.currentForum.implementationKey, this.currentForum.subpage);
+            } else {
+                this.showToast(data.message || 'Failed to delete message', 'error');
+            }
+        } catch (error) {
+            this.showToast('Network error occurred', 'error');
+        }
+    }
+
+    async adminDeleteMessage(messageId) {
+        if (!confirm('Are you sure you want to permanently delete this message? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/admin/message/${messageId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Access-Key': this.currentUser.accessKey
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast('Message permanently deleted', 'success');
                 // Reload the forum
                 this.loadForum(this.currentForum.implementationKey, this.currentForum.subpage);
             } else {
