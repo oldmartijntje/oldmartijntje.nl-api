@@ -992,6 +992,12 @@ async function updateUserDesign(req, res) {
             if (hasProfanity) {
                 user.limbo = true;
                 await user.save();
+
+                // Also set all existing messages from this user to limbo
+                await quartzForumMessages.updateMany(
+                    { accountId: user._id },
+                    { $set: { limbo: true } }
+                );
             }
         }        // Update user design
         const updatedUser = await quartzForumAccounts.findOneAndUpdate(
