@@ -497,7 +497,7 @@ async function adminDeleteMessage(req, res) {
 // Forum Management
 async function getForum(req, res) {
     try {
-        const { implementationKey, subpage, requesterAccessKey } = req.query;
+        let { implementationKey, subpage, requesterAccessKey } = req.query;
         const requesterInLimbo = req.requesterInLimbo || false;
 
         // Check if requester is admin
@@ -509,6 +509,14 @@ async function getForum(req, res) {
 
         if (!implementationKey || !subpage) {
             return res.status(400).json({ message: 'Implementation key and subpage are required' });
+        }
+
+        // Trim whitespace to prevent issues with spaces
+        implementationKey = implementationKey.trim();
+        subpage = subpage.trim();
+
+        if (!implementationKey || !subpage) {
+            return res.status(400).json({ message: 'Implementation key and subpage cannot be empty after trimming' });
         }
 
         const forum = await quartzForumForums.findOne({
@@ -650,7 +658,15 @@ async function getRecentForums(req, res) {
 
 async function getAllForums(req, res) {
     try {
-        const { implementationKey, subpage, limit = 50, offset = 0 } = req.query;
+        let { implementationKey, subpage, limit = 50, offset = 0 } = req.query;
+
+        // Trim whitespace to prevent issues with spaces
+        if (implementationKey) {
+            implementationKey = implementationKey.trim();
+        }
+        if (subpage) {
+            subpage = subpage.trim();
+        }
 
         let matchConditions = {};
         if (implementationKey) {
@@ -721,7 +737,14 @@ async function getAllForums(req, res) {
 // Get implementation key details
 async function getImplementationKey(req, res) {
     try {
-        const key = req.params.key;
+        let key = req.params.key;
+
+        // Trim whitespace to prevent issues with spaces
+        key = key.trim();
+
+        if (!key) {
+            return res.status(400).json({ message: 'Implementation key cannot be empty' });
+        }
 
         const implementationKeyData = await implementationKeys.findOne({ implementationKey: key });
 

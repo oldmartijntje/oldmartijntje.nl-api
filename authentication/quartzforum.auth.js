@@ -36,10 +36,17 @@ async function authenticateAccessKey(req, res, next) {
  */
 async function validateImplementationKey(req, res, next) {
     try {
-        const implementationKey = req.body.implementationKey || req.query.implementationKey;
+        let implementationKey = req.body.implementationKey || req.query.implementationKey;
 
         if (!implementationKey) {
             return res.status(400).json({ message: 'Implementation key required' });
+        }
+
+        // Trim whitespace to prevent issues with spaces
+        implementationKey = implementationKey.trim();
+
+        if (!implementationKey) {
+            return res.status(400).json({ message: 'Implementation key cannot be empty' });
         }
 
         const keyData = await implementationKeys.findOne({ implementationKey: implementationKey });

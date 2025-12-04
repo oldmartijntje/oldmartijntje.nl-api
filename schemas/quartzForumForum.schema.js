@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const quartzForumForumJsonSchema = {
     implementationKey: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     subpage: {
         type: String,
