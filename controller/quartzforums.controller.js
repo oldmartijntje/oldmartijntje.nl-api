@@ -670,8 +670,17 @@ async function getAllForums(req, res) {
                 }
             },
             {
+                $lookup: {
+                    from: 'quartzforummessages',
+                    localField: '_id',
+                    foreignField: 'forumId',
+                    as: 'messages'
+                }
+            },
+            {
                 $match: {
                     'keyData.disabled': { $ne: true },
+                    'messages.0': { $exists: true }, // Only include forums that have at least one message
                     ...matchConditions
                 }
             },
@@ -685,7 +694,8 @@ async function getAllForums(req, res) {
                                 forumId: '$_id',
                                 implementationKey: '$implementationKey',
                                 subpage: '$subpage',
-                                lastPush: '$lastPush'
+                                lastPush: '$lastPush',
+                                messageCount: { $size: '$messages' }
                             }
                         }
                     ],

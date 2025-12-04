@@ -429,13 +429,16 @@ class QuartzForumsApp {
         const html = forums.map(forum => {
             const domain = keyToDomainMap.get(forum.implementationKey) || forum.implementationKey;
             const forumUrl = `forum-view.html?implementationKey=${encodeURIComponent(forum.implementationKey)}&subpage=${encodeURIComponent(forum.subpage)}`;
+            const messageCount = forum.messageCount || 0;
+            const messageText = messageCount === 1 ? 'message' : 'messages';
+
             return `
             <div class="list-group-item forum-item">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1" onclick="app.visitExternalForum('${forum.implementationKey}', '${forum.subpage}')" style="cursor: pointer;">
                         <h6 class="mb-1">${forum.subpage}</h6>
                         <p class="mb-1 text-muted">${domain}</p>
-                        <small class="text-muted">${this.formatDate(forum.lastPush)}</small>
+                        <small class="text-muted">${this.formatDate(forum.lastPush)} • ${messageCount} ${messageText}</small>
                     </div>
                     <div class="d-flex flex-column gap-2">
                         <a href="${forumUrl}" class="btn btn-sm btn-primary">
