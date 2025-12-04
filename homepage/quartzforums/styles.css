@@ -174,10 +174,6 @@ body {
     background-color: #161b22;
     border-color: #30363d;
 }
-.container.mt-4 {
-    z-index: -1;
-    position: relative;
-}
 
 .dropdown-item {
     color: #f0f6fc;
