@@ -619,7 +619,7 @@ class QuartzForumsApp {
                         </button>
                     ` : ''}
                 </div>
-                <div class="message-text">${this.escapeHtml(message.content)}</div>
+                <div class="message-text">${this.markdownToHtml(message.content)}</div>
             </div>
         `).join('');
 
@@ -630,6 +630,124 @@ class QuartzForumsApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Convert markdown to HTML with Obsidian-style features
+    markdownToHtml(text) {
+        if (!text || typeof text !== 'string') return text;
+
+        let html = text;
+
+        // Split into lines for processing
+        const lines = html.split('\n');
+        const processedLines = [];
+        let inCodeBlock = false;
+        let codeBlockContent = [];
+        let codeBlockLanguage = '';
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+
+            // Handle code blocks (```)
+            if (line.trim().startsWith('```')) {
+                if (inCodeBlock) {
+                    // End code block
+                    processedLines.push(`<pre><code class="language-${codeBlockLanguage}">${this.escapeHtml(codeBlockContent.join('\n'))}</code></pre>`);
+                    codeBlockContent = [];
+                    codeBlockLanguage = '';
+                    inCodeBlock = false;
+                } else {
+                    // Start code block - extract language if specified
+                    codeBlockLanguage = line.trim().substring(3).trim() || 'text';
+                    inCodeBlock = true;
+                }
+                continue;
+            }
+
+            if (inCodeBlock) {
+                codeBlockContent.push(line);
+                continue;
+            }
+
+            // Handle horizontal rules (--- on its own line)
+            if (line.trim() === '---') {
+                processedLines.push('<hr/>');
+                continue;
+            }
+
+            // Handle blockquotes (> at start of line)
+            if (line.trim().startsWith('> ')) {
+                line = `<blockquote>${line.substring(2)}</blockquote>`;
+            }
+
+            // Handle headers (# ## ### etc.)
+            line = line.replace(/^(#{1,6})\s+(.+)$/gm, (match, hashes, content) => {
+                const level = hashes.length;
+                return `<h${level}>${content}</h${level}>`;
+            });
+
+            // Handle strikethrough (~~text~~)
+            line = line.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+            // Handle bold (**text** or __text__)
+            line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            line = line.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+            // Handle italic (*text* or _text_) - be careful not to conflict with bold
+            line = line.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>');
+            line = line.replace(/(?<!_)_([^_]+?)_(?!_)/g, '<em>$1</em>');
+
+            // Handle highlight (==text==)
+            line = line.replace(/==(.*?)==/g, '<mark>$1</mark>');
+
+            // Handle inline code (`code`)
+            line = line.replace(/`([^`]+?)`/g, '<code>$1</code>');
+
+            // Handle unordered lists (- or *)
+            if (line.trim().match(/^[-*]\s+/)) {
+                line = line.replace(/^(\s*)([-*])\s+(.+)/, '$1<li>$3</li>');
+                // Wrap in <ul> if this is the first list item or previous line wasn't a list
+                if (i === 0 || !lines[i - 1].trim().match(/^[-*]\s+/)) {
+                    line = '<ul>' + line;
+                }
+                // Close <ul> if next line isn't a list item
+                if (i === lines.length - 1 || !lines[i + 1].trim().match(/^[-*]\s+/)) {
+                    line = line + '</ul>';
+                }
+            }
+
+            // Handle ordered lists (1. 2. etc.)
+            if (line.trim().match(/^\d+\.\s+/)) {
+                line = line.replace(/^(\s*)(\d+)\.\s+(.+)/, '$1<li>$3</li>');
+                // Wrap in <ol> if this is the first list item or previous line wasn't a list
+                if (i === 0 || !lines[i - 1].trim().match(/^\d+\.\s+/)) {
+                    line = '<ol>' + line;
+                }
+                // Close <ol> if next line isn't a list item
+                if (i === lines.length - 1 || !lines[i + 1].trim().match(/^\d+\.\s+/)) {
+                    line = line + '</ol>';
+                }
+            }
+
+            processedLines.push(line);
+        }
+
+        // Close any remaining code block
+        if (inCodeBlock && codeBlockContent.length > 0) {
+            processedLines.push(`<pre><code class="language-${codeBlockLanguage}">${this.escapeHtml(codeBlockContent.join('\n'))}</code></pre>`);
+        }
+
+        // Join lines and convert line breaks
+        html = processedLines.join('<br/>');
+
+        // Clean up excessive <br/> tags
+        html = html.replace(/(<br\/>){3,}/g, '<br/><br/>');
+
+        // Remove <br/> before and after block elements
+        html = html.replace(/<br\/>\s*(<\/?(h[1-6]|blockquote|pre|hr|ul|ol|li)>)/g, '$1');
+        html = html.replace(/(<\/?(h[1-6]|blockquote|pre|hr|ul|ol|li)>)\s*<br\/>/g, '$1');
+
+        return html;
     }
 
     // Message Posting Methods
