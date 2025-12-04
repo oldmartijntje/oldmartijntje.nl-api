@@ -4,6 +4,27 @@ const { quartzForumAccounts, quartzForumForums, quartzForumMessages, implementat
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
+// Helper function to strip HTML tags from text
+function stripHtml(text) {
+    if (!text || typeof text !== 'string') return text;
+    // Remove HTML tags and decode HTML entities
+    return text
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .trim();
+}
+
+// Helper function to sanitize user input
+function sanitizeInput(text) {
+    if (!text || typeof text !== 'string') return text;
+    return stripHtml(text);
+}
+
 // Helper function to generate access key
 function generateAccessKey() {
     return crypto.randomBytes(32).toString('hex');
@@ -45,10 +66,17 @@ async function checkProfanityAndUpdateLimbo(content, user) {
 // Account Management
 async function createAccount(req, res) {
     try {
-        const { username, password } = req.body;
+        let { username, password } = req.body;
 
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
+        }
+
+        // Sanitize username input
+        username = sanitizeInput(username);
+
+        if (!username.trim()) {
+            return res.status(400).json({ message: 'Username cannot be empty or contain only HTML' });
         }
 
         // Check if username already exists
@@ -132,11 +160,14 @@ async function validateAccessKey(req, res) {
 
 async function login(req, res) {
     try {
-        const { username, password } = req.body;
+        let { username, password } = req.body;
 
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
+
+        // Sanitize username input
+        username = sanitizeInput(username);
 
         const user = await quartzForumAccounts.findOne({ name: username });
         if (!user) {
@@ -165,11 +196,14 @@ async function login(req, res) {
 
 async function resetAccessKey(req, res) {
     try {
-        const { username, password } = req.body;
+        let { username, password } = req.body;
 
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
+
+        // Sanitize username input
+        username = sanitizeInput(username);
 
         const user = await quartzForumAccounts.findOne({ name: username });
         if (!user) {
@@ -197,11 +231,14 @@ async function resetAccessKey(req, res) {
 
 async function deleteAccount(req, res) {
     try {
-        const { username, password } = req.body;
+        let { username, password } = req.body;
 
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
+
+        // Sanitize username input
+        username = sanitizeInput(username);
 
         const user = await quartzForumAccounts.findOne({ name: username });
         if (!user) {
@@ -286,11 +323,18 @@ async function getUserProfile(req, res) {
 // Message Management
 async function postMessage(req, res) {
     try {
-        const { implementationKey, subpage, content } = req.body;
+        let { implementationKey, subpage, content } = req.body;
         const user = req.quartzUser; // Set by auth middleware
 
         if (!implementationKey || !subpage || !content) {
             return res.status(400).json({ message: 'Implementation key, subpage, and content are required' });
+        }
+
+        // Sanitize content input
+        content = sanitizeInput(content);
+
+        if (!content.trim()) {
+            return res.status(400).json({ message: 'Message content cannot be empty or contain only HTML' });
         }
 
         // Check for profanity and update user limbo status
