@@ -392,3 +392,19 @@ body {
 .message-text ol li::marker {
     color: #58a6ff;
 }
+
+/* Wiki link styling */
+.message-text .wiki-link {
+    color: #58a6ff;
+    text-decoration: none;
+    cursor: pointer;
+    border-bottom: 1px dotted #58a6ff;
+    padding: 1px 2px;
+    border-radius: 2px;
+    transition: background-color 0.2s ease;
+}
+
+.message-text .wiki-link:hover {
+    background-color: rgba(88, 166, 255, 0.1);
+    text-decoration: underline;
+}

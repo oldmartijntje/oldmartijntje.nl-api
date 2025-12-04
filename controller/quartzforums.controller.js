@@ -22,7 +22,10 @@ function stripHtml(text) {
 // Helper function to sanitize user input
 function sanitizeInput(text) {
     if (!text || typeof text !== 'string') return text;
-    return stripHtml(text);
+    let sanitized = stripHtml(text);
+    // Convert URLs to wiki links
+    sanitized = convertUrlsToWikiLinks(sanitized);
+    return sanitized;
 }
 
 // Helper function to generate access key
@@ -46,8 +49,44 @@ const profanityList = [
     'whore', 'whores',
     'cock', 'cocks',
     'pussy', 'pussies',
-    'hitler', 'https://', 'http://'
+    'hitler'
 ];
+
+// Helper function to convert URLs to wiki links
+function convertUrlsToWikiLinks(text) {
+    if (!text || typeof text !== 'string') return text;
+
+    // Regular expression to match http:// and https:// URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    return text.replace(urlRegex, (url) => {
+        try {
+            const urlObj = new URL(url);
+            let path = urlObj.pathname;
+
+            // Remove leading slash if it exists
+            if (path.startsWith('/')) {
+                path = path.substring(1);
+            }
+
+            // If path is empty, use the domain
+            if (!path) {
+                path = urlObj.hostname;
+            }
+
+            // Remove trailing slash if it exists
+            if (path.endsWith('/')) {
+                path = path.substring(0, path.length - 1);
+            }
+
+            // Create wiki link format [[path|unknown link]]
+            return `[[${path}|unknown link]]`;
+        } catch (e) {
+            // If URL parsing fails, return the original text
+            return `[[${url}|unknown link]]`;
+        }
+    });
+}
 
 // Helper function to check for profanity
 function containsProfanity(text) {

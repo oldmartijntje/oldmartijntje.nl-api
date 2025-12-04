@@ -700,6 +700,12 @@ class QuartzForumsApp {
             // Handle highlight (==text==)
             line = line.replace(/==(.*?)==/g, '<mark>$1</mark>');
 
+            // Handle wiki links ([[path|display text]])
+            line = line.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '<span class="wiki-link" data-path="$1">$2</span>');
+
+            // Handle wiki links without display text ([[path]])
+            line = line.replace(/\[\[([^\]]+)\]\]/g, '<span class="wiki-link" data-path="$1">$1</span>');
+
             // Handle inline code (`code`)
             line = line.replace(/`([^`]+?)`/g, '<code>$1</code>');
 
