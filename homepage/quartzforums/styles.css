@@ -269,6 +269,8 @@ body {
 
 .navbar {
     backdrop-filter: blur(10px);
+    z-index: 1020;
+    position: relative;
 }
 
 .modal-content {

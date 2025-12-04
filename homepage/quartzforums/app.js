@@ -131,11 +131,11 @@ class QuartzForumsApp {
         if (this.currentUser) {
             authNav.innerHTML = `
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                         <div class="user-avatar me-1">${this.getUserAvatar(this.currentUser.username)}</div>
                         ${this.currentUser.username}
                     </a>
-                    <ul class="dropdown-menu">
+                    <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="user-profile.html">
                             <i class="bi bi-person"></i> Profile
                         </a></li>
