@@ -708,6 +708,12 @@ async function getForum(req, res) {
                     messageId: '$_id',
                     accountId: '$accountId',
                     username: { $ifNull: [{ $arrayElemAt: ['$account.name', 0] }, null] },
+                    design: {
+                        $ifNull: [
+                            { $arrayElemAt: ['$account.design', 0] },
+                            { footer: "" }
+                        ]
+                    },
                     content: '$content',
                     ...(isAdmin ? { limbo: '$limbo' } : {}),
                     createdAt: '$createdAt'

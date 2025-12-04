@@ -20,6 +20,12 @@ const quartzForumAccountJsonSchema = {
         type: Object,
         default: {}
     },
+    design: {
+        type: Object,
+        default: {
+            footer: ""
+        }
+    },
     lastUsage: {
         type: Date,
         default: Date.now

@@ -622,6 +622,9 @@ class QuartzForumsApp {
 
             console.log(`Message ${message.messageId}: accountId=${message.accountId}, currentUserId=${this.currentUser?.userId}, isOwner=${isOwner}, isAdmin=${isAdmin}, showAdminButton=${showAdminButton}`);
 
+            // Get user's footer design
+            const footerContent = message.design && message.design.footer ? message.design.footer : '';
+
             return `
             <div class="message-content ${message.limbo ? 'limbo-message' : ''}">
                 <div class="message-meta">
@@ -644,6 +647,7 @@ class QuartzForumsApp {
                     ` : ''}
                 </div>
                 <div class="message-text">${this.markdownToHtml(message.content)}</div>
+                ${footerContent ? `<div class="message-footer" style="margin-top: 8px; font-size: 0.875em; color: #888;">${this.markdownToHtml(footerContent)}</div>` : ''}
             </div>
             `;
         }).join('');
