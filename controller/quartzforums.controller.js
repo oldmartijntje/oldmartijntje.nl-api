@@ -9,9 +9,34 @@ function generateAccessKey() {
     return crypto.randomBytes(32).toString('hex');
 }
 
+// Comprehensive profanity list
+const profanityList = [
+    'fuck', 'fucking', 'fucked', 'fucker', 'fucks',
+    'bitch', 'bitches', 'bitching',
+    'damn', 'damned', 'damning',
+    'asses', 'asshole', 'assholes',
+    'bastard', 'bastards',
+    'cunt', 'cunts',
+    'dick', 'dicks', 'dickhead',
+    'nigger', 'niggers', 'nigga', 'niggas',
+    'faggot', 'faggots', 'fag', 'fags',
+    'retard', 'retarded', 'retards',
+    'slut', 'sluts', 'slutty',
+    'whore', 'whores',
+    'cock', 'cocks',
+    'pussy', 'pussies',
+    'hitler', 'https://', 'http://'
+];
+
+// Helper function to check for profanity
+function containsProfanity(text) {
+    const lowerText = text.toLowerCase();
+    return profanityList.some(word => lowerText.includes(word));
+}
+
 // Helper function to check for profanity and update limbo status
 async function checkProfanityAndUpdateLimbo(content, user) {
-    if (content.toLowerCase().includes('fuck')) {
+    if (containsProfanity(content)) {
         user.limbo = true;
         await user.save();
     }
@@ -34,10 +59,13 @@ async function createAccount(req, res) {
 
         // Create new account
         const accessKey = generateAccessKey();
+        const hasOffensiveUsername = containsProfanity(username);
+
         const newUser = new quartzForumAccounts({
             name: username,
             password: password, // Will be hashed by pre-save middleware
-            accessKey: accessKey
+            accessKey: accessKey,
+            limbo: hasOffensiveUsername // Set limbo status based on username profanity
         });
 
         await newUser.save();
