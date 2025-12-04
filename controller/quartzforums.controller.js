@@ -150,7 +150,8 @@ async function createAccount(req, res) {
             name: username,
             password: password, // Will be hashed by pre-save middleware
             accessKey: accessKey,
-            limbo: hasOffensiveUsername // Set limbo status based on username profanity
+            limbo: hasOffensiveUsername, // Set limbo status based on username profanity
+            admin: false // Default to non-admin
         });
 
         await newUser.save();
