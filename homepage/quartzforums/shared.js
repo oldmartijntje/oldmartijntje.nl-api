@@ -15,7 +15,8 @@ function getURLParams() {
         subpage: params.get('subpage'),
         page: parseInt(params.get('page')) || 0,
         search: params.get('search') || '',
-        filter: params.get('filter') || ''
+        filter: params.get('filter') || '',
+        userId: params.get('userId')
     };
 }
 

@@ -579,7 +579,10 @@ class QuartzForumsApp {
             <div class="message-content ${message.limbo ? 'limbo-message' : ''}">
                 <div class="message-meta">
                     <div class="user-avatar me-2">${this.getUserAvatar(message.username)}</div>
-                    <strong>${message.username || '[Deleted User]'}</strong>
+                    ${message.username ?
+                `<strong class="username-link" onclick="app.viewUserProfile('${message.accountId}', '${message.username}')" style="cursor: pointer; color: #58a6ff;">${message.username}</strong>` :
+                '<strong>[Deleted User]</strong>'
+            }
                     <span class="text-muted ms-2">${this.formatDate(message.createdAt)}</span>
                     ${message.limbo ? '<span class="badge bg-warning ms-2">Limbo</span>' : ''}
                     ${this.currentUser && message.accountId === this.currentUser.userId ? `
@@ -718,14 +721,19 @@ class QuartzForumsApp {
     }
 
     // User Profile Methods
-    async loadUserProfile() {
-        if (!this.currentUser) return;
+    async loadUserProfile(userId = null) {
+        const targetUserId = userId || this.currentUser?.userId;
+
+        if (!targetUserId) {
+            this.showToast('User ID not found', 'error');
+            return;
+        }
 
         const container = document.getElementById('userProfileContent');
         container.innerHTML = '<div class="loading"><i class="bi bi-arrow-clockwise"></i> Loading profile...</div>';
 
         try {
-            const url = new URL(`${this.apiBase}/account/${this.currentUser.userId}`, window.location.origin);
+            const url = new URL(`${this.apiBase}/account/${targetUserId}`, window.location.origin);
             if (this.currentUser) {
                 url.searchParams.append('requesterAccessKey', this.currentUser.accessKey);
             }
@@ -734,7 +742,7 @@ class QuartzForumsApp {
             const data = await response.json();
 
             if (response.ok) {
-                this.renderUserProfile(data, container);
+                this.renderUserProfile(data, container, userId !== null);
             } else {
                 container.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
             }
@@ -743,7 +751,7 @@ class QuartzForumsApp {
         }
     }
 
-    renderUserProfile(profile, container) {
+    renderUserProfile(profile, container, isOtherUser = false) {
         const forumsHtml = profile.forums.length > 0 ?
             profile.forums.map(forum => {
                 const forumUrl = `forum-view.html?implementationKey=${encodeURIComponent(forum.implementationKey)}&subpage=${encodeURIComponent(forum.subpage)}`;
@@ -760,6 +768,27 @@ class QuartzForumsApp {
             `}).join('') :
             '<div class="list-group-item text-center text-muted">No forum activity yet</div>';
 
+        // Different layouts for viewing own profile vs other users' profiles
+        const profileActions = isOtherUser ? '' : `
+            <div class="mb-3">
+                <label class="form-label small text-muted">Access Key:</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <code class="flex-grow-1 user-select-all" style="font-size: 0.75rem; word-break: break-all;">${this.currentUser.accessKey}</code>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="app.copyToClipboard('${this.currentUser.accessKey}')">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="d-grid gap-2">
+                <button class="btn btn-outline-primary" onclick="app.showResetAccessKeyModal()">
+                    <i class="bi bi-key"></i> Reset Access Key
+                </button>
+                <button class="btn btn-outline-danger" onclick="app.showDeleteAccountModal()">
+                    <i class="bi bi-trash"></i> Delete Account
+                </button>
+            </div>
+        `;
+
         container.innerHTML = `
             <div class="row">
                 <div class="col-md-4">
@@ -770,23 +799,7 @@ class QuartzForumsApp {
                             </div>
                             <h5>${profile.username}</h5>
                             <p class="text-muted">User ID: ${profile.userId}</p>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Access Key:</label>
-                                <div class="d-flex gap-2 align-items-center">
-                                    <code class="flex-grow-1 user-select-all" style="font-size: 0.75rem; word-break: break-all;">${this.currentUser.accessKey}</code>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="app.copyToClipboard('${this.currentUser.accessKey}')">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-outline-primary" onclick="app.showResetAccessKeyModal()">
-                                    <i class="bi bi-key"></i> Reset Access Key
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="app.showDeleteAccountModal()">
-                                    <i class="bi bi-trash"></i> Delete Account
-                                </button>
-                            </div>
+                            ${profileActions}
                         </div>
                     </div>
                 </div>
@@ -947,6 +960,17 @@ class QuartzForumsApp {
         this.visitExternalForum(this.currentForum.implementationKey, this.currentForum.subpage);
     }
 
+    // Profile viewing functionality
+    viewUserProfile(userId, username) {
+        if (!userId || userId === 'null') {
+            this.showToast('Cannot view profile of deleted user', 'info');
+            return;
+        }
+
+        // Navigate to a user profile page with the user ID as parameter
+        navigateTo('user-profile.html', { userId: userId });
+    }
+
     copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
             this.showToast('Copied to clipboard!', 'success');
@@ -987,6 +1011,7 @@ function submitResetAccessKey() { app.submitResetAccessKey(); }
 function showDeleteAccountModal() { app.showDeleteAccountModal(); }
 function submitDeleteAccount() { app.submitDeleteAccount(); }
 function visitOriginalWebsite() { app.visitOriginalWebsite(); }
+function viewUserProfile(userId, username) { app.viewUserProfile(userId, username); }
 function copyAccessKey() {
     const accessKey = document.getElementById('accessKeyDisplay').textContent;
     app.copyToClipboard(accessKey);

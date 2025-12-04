@@ -45,10 +45,17 @@
             app = new QuartzForumsApp();
             app.currentPage = 'userProfile';
 
-            if (!app.currentUser) {
-                // Redirect to home if not logged in
+            // Get URL parameters
+            const urlParams = getURLParams();
+
+            if (urlParams.userId) {
+                // Viewing another user's profile
+                app.loadUserProfile(urlParams.userId);
+            } else if (!app.currentUser) {
+                // Not logged in and no userId specified - redirect to home
                 window.location.href = 'index.html';
             } else {
+                // Viewing own profile
                 app.loadUserProfile();
             }
         });
