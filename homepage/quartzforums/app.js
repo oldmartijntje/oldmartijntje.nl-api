@@ -411,18 +411,38 @@ class QuartzForumsApp {
         }
     }
 
-    renderForumsList(forums, container) {
+    async renderForumsList(forums, container) {
         if (forums.length === 0) {
             container.innerHTML = '<div class="alert alert-info">No forums found</div>';
             return;
         }
 
-        const html = forums.map(forum => `
+        // Get domains for all implementation keys
+        const keyToDomainMap = new Map();
+        const uniqueKeys = [...new Set(forums.map(forum => forum.implementationKey))];
+
+        await Promise.all(uniqueKeys.map(async (key) => {
+            try {
+                const response = await fetch(`${this.apiBase}/implementation-key/${key}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    keyToDomainMap.set(key, data.domain || key);
+                } else {
+                    keyToDomainMap.set(key, key);
+                }
+            } catch (error) {
+                keyToDomainMap.set(key, key);
+            }
+        }));
+
+        const html = forums.map(forum => {
+            const domain = keyToDomainMap.get(forum.implementationKey) || forum.implementationKey;
+            return `
             <div class="list-group-item forum-item">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1" onclick="app.visitExternalForum('${forum.implementationKey}', '${forum.subpage}')" style="cursor: pointer;">
                         <h6 class="mb-1">${forum.subpage}</h6>
-                        <p class="mb-1 text-muted">${forum.implementationKey}</p>
+                        <p class="mb-1 text-muted">${domain}</p>
                         <small class="text-muted">${this.formatDate(forum.lastPush)}</small>
                     </div>
                     <div class="d-flex flex-column gap-2">
@@ -435,7 +455,7 @@ class QuartzForumsApp {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
 
         container.innerHTML = `<div class="list-group">${html}</div>`;
     }
@@ -498,7 +518,19 @@ class QuartzForumsApp {
         this.currentForum = { implementationKey, subpage };
 
         titleElement.innerHTML = `<i class="bi bi-chat-square-text"></i> ${subpage}`;
-        metaElement.textContent = `${implementationKey}`;
+
+        // Get domain for this implementation key
+        try {
+            const keyResponse = await fetch(`${this.apiBase}/implementation-key/${implementationKey}`);
+            if (keyResponse.ok) {
+                const keyData = await keyResponse.json();
+                metaElement.textContent = keyData.domain || implementationKey;
+            } else {
+                metaElement.textContent = implementationKey;
+            }
+        } catch (error) {
+            metaElement.textContent = implementationKey;
+        }
 
         if (this.currentUser) {
             postBtn.style.display = 'inline-block';
