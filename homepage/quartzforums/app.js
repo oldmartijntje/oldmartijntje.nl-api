@@ -196,7 +196,29 @@ class QuartzForumsApp {
 
     toggleAuthMode() {
         const currentMode = document.getElementById('authSubmitBtn').getAttribute('data-mode');
-        this.showAuthModal(currentMode === 'login' ? 'register' : 'login');
+        const newMode = currentMode === 'login' ? 'register' : 'login';
+
+        // Just update the existing modal content instead of creating a new one
+        const title = document.getElementById('authModalTitle');
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const toggleBtn = document.getElementById('authToggleBtn');
+
+        if (newMode === 'login') {
+            title.textContent = 'Login';
+            submitBtn.textContent = 'Login';
+            toggleBtn.textContent = 'Need an account? Register';
+            submitBtn.setAttribute('data-mode', 'login');
+        } else {
+            title.textContent = 'Register';
+            submitBtn.textContent = 'Register';
+            toggleBtn.textContent = 'Already have an account? Login';
+            submitBtn.setAttribute('data-mode', 'register');
+        }
+
+        // Clear form
+        document.getElementById('authForm').reset();
+        document.getElementById('authError').style.display = 'none';
+        document.getElementById('authSuccess').style.display = 'none';
     }
 
     async submitAuth() {
