@@ -768,7 +768,7 @@ async function getRecentForums(req, res) {
     try {
         const requesterInLimbo = req.requesterInLimbo || false;
 
-        // First, get all recent forums
+        // First, get all recent forums with message count
         const forums = await quartzForumForums.aggregate([
             {
                 $lookup: {
@@ -779,8 +779,17 @@ async function getRecentForums(req, res) {
                 }
             },
             {
+                $lookup: {
+                    from: 'quartzforummessages',
+                    localField: '_id',
+                    foreignField: 'forumId',
+                    as: 'messages'
+                }
+            },
+            {
                 $match: {
-                    'keyData.disabled': { $ne: true }
+                    'keyData.disabled': { $ne: true },
+                    'messages.0': { $exists: true } // Only include forums that have at least one message
                 }
             },
             {
@@ -788,6 +797,15 @@ async function getRecentForums(req, res) {
             },
             {
                 $limit: 50 // Get more initially to filter later
+            },
+            {
+                $project: {
+                    _id: 1,
+                    implementationKey: 1,
+                    subpage: 1,
+                    lastPush: 1,
+                    messages: 1
+                }
             }
         ]);
 
@@ -796,30 +814,19 @@ async function getRecentForums(req, res) {
         // Filter forums based on limbo status if requester is not in limbo
         if (!requesterInLimbo) {
             for (const forum of forums) {
-                // Check if forum has any messages from non-limbo users
-                const nonLimboMessageCount = await quartzForumMessages.countDocuments({
-                    forumId: forum._id,
-                    $or: [
-                        { limbo: false },
-                        { limbo: { $exists: false } },
-                        {
-                            $expr: {
-                                $eq: [
-                                    { $ifNull: ["$limbo", false] },
-                                    false
-                                ]
-                            }
-                        }
-                    ]
-                });
+                // Filter messages to count only non-limbo messages
+                const nonLimboMessages = forum.messages.filter(message =>
+                    message.limbo === false || !message.hasOwnProperty('limbo')
+                );
 
                 // Include forum if it has at least one non-limbo message
-                if (nonLimboMessageCount > 0) {
+                if (nonLimboMessages.length > 0) {
                     filteredForums.push({
                         forumId: forum._id,
                         implementationKey: forum.implementationKey,
                         subpage: forum.subpage,
-                        lastPush: forum.lastPush
+                        lastPush: forum.lastPush,
+                        messageCount: nonLimboMessages.length
                     });
                 }
 
@@ -829,12 +836,13 @@ async function getRecentForums(req, res) {
                 }
             }
         } else {
-            // If requester is in limbo, show all forums
+            // If requester is in limbo, show all forums with full message count
             filteredForums = forums.slice(0, 25).map(forum => ({
                 forumId: forum._id,
                 implementationKey: forum.implementationKey,
                 subpage: forum.subpage,
-                lastPush: forum.lastPush
+                lastPush: forum.lastPush,
+                messageCount: forum.messages.length
             }));
         }
 
