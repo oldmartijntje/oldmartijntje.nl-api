@@ -122,6 +122,12 @@ class QuartzForumsApp {
     updateAuthNav() {
         const authNav = document.getElementById('authNav');
 
+        // Check if authNav element exists before trying to modify it
+        if (!authNav) {
+            console.warn('authNav element not found, skipping navigation update');
+            return;
+        }
+
         if (this.currentUser) {
             authNav.innerHTML = `
                 <li class="nav-item dropdown">
