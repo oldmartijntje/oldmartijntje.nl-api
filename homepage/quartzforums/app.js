@@ -978,7 +978,34 @@ class QuartzForumsApp {
             '<div class="list-group-item text-center text-muted">No forum activity yet</div>';
 
         // Different layouts for viewing own profile vs other users' profiles
-        const profileActions = isOtherUser ? '' : `
+        const profileActions = isOtherUser ?
+            // Admin buttons for other users (if current user is admin)
+            (this.currentUser?.admin && profile.adminInfo ? `
+                <div class="admin-controls border-top pt-3 mt-3">
+                    <h6 class="text-warning mb-2"><i class="bi bi-shield-check"></i> Admin Controls</h6>
+                    <div class="small mb-2">
+                        <div><strong>Limbo Status:</strong> ${profile.adminInfo.limbo ? '<span class="text-danger">In Limbo</span>' : '<span class="text-success">Normal</span>'}</div>
+                        <div><strong>Admin:</strong> ${profile.adminInfo.admin ? '<span class="text-info">Yes</span>' : 'No'}</div>
+                        <div><strong>Created:</strong> ${new Date(profile.adminInfo.createdAt).toLocaleDateString()}</div>
+                        <div><strong>Last Usage:</strong> ${new Date(profile.adminInfo.lastUsage).toLocaleDateString()}</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        ${profile.adminInfo.limbo ?
+                    `<button class="btn btn-sm btn-outline-success" onclick="app.adminRemoveFromLimbo('${profile.userId}')">
+                                <i class="bi bi-unlock"></i> Remove from Limbo
+                            </button>` :
+                    `<button class="btn btn-sm btn-outline-warning" onclick="app.adminAddToLimbo('${profile.userId}')">
+                                <i class="bi bi-lock"></i> Add to Limbo
+                            </button>`
+                }
+                        ${!profile.adminInfo.admin ?
+                    `<button class="btn btn-sm btn-outline-danger" onclick="app.adminDeleteAccount('${profile.userId}', '${profile.username}')">
+                                <i class="bi bi-trash"></i> Delete Account
+                            </button>` : ''
+                }
+                    </div>
+                </div>
+            ` : '') : `
             <div class="mb-3">
                 <label class="form-label small text-muted">Access Key:</label>
                 <div class="d-flex gap-2 align-items-center">
@@ -1133,6 +1160,124 @@ class QuartzForumsApp {
         } catch (error) {
             errorDiv.textContent = 'Network error occurred';
             errorDiv.style.display = 'block';
+        }
+    }
+
+    // Admin Functions
+    async adminAddToLimbo(userId) {
+        if (!this.currentUser?.admin) {
+            this.showToast('Admin access required', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to add this user to limbo?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/admin/user/${userId}/limbo/add`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': this.currentUser.accessKey
+                },
+                body: JSON.stringify({
+                    accessKey: this.currentUser.accessKey
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast(data.message || 'User added to limbo', 'success');
+                // Reload the profile to refresh the admin controls
+                this.loadUserProfile(userId);
+            } else {
+                this.showToast(data.message || 'Failed to add user to limbo', 'error');
+            }
+        } catch (error) {
+            console.error('Admin add to limbo error:', error);
+            this.showToast('Network error occurred', 'error');
+        }
+    }
+
+    async adminRemoveFromLimbo(userId) {
+        if (!this.currentUser?.admin) {
+            this.showToast('Admin access required', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to remove this user from limbo?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/admin/user/${userId}/limbo/remove`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': this.currentUser.accessKey
+                },
+                body: JSON.stringify({
+                    accessKey: this.currentUser.accessKey
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast(data.message || 'User removed from limbo', 'success');
+                // Reload the profile to refresh the admin controls
+                this.loadUserProfile(userId);
+            } else {
+                this.showToast(data.message || 'Failed to remove user from limbo', 'error');
+            }
+        } catch (error) {
+            console.error('Admin remove from limbo error:', error);
+            this.showToast('Network error occurred', 'error');
+        }
+    }
+
+    async adminDeleteAccount(userId, username) {
+        if (!this.currentUser?.admin) {
+            this.showToast('Admin access required', 'error');
+            return;
+        }
+
+        const confirmMessage = `Are you sure you want to PERMANENTLY DELETE the account "${username}"? This will also delete all their messages and cannot be undone.`;
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        // Double confirmation for such a destructive action
+        if (!confirm('This is a PERMANENT action. Are you absolutely sure?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/admin/user/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': this.currentUser.accessKey
+                },
+                body: JSON.stringify({
+                    accessKey: this.currentUser.accessKey
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast(data.message || 'Account deleted successfully', 'success');
+                // Redirect to home since the user no longer exists
+                window.location.href = 'index.html';
+            } else {
+                this.showToast(data.message || 'Failed to delete account', 'error');
+            }
+        } catch (error) {
+            console.error('Admin delete account error:', error);
+            this.showToast('Network error occurred', 'error');
         }
     }
 

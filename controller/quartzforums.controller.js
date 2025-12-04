@@ -332,6 +332,7 @@ async function getUserProfile(req, res) {
     try {
         const userId = req.params.userId;
         const requesterInLimbo = req.requesterInLimbo || false;
+        const requesterAccessKey = req.query.requesterAccessKey;
 
         // Validate ObjectId format
         if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -341,6 +342,15 @@ async function getUserProfile(req, res) {
         const user = await quartzForumAccounts.findById(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if requester is admin
+        let requesterIsAdmin = false;
+        if (requesterAccessKey) {
+            const requesterUser = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
+            if (requesterUser) {
+                requesterIsAdmin = requesterUser.admin || false;
+            }
         }
 
         // Get forums where user has posted
@@ -372,7 +382,16 @@ async function getUserProfile(req, res) {
             userId: user._id,
             username: user.name,
             profileDesign: user.profileDesign,
-            forums: forumData
+            forums: forumData,
+            // Include admin-specific information if requester is admin
+            ...(requesterIsAdmin ? {
+                adminInfo: {
+                    limbo: user.limbo,
+                    admin: user.admin,
+                    createdAt: user.createdAt,
+                    lastUsage: user.lastUsage
+                }
+            } : {})
         });
     } catch (error) {
         console.error('Get user profile error:', error);
@@ -490,6 +509,143 @@ async function adminDeleteMessage(req, res) {
         });
     } catch (error) {
         console.error('Admin delete message error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+async function adminAddToLimbo(req, res) {
+    try {
+        const targetUserId = req.params.userId;
+        const { accessKey } = req.body;
+
+        // Verify admin access
+        const adminUser = await quartzForumAccounts.findOne({ accessKey });
+        if (!adminUser || !adminUser.admin) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        // Validate ObjectId format
+        if (!targetUserId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: 'Invalid user ID format' });
+        }
+
+        // Find target user
+        const targetUser = await quartzForumAccounts.findById(targetUserId);
+        if (!targetUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Prevent admin from putting themselves in limbo
+        if (targetUser._id.toString() === adminUser._id.toString()) {
+            return res.status(400).json({ message: 'Cannot put yourself in limbo' });
+        }
+
+        // Add to limbo
+        targetUser.limbo = true;
+        await targetUser.save();
+
+        res.status(200).json({
+            message: `User ${targetUser.name} has been added to limbo`,
+            user: {
+                userId: targetUser._id,
+                username: targetUser.name,
+                limbo: targetUser.limbo,
+                admin: targetUser.admin
+            }
+        });
+    } catch (error) {
+        console.error('Admin add to limbo error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+async function adminRemoveFromLimbo(req, res) {
+    try {
+        const targetUserId = req.params.userId;
+        const { accessKey } = req.body;
+
+        // Verify admin access
+        const adminUser = await quartzForumAccounts.findOne({ accessKey });
+        if (!adminUser || !adminUser.admin) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        // Validate ObjectId format
+        if (!targetUserId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: 'Invalid user ID format' });
+        }
+
+        // Find target user
+        const targetUser = await quartzForumAccounts.findById(targetUserId);
+        if (!targetUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Remove from limbo
+        targetUser.limbo = false;
+        await targetUser.save();
+
+        res.status(200).json({
+            message: `User ${targetUser.name} has been removed from limbo`,
+            user: {
+                userId: targetUser._id,
+                username: targetUser.name,
+                limbo: targetUser.limbo,
+                admin: targetUser.admin
+            }
+        });
+    } catch (error) {
+        console.error('Admin remove from limbo error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+async function adminDeleteAccount(req, res) {
+    try {
+        const targetUserId = req.params.userId;
+        const { accessKey } = req.body;
+
+        // Verify admin access
+        const adminUser = await quartzForumAccounts.findOne({ accessKey });
+        if (!adminUser || !adminUser.admin) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        // Validate ObjectId format
+        if (!targetUserId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: 'Invalid user ID format' });
+        }
+
+        // Find target user
+        const targetUser = await quartzForumAccounts.findById(targetUserId);
+        if (!targetUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Prevent admin from deleting themselves
+        if (targetUser._id.toString() === adminUser._id.toString()) {
+            return res.status(400).json({ message: 'Cannot delete your own account' });
+        }
+
+        // Prevent deleting other admin accounts
+        if (targetUser.admin) {
+            return res.status(400).json({ message: 'Cannot delete admin accounts' });
+        }
+
+        // Set all user's messages' accountId to null
+        await quartzForumMessages.updateMany(
+            { accountId: targetUser._id },
+            { $set: { accountId: null } }
+        );
+
+        // Delete the account
+        await quartzForumAccounts.findByIdAndDelete(targetUserId);
+
+        res.status(200).json({
+            message: `User account ${targetUser.name} and all associated messages have been permanently deleted`
+        });
+    } catch (error) {
+        console.error('Admin delete account error:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 }
@@ -773,6 +929,9 @@ module.exports = {
     postMessage,
     deleteMessage,
     adminDeleteMessage,
+    adminAddToLimbo,
+    adminRemoveFromLimbo,
+    adminDeleteAccount,
     getForum,
     getRecentForums,
     getAllForums,
