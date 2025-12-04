@@ -468,8 +468,16 @@ async function deleteMessage(req, res) {
 // Forum Management
 async function getForum(req, res) {
     try {
-        const { implementationKey, subpage } = req.query;
+        const { implementationKey, subpage, requesterAccessKey } = req.query;
         const requesterInLimbo = req.requesterInLimbo || false;
+
+        // Check if requester is admin
+        let isAdmin = false;
+        console.log(requesterAccessKey)
+        if (requesterAccessKey) {
+            const requesterUser = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
+            isAdmin = requesterUser?.admin || false;
+        }
 
         if (!implementationKey || !subpage) {
             return res.status(400).json({ message: 'Implementation key and subpage are required' });
@@ -489,7 +497,7 @@ async function getForum(req, res) {
             {
                 $match: {
                     forumId: forum._id,
-                    ...(requesterInLimbo ? {} : { limbo: { $ne: true } })
+                    ...(requesterInLimbo || isAdmin ? {} : { limbo: { $ne: true } })
                 }
             },
             {
@@ -509,11 +517,12 @@ async function getForum(req, res) {
                     accountId: '$accountId',
                     username: { $ifNull: [{ $arrayElemAt: ['$account.name', 0] }, null] },
                     content: '$content',
-                    limbo: '$limbo',
+                    ...(isAdmin ? { limbo: '$limbo' } : {}),
                     createdAt: '$createdAt'
                 }
             }
         ]);
+
 
         res.status(200).json({
             forumId: forum._id,
