@@ -19,6 +19,29 @@ function stripHtml(text) {
         .trim();
 }
 
+// Helper function to sanitize footer input (preserves newlines)
+function sanitizeFooter(text, user) {
+    if (!text || typeof text !== 'string') return { sanitized: text, hasProfanity: false };
+
+    // Remove HTML tags and decode HTML entities, but preserve newlines
+    let sanitized = text
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+
+    // Convert URLs to wiki links
+    sanitized = convertUrlsToWikiLinks(sanitized);
+
+    // Check for profanity
+    const hasProfanity = containsProfanity(sanitized);
+
+    return { sanitized, hasProfanity };
+}
+
 // Helper function to sanitize user input
 function sanitizeInput(text) {
     if (!text || typeof text !== 'string') return text;
@@ -382,6 +405,7 @@ async function getUserProfile(req, res) {
             userId: user._id,
             username: user.name,
             profileDesign: user.profileDesign,
+            design: user.design || { footer: "" },
             forums: forumData,
             // Include admin-specific information if requester is admin
             ...(requesterIsAdmin ? {
@@ -930,6 +954,72 @@ async function getImplementationKey(req, res) {
     }
 }
 
+async function updateUserDesign(req, res) {
+    try {
+        let { footer } = req.body;
+        const requesterAccessKey = req.headers['x-access-key'];
+
+        if (!requesterAccessKey) {
+            return res.status(401).json({ message: 'Access key required' });
+        }
+
+        // Find the user by access key
+        const user = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid access key' });
+        }
+
+        // Validate footer input
+        if (footer !== undefined) {
+            if (typeof footer !== 'string') {
+                return res.status(400).json({ message: 'Footer must be a string' });
+            }
+
+            // Sanitize footer input and check for profanity (preserves newlines)
+            const { sanitized, hasProfanity } = sanitizeFooter(footer, user);
+            footer = sanitized;
+
+            if (!footer.trim() && footer.length > 0) {
+                return res.status(400).json({ message: 'Footer cannot contain only HTML or whitespace' });
+            }
+
+            // Check footer length limit (same as message: 1000 characters)
+            if (footer.length > 1000) {
+                return res.status(400).json({ message: 'Footer cannot exceed 1000 characters' });
+            }
+
+            // Update user limbo status if profanity was found
+            if (hasProfanity) {
+                user.limbo = true;
+                await user.save();
+            }
+        }        // Update user design
+        const updatedUser = await quartzForumAccounts.findOneAndUpdate(
+            { _id: user._id },
+            {
+                $set: {
+                    'design.footer': footer || '',
+                    lastUsage: new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'Design updated successfully',
+            design: updatedUser.design
+        });
+
+    } catch (error) {
+        console.error('Update user design error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 module.exports = {
     createAccount,
     login,
@@ -946,5 +1036,6 @@ module.exports = {
     getForum,
     getRecentForums,
     getAllForums,
-    getImplementationKey
+    getImplementationKey,
+    updateUserDesign
 };

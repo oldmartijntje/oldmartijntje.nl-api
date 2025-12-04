@@ -1019,6 +1019,17 @@ class QuartzForumsApp {
                     </button>
                 </div>
             </div>
+            <div class="mb-3">
+                <label for="userFooter" class="form-label small text-muted">Custom Footer:</label>
+                <div class="input-group">
+                    <textarea id="userFooter" class="form-control form-control-sm" rows="3" 
+                              maxlength="1000" placeholder="Enter your custom footer text...">${(profile.design?.footer || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                    <button class="btn btn-outline-success btn-sm align-self-start" onclick="app.updateFooter()">
+                        <i class="bi bi-check"></i>
+                    </button>
+                </div>
+                <div class="form-text">Max 1000 characters. Supports markdown. This will appear below your messages.</div>
+            </div>
             <div class="d-grid gap-2">
                 <button class="btn btn-outline-primary" onclick="app.showResetAccessKeyModal()">
                     <i class="bi bi-key"></i> Reset Access Key
@@ -1164,6 +1175,40 @@ class QuartzForumsApp {
         } catch (error) {
             errorDiv.textContent = 'Network error occurred';
             errorDiv.style.display = 'block';
+        }
+    }
+
+    async updateFooter() {
+        const footerInput = document.getElementById('userFooter');
+        const footer = footerInput.value.trim();
+
+        try {
+            const response = await fetch(this.apiBase + '/account/design', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-key': this.currentUser.accessKey
+                },
+                body: JSON.stringify({
+                    footer: footer
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast('Footer updated successfully', 'success');
+                // Update the current user data
+                if (!this.currentUser.design) {
+                    this.currentUser.design = {};
+                }
+                this.currentUser.design.footer = footer;
+                this.saveUserToStorage(this.currentUser);
+            } else {
+                this.showToast(data.message || 'Failed to update footer', 'danger');
+            }
+        } catch (error) {
+            this.showToast('Network error occurred', 'danger');
         }
     }
 

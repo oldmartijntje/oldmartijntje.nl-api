@@ -16,7 +16,8 @@ const {
     getForum,
     getRecentForums,
     getAllForums,
-    getImplementationKey
+    getImplementationKey,
+    updateUserDesign
 } = require("../controller/quartzforums.controller"); const quartzforumsRouter = express.Router();
 quartzforumsRouter.use(express.json());
 
@@ -27,6 +28,7 @@ quartzforumsRouter.post("/account/validate-access-key", validateAccessKey);
 quartzforumsRouter.post("/account/reset-access-key", resetAccessKey);
 quartzforumsRouter.delete("/account", deleteAccount);
 quartzforumsRouter.get("/account/:userId", checkRequesterLimbo, getUserProfile);
+quartzforumsRouter.put("/account/design", authenticateAccessKey, updateUserDesign);
 
 // Message Management Routes
 quartzforumsRouter.post("/message", validateImplementationKey, authenticateAccessKey, postMessage);
