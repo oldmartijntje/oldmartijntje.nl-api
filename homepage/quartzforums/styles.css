@@ -174,7 +174,7 @@ body {
     background-color: #161b22;
     border-color: #30363d;
 }
-.mt-4 {
+.container.mt-4 {
     z-index: -1;
     position: relative;
 }
