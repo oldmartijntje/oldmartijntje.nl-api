@@ -722,9 +722,11 @@ class QuartzForumsApp {
 
     // User Profile Methods
     async loadUserProfile(userId = null) {
-        const targetUserId = userId || this.currentUser?.userId;
+        // Use provided userId or current user's userId
+        const targetUserId = userId || (this.currentUser ? this.currentUser.userId : null);
 
         if (!targetUserId) {
+            console.error('No user ID found. Current user:', this.currentUser);
             this.showToast('User ID not found', 'error');
             return;
         }
@@ -742,16 +744,16 @@ class QuartzForumsApp {
             const data = await response.json();
 
             if (response.ok) {
-                this.renderUserProfile(data, container, userId !== null);
+                // Pass true for isOtherUser only when explicitly viewing someone else's profile
+                this.renderUserProfile(data, container, userId !== null && userId !== this.currentUser?.userId);
             } else {
                 container.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
             }
         } catch (error) {
+            console.error('Profile load error:', error);
             container.innerHTML = '<div class="alert alert-danger">Failed to load profile</div>';
         }
-    }
-
-    renderUserProfile(profile, container, isOtherUser = false) {
+    } renderUserProfile(profile, container, isOtherUser = false) {
         const forumsHtml = profile.forums.length > 0 ?
             profile.forums.map(forum => {
                 const forumUrl = `forum-view.html?implementationKey=${encodeURIComponent(forum.implementationKey)}&subpage=${encodeURIComponent(forum.subpage)}`;
