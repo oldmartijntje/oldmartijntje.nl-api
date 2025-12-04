@@ -428,6 +428,9 @@ async function getForum(req, res) {
 
 async function getRecentForums(req, res) {
     try {
+        const requesterInLimbo = req.requesterInLimbo || false;
+
+        // First, get all recent forums
         const forums = await quartzForumForums.aggregate([
             {
                 $lookup: {
@@ -446,20 +449,59 @@ async function getRecentForums(req, res) {
                 $sort: { lastPush: -1 }
             },
             {
-                $limit: 25
-            },
-            {
-                $project: {
-                    forumId: '$_id',
-                    implementationKey: '$implementationKey',
-                    subpage: '$subpage',
-                    lastPush: '$lastPush'
-                }
+                $limit: 50 // Get more initially to filter later
             }
         ]);
 
+        let filteredForums = [];
+
+        // Filter forums based on limbo status if requester is not in limbo
+        if (!requesterInLimbo) {
+            for (const forum of forums) {
+                // Check if forum has any messages from non-limbo users
+                const nonLimboMessageCount = await quartzForumMessages.countDocuments({
+                    forumId: forum._id,
+                    $or: [
+                        { limbo: false },
+                        { limbo: { $exists: false } },
+                        {
+                            $expr: {
+                                $eq: [
+                                    { $ifNull: ["$limbo", false] },
+                                    false
+                                ]
+                            }
+                        }
+                    ]
+                });
+
+                // Include forum if it has at least one non-limbo message
+                if (nonLimboMessageCount > 0) {
+                    filteredForums.push({
+                        forumId: forum._id,
+                        implementationKey: forum.implementationKey,
+                        subpage: forum.subpage,
+                        lastPush: forum.lastPush
+                    });
+                }
+
+                // Stop once we have 25 forums
+                if (filteredForums.length >= 25) {
+                    break;
+                }
+            }
+        } else {
+            // If requester is in limbo, show all forums
+            filteredForums = forums.slice(0, 25).map(forum => ({
+                forumId: forum._id,
+                implementationKey: forum.implementationKey,
+                subpage: forum.subpage,
+                lastPush: forum.lastPush
+            }));
+        }
+
         res.status(200).json({
-            forums: forums
+            forums: filteredForums
         });
     } catch (error) {
         console.error('Get recent forums error:', error);
