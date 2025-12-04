@@ -18,37 +18,31 @@ class QuartzForumsApp {
 
     init() {
         this.updateAuthNav();
-        this.updateWelcomeSection();
+        if (document.getElementById('userWelcome') && document.getElementById('guestWelcome')) {
+            this.updateWelcomeSection();
+        }
         this.setupEventListeners();
     }
 
     setupEventListeners() {
         // Form submissions
-        document.getElementById('authForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitAuth();
-        });
-
-        document.getElementById('postMessageForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitMessage();
-        });
-
-        // Search functionality
-        const searchInput = document.getElementById('forumSearch');
-        if (searchInput) {
-            searchInput.addEventListener('input', () => {
-                this.debounce(() => this.searchForums(), 300)();
+        const authForm = document.getElementById('authForm');
+        if (authForm) {
+            authForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitAuth();
             });
         }
 
-        // Pagination
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.page-link[data-page]')) {
+        const postMessageForm = document.getElementById('postMessageForm');
+        if (postMessageForm) {
+            postMessageForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.loadPage(parseInt(e.target.dataset.page));
-            }
-        });
+                this.submitMessage();
+            });
+        }
+
+        // Search functionality is now handled in individual page scripts
     }
 
     // Utility Methods
@@ -99,46 +93,17 @@ class QuartzForumsApp {
         this.currentUser = null;
     }
 
-    // Navigation Methods
-    showPage(pageId) {
-        // Hide all pages
-        document.querySelectorAll('.page').forEach(page => {
-            page.style.display = 'none';
-        });
-
-        // Show target page
-        const targetPage = document.getElementById(pageId);
-        if (targetPage) {
-            targetPage.style.display = 'block';
-            this.currentPage = pageId.replace('Page', '');
-        }
-    }
-
-    goBack() {
-        if (this.navigationHistory.length > 0) {
-            const previous = this.navigationHistory.pop();
-            this[`show${previous.charAt(0).toUpperCase() + previous.slice(1)}`]();
-        } else {
-            this.showHome();
-        }
-    }
-
+    // Navigation Methods - updated for multi-page structure
     showHome() {
-        this.showPage('homePage');
-        this.updateWelcomeSection();
+        window.location.href = 'index.html';
     }
 
     showRecentForums() {
-        this.navigationHistory.push(this.currentPage);
-        this.showPage('recentForumsPage');
-        this.loadRecentForums();
+        window.location.href = 'recent-forums.html';
     }
 
     showAllForums() {
-        this.navigationHistory.push(this.currentPage);
-        this.showPage('allForumsPage');
-        this.loadImplementationKeyOptions();
-        this.loadAllForums();
+        window.location.href = 'all-forums.html';
     }
 
     showUserProfile() {
@@ -146,15 +111,11 @@ class QuartzForumsApp {
             this.showAuthModal('login');
             return;
         }
-        this.navigationHistory.push(this.currentPage);
-        this.showPage('userProfilePage');
-        this.loadUserProfile();
+        window.location.href = 'user-profile.html';
     }
 
     showForum(implementationKey, subpage) {
-        this.navigationHistory.push(this.currentPage);
-        this.showPage('forumViewPage');
-        this.loadForum(implementationKey, subpage);
+        navigateTo('forum-view.html', { implementationKey, subpage });
     }
 
     // Authentication Methods
@@ -169,7 +130,7 @@ class QuartzForumsApp {
                         ${this.currentUser.username}
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="app.showUserProfile()">
+                        <li><a class="dropdown-item" href="user-profile.html">
                             <i class="bi bi-person"></i> Profile
                         </a></li>
                         <li><a class="dropdown-item" href="#" onclick="app.showResetAccessKeyModal()">
@@ -286,7 +247,9 @@ class QuartzForumsApp {
     logout() {
         this.clearUserFromStorage();
         this.updateAuthNav();
-        this.updateWelcomeSection();
+        if (document.getElementById('userWelcome') && document.getElementById('guestWelcome')) {
+            this.updateWelcomeSection();
+        }
         this.showToast('Logged out successfully', 'info');
         this.showHome();
     }
@@ -437,6 +400,7 @@ class QuartzForumsApp {
 
         const html = forums.map(forum => {
             const domain = keyToDomainMap.get(forum.implementationKey) || forum.implementationKey;
+            const forumUrl = `forum-view.html?implementationKey=${encodeURIComponent(forum.implementationKey)}&subpage=${encodeURIComponent(forum.subpage)}`;
             return `
             <div class="list-group-item forum-item">
                 <div class="d-flex justify-content-between align-items-start">
@@ -446,9 +410,9 @@ class QuartzForumsApp {
                         <small class="text-muted">${this.formatDate(forum.lastPush)}</small>
                     </div>
                     <div class="d-flex flex-column gap-2">
-                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); app.showForum('${forum.implementationKey}', '${forum.subpage}')">
+                        <a href="${forumUrl}" class="btn btn-sm btn-primary">
                             <i class="bi bi-eye"></i> View Here
-                        </button>
+                        </a>
                         <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); app.visitExternalForum('${forum.implementationKey}', '${forum.subpage}')">
                             <i class="bi bi-box-arrow-up-right"></i> Original
                         </button>
@@ -474,31 +438,64 @@ class QuartzForumsApp {
 
         let html = '';
 
+        // Get current URL params
+        const urlParams = getURLParams();
+
         // Previous button
-        html += `
-            <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
-            </li>
-        `;
+        if (currentPage > 0) {
+            const prevParams = { ...urlParams, page: currentPage - 1 };
+            const prevUrl = '?' + new URLSearchParams(prevParams).toString();
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="${prevUrl}">Previous</a>
+                </li>
+            `;
+        } else {
+            html += `
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            `;
+        }
 
         // Page numbers
         const startPage = Math.max(0, currentPage - 2);
         const endPage = Math.min(totalPages - 1, currentPage + 2);
 
         for (let i = startPage; i <= endPage; i++) {
-            html += `
-                <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
-                </li>
-            `;
+            if (i === currentPage) {
+                html += `
+                    <li class="page-item active">
+                        <span class="page-link">${i + 1}</span>
+                    </li>
+                `;
+            } else {
+                const pageParams = { ...urlParams, page: i };
+                const pageUrl = '?' + new URLSearchParams(pageParams).toString();
+                html += `
+                    <li class="page-item">
+                        <a class="page-link" href="${pageUrl}">${i + 1}</a>
+                    </li>
+                `;
+            }
         }
 
         // Next button
-        html += `
-            <li class="page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
-            </li>
-        `;
+        if (currentPage < totalPages - 1) {
+            const nextParams = { ...urlParams, page: currentPage + 1 };
+            const nextUrl = '?' + new URLSearchParams(nextParams).toString();
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="${nextUrl}">Next</a>
+                </li>
+            `;
+        } else {
+            html += `
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            `;
+        }
 
         paginationList.innerHTML = html;
     }
@@ -748,8 +745,10 @@ class QuartzForumsApp {
 
     renderUserProfile(profile, container) {
         const forumsHtml = profile.forums.length > 0 ?
-            profile.forums.map(forum => `
-                <div class="list-group-item forum-item" onclick="app.showForum('${forum.implementationKey}', '${forum.subpage}')">
+            profile.forums.map(forum => {
+                const forumUrl = `forum-view.html?implementationKey=${encodeURIComponent(forum.implementationKey)}&subpage=${encodeURIComponent(forum.subpage)}`;
+                return `
+                <a href="${forumUrl}" class="list-group-item forum-item text-decoration-none">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="mb-1">${forum.subpage}</h6>
@@ -757,8 +756,8 @@ class QuartzForumsApp {
                         </div>
                         <span class="badge bg-secondary">${forum.messageCount} messages</span>
                     </div>
-                </div>
-            `).join('') :
+                </a>
+            `}).join('') :
             '<div class="list-group-item text-center text-muted">No forum activity yet</div>';
 
         container.innerHTML = `
@@ -805,10 +804,6 @@ class QuartzForumsApp {
                 </div>
             </div>
         `;
-    }
-
-    loadPage(page) {
-        this.loadAllForums(page);
     }
 
     // Additional Modal Methods
