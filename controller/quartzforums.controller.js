@@ -123,6 +123,19 @@ async function createAccount(req, res) {
             return res.status(400).json({ message: 'Username cannot be empty or contain only HTML' });
         }
 
+        // Validate username format and length
+        if (username.length < 4) {
+            return res.status(400).json({ message: 'Username must be at least 4 characters long' });
+        }
+
+        if (username.length > 32) {
+            return res.status(400).json({ message: 'Username must be no more than 32 characters long' });
+        }
+
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            return res.status(400).json({ message: 'Username can only contain letters, numbers, and underscores' });
+        }
+
         // Check if username already exists
         const existingUser = await quartzForumAccounts.findOne({ name: username });
         if (existingUser) {
