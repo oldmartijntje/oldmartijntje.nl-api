@@ -3,6 +3,7 @@ const { authenticateAccessKey, validateImplementationKey, checkRequesterLimbo } 
 const {
     createAccount,
     login,
+    validateAccessKey,
     resetAccessKey,
     deleteAccount,
     getUserProfile,
@@ -18,6 +19,7 @@ quartzforumsRouter.use(express.json());
 // Account Management Routes
 quartzforumsRouter.post("/account/register", createAccount);
 quartzforumsRouter.post("/account/login", login);
+quartzforumsRouter.post("/account/validate-access-key", validateAccessKey);
 quartzforumsRouter.post("/account/reset-access-key", resetAccessKey);
 quartzforumsRouter.delete("/account", deleteAccount);
 quartzforumsRouter.get("/account/:userId", checkRequesterLimbo, getUserProfile);

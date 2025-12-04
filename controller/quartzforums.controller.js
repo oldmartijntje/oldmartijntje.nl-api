@@ -53,6 +53,55 @@ async function createAccount(req, res) {
     }
 }
 
+/**
+ * Validate Access Key
+ * POST /forums/account/validate-access-key
+ * Body: { accessKey: string }
+ */
+async function validateAccessKey(req, res) {
+    try {
+        const { accessKey } = req.body;
+
+        if (!accessKey) {
+            return res.status(400).json({
+                valid: false,
+                message: 'Access key is required'
+            });
+        }
+
+        const user = await quartzForumAccounts.findOne({ accessKey });
+
+        if (!user) {
+            return res.status(200).json({
+                valid: false,
+                message: 'Invalid access key'
+            });
+        }
+
+        // Update last usage
+        user.lastUsage = new Date();
+        await user.save();
+
+        res.status(200).json({
+            valid: true,
+            message: 'Access key is valid',
+            user: {
+                userId: user._id,
+                username: user.name,
+                limbo: user.limbo,
+                createdAt: user.createdAt,
+                lastUsage: user.lastUsage
+            }
+        });
+    } catch (error) {
+        console.error('Validate access key error:', error);
+        res.status(500).json({
+            valid: false,
+            message: 'Internal server error'
+        });
+    }
+}
+
 async function login(req, res) {
     try {
         const { username, password } = req.body;
@@ -158,6 +207,11 @@ async function getUserProfile(req, res) {
     try {
         const userId = req.params.userId;
         const requesterInLimbo = req.requesterInLimbo || false;
+
+        // Validate ObjectId format
+        if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: 'Invalid user ID format' });
+        }
 
         const user = await quartzForumAccounts.findById(userId);
         if (!user) {
@@ -470,6 +524,7 @@ async function getImplementationKey(req, res) {
 module.exports = {
     createAccount,
     login,
+    validateAccessKey,
     resetAccessKey,
     deleteAccount,
     getUserProfile,
