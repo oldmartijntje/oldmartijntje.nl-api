@@ -588,6 +588,66 @@ async function adminAddToLimbo(req, res) {
     }
 }
 
+async function adminMessageAddToLimbo(req, res) {
+    try {
+        const messageId = req.params.messageId;
+        const user = req.quartzUser; // Set by auth middleware
+
+        // Check if user is admin
+        if (!user.admin) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        const message = await quartzForumMessages.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+
+        // Set message to limbo
+        message.limbo = true;
+        await message.save();
+
+        res.status(200).json({
+            message: 'Message sent to limbo',
+            messageId: message._id,
+            limbo: message.limbo
+        });
+    } catch (error) {
+        console.error('Admin message add to limbo error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+async function adminMessageRemoveFromLimbo(req, res) {
+    try {
+        const messageId = req.params.messageId;
+        const user = req.quartzUser; // Set by auth middleware
+
+        // Check if user is admin
+        if (!user.admin) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        const message = await quartzForumMessages.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+
+        // Remove message from limbo
+        message.limbo = false;
+        await message.save();
+
+        res.status(200).json({
+            message: 'Message removed from limbo',
+            messageId: message._id,
+            limbo: message.limbo
+        });
+    } catch (error) {
+        console.error('Admin message remove from limbo error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 async function adminRemoveFromLimbo(req, res) {
     try {
         const targetUserId = req.params.userId;
@@ -1044,6 +1104,8 @@ module.exports = {
     postMessage,
     deleteMessage,
     adminDeleteMessage,
+    adminMessageAddToLimbo,
+    adminMessageRemoveFromLimbo,
     adminAddToLimbo,
     adminRemoveFromLimbo,
     adminDeleteAccount,

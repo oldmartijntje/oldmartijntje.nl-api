@@ -9,7 +9,7 @@ class QuartzForumsApp {
         this.currentUser = this.loadUserFromStorage();
         this.currentPage = 'home';
         this.currentForum = null;
-        this.currentImplementationKey = localStorage.getItem('qf_implementation_key') || 'test-key-123';
+        this.currentImplementationKey = localStorage.getItem('qf_implementation_key') || null;
         this.currentSubpage = localStorage.getItem('qf_subpage') || '/test-forum';
         this.navigationHistory = [];
 
@@ -542,6 +542,10 @@ class QuartzForumsApp {
         const metaElement = document.getElementById('forumMeta');
         const postBtn = document.getElementById('postMessageBtn');
         const originalWebsiteBtn = document.getElementById('originalWebsiteBtn');
+        if (implementationKey == null) {
+            console.warn("ran loadForum() without implementationKey")
+            return;
+        };
 
         this.currentForum = { implementationKey, subpage };
 
@@ -645,6 +649,15 @@ class QuartzForumsApp {
                             <i class="bi bi-trash-fill"></i> Admin
                         </button>
                     ` : ''}
+                    ${showAdminButton ? (message.limbo ? `
+                        <button class="btn btn-sm btn-outline-success ms-1" onclick="app.adminMessageRemoveFromLimbo('${message.messageId}')" title="Admin: Remove message from limbo">
+                            <i class="bi bi-unlock"></i> Restore
+                        </button>
+                    ` : `
+                        <button class="btn btn-sm btn-outline-warning ms-1" onclick="app.adminMessageAddToLimbo('${message.messageId}')" title="Admin: Send message to limbo">
+                            <i class="bi bi-lock"></i> Limbo
+                        </button>
+                    `) : ''}
                 </div>
                 <div class="message-text">${this.markdownToHtml(message.content)}</div>
                 ${footerContent ? `<div class="message-footer" style="margin-top: 8px; font-size: 0.875em; color: #888;">${this.markdownToHtml(footerContent)}</div>` : ''}
@@ -1326,6 +1339,78 @@ class QuartzForumsApp {
             }
         } catch (error) {
             console.error('Admin delete account error:', error);
+            this.showToast('Network error occurred', 'error');
+        }
+    }
+
+    async adminMessageAddToLimbo(messageId) {
+        if (!this.currentUser?.admin) {
+            this.showToast('Admin access required', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to send this message to limbo?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/admin/message/${messageId}/limbo/add`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': this.currentUser.accessKey
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast(data.message || 'Message sent to limbo', 'success');
+                // Reload the current forum to refresh the view
+                if (this.currentForum) {
+                    this.loadForum(this.currentForum.implementationKey, this.currentForum.subpage);
+                }
+            } else {
+                this.showToast(data.message || 'Failed to send message to limbo', 'error');
+            }
+        } catch (error) {
+            console.error('Admin message add to limbo error:', error);
+            this.showToast('Network error occurred', 'error');
+        }
+    }
+
+    async adminMessageRemoveFromLimbo(messageId) {
+        if (!this.currentUser?.admin) {
+            this.showToast('Admin access required', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to remove this message from limbo?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/admin/message/${messageId}/limbo/remove`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Access-Key': this.currentUser.accessKey
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast(data.message || 'Message removed from limbo', 'success');
+                // Reload the current forum to refresh the view
+                if (this.currentForum) {
+                    this.loadForum(this.currentForum.implementationKey, this.currentForum.subpage);
+                }
+            } else {
+                this.showToast(data.message || 'Failed to remove message from limbo', 'error');
+            }
+        } catch (error) {
+            console.error('Admin message remove from limbo error:', error);
             this.showToast('Network error occurred', 'error');
         }
     }

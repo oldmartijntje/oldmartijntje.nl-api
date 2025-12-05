@@ -10,6 +10,8 @@ const {
     postMessage,
     deleteMessage,
     adminDeleteMessage,
+    adminMessageAddToLimbo,
+    adminMessageRemoveFromLimbo,
     adminAddToLimbo,
     adminRemoveFromLimbo,
     adminDeleteAccount,
@@ -34,6 +36,10 @@ quartzforumsRouter.put("/account/design", authenticateAccessKey, updateUserDesig
 quartzforumsRouter.post("/message", validateImplementationKey, authenticateAccessKey, postMessage);
 quartzforumsRouter.delete("/message/:messageId", authenticateAccessKey, deleteMessage);
 quartzforumsRouter.delete("/admin/message/:messageId", authenticateAccessKey, adminDeleteMessage);
+
+// Admin Message Management Routes
+quartzforumsRouter.put("/admin/message/:messageId/limbo/add", authenticateAccessKey, adminMessageAddToLimbo);
+quartzforumsRouter.put("/admin/message/:messageId/limbo/remove", authenticateAccessKey, adminMessageRemoveFromLimbo);
 
 // Admin User Management Routes
 quartzforumsRouter.put("/admin/user/:userId/limbo/add", authenticateAccessKey, adminAddToLimbo);
