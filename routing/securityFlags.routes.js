@@ -13,6 +13,13 @@ securityFlagsRouter.use(express.json());
 
 // Get security flags with filtering
 // GET /security-flags?sessionToken=xxx&riskLevel=3&resolved=false&limit=20&skip=0
+// Text filtering options:
+// &descriptionFilter=xxx - Filter by description content
+// &userFilter=xxx - Filter by user names (username/quartzforum name)
+// &ipFilter=xxx - Filter by IP address content
+// &fileFilter=xxx - Filter by filename content
+// &additionalDataFilter=xxx - Filter by additional data content
+// &dateTimeFilter=xxx - Filter by date/time content (format: YYYY-MM-DD HH:MM:SS)
 securityFlagsRouter.get('/', async (req, res) => {
     try {
         const sessionTokenString = req.query.sessionToken;

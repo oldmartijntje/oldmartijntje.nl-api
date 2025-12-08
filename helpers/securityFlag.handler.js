@@ -191,6 +191,12 @@ class SecurityFlagHandler {
      * @param {boolean} [filters.resolved] - Filter by resolved status
      * @param {Date} [filters.dateFrom] - Filter from date
      * @param {Date} [filters.dateTo] - Filter to date
+     * @param {string} [filters.descriptionFilter] - Text filter for description
+     * @param {string} [filters.userFilter] - Text filter for user fields
+     * @param {string} [filters.ipFilter] - Text filter for IP address
+     * @param {string} [filters.fileFilter] - Text filter for file name
+     * @param {string} [filters.additionalDataFilter] - Text filter for additional data
+     * @param {string} [filters.dateTimeFilter] - Text filter for date/time
      * @param {number} [limit=50] - Limit results
      * @param {number} [skip=0] - Skip results for pagination
      * @returns {Promise<Array>} Array of security flags
@@ -199,10 +205,24 @@ class SecurityFlagHandler {
         try {
             const query = {};
 
+            // Existing filters
             if (filters.riskLevel) query.riskLevel = filters.riskLevel;
             if (filters.ipAddress) query.ipAddress = filters.ipAddress;
             if (filters.resolved !== undefined) query.resolved = filters.resolved;
             if (filters.fileName) query.fileName = new RegExp(filters.fileName, 'i');
+
+            // Text-based filters using regex for case-insensitive search
+            if (filters.descriptionFilter) {
+                query.description = new RegExp(filters.descriptionFilter, 'i');
+            }
+            
+            if (filters.ipFilter) {
+                query.ipAddress = new RegExp(filters.ipFilter, 'i');
+            }
+            
+            if (filters.fileFilter) {
+                query.fileName = new RegExp(filters.fileFilter, 'i');
+            }
 
             if (filters.dateFrom || filters.dateTo) {
                 query.dateTime = {};
@@ -210,14 +230,127 @@ class SecurityFlagHandler {
                 if (filters.dateTo) query.dateTime.$lte = filters.dateTo;
             }
 
-            return await securityFlags
-                .find(query)
-                .sort({ dateTime: -1 })
-                .limit(limit)
-                .skip(skip)
-                .populate('userId', 'username')
-                .populate('quartzUserId', 'name')
-                .populate('resolvedBy', 'username');
+            let aggregationPipeline = [];
+            
+            // Build the initial match stage
+            if (Object.keys(query).length > 0) {
+                aggregationPipeline.push({ $match: query });
+            }
+            
+            // Populate user references
+            aggregationPipeline.push(
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'userId',
+                        foreignField: '_id',
+                        as: 'userId'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'quartzforumaccounts',
+                        localField: 'quartzUserId',
+                        foreignField: '_id',
+                        as: 'quartzUserId'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'resolvedBy',
+                        foreignField: '_id',
+                        as: 'resolvedBy'
+                    }
+                }
+            );
+
+            // Add fields to make searching easier
+            aggregationPipeline.push({
+                $addFields: {
+                    userText: {
+                        $concat: [
+                            { $ifNull: [{ $arrayElemAt: ["$userId.username", 0] }, ""] },
+                            " ",
+                            { $ifNull: [{ $arrayElemAt: ["$quartzUserId.name", 0] }, ""] }
+                        ]
+                    },
+                    additionalDataText: {
+                        $function: {
+                            body: function(obj) {
+                                if (!obj || typeof obj !== 'object') return '';
+                                return JSON.stringify(obj).toLowerCase();
+                            },
+                            args: ["$additionalData"],
+                            lang: "js"
+                        }
+                    },
+                    dateTimeText: {
+                        $dateToString: {
+                            format: "%Y-%m-%d %H:%M:%S",
+                            date: "$dateTime"
+                        }
+                    }
+                }
+            });
+
+            // Apply text filters
+            if (filters.userFilter) {
+                aggregationPipeline.push({
+                    $match: {
+                        userText: new RegExp(filters.userFilter, 'i')
+                    }
+                });
+            }
+
+            if (filters.additionalDataFilter) {
+                aggregationPipeline.push({
+                    $match: {
+                        additionalDataText: new RegExp(filters.additionalDataFilter, 'i')
+                    }
+                });
+            }
+
+            if (filters.dateTimeFilter) {
+                aggregationPipeline.push({
+                    $match: {
+                        dateTimeText: new RegExp(filters.dateTimeFilter, 'i')
+                    }
+                });
+            }
+
+            // Sort, skip, and limit
+            aggregationPipeline.push(
+                { $sort: { dateTime: -1 } },
+                { $skip: skip },
+                { $limit: limit }
+            );
+
+            // Clean up the output
+            aggregationPipeline.push({
+                $project: {
+                    ipAddress: 1,
+                    riskLevel: 1,
+                    dateTime: 1,
+                    description: 1,
+                    fileName: 1,
+                    userAgent: 1,
+                    sessionToken: 1,
+                    userId: { $arrayElemAt: ["$userId", 0] },
+                    quartzUserId: { $arrayElemAt: ["$quartzUserId", 0] },
+                    implementationKey: 1,
+                    requestMethod: 1,
+                    requestUrl: 1,
+                    requestHeaders: 1,
+                    additionalData: 1,
+                    resolved: 1,
+                    resolvedBy: { $arrayElemAt: ["$resolvedBy", 0] },
+                    resolvedAt: 1,
+                    resolvedNotes: 1
+                }
+            });
+
+            return await securityFlags.aggregate(aggregationPipeline);
         } catch (error) {
             console.error('Error getting security flags:', error);
             throw error;

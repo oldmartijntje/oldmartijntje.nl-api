@@ -12,6 +12,13 @@ async function getSecurityFlags(req, res) {
             dateFrom,
             dateTo,
             fileName,
+            // Text filtering parameters
+            descriptionFilter,
+            userFilter,
+            ipFilter,
+            fileFilter,
+            additionalDataFilter,
+            dateTimeFilter,
             limit = 50,
             skip = 0
         } = req.query;
@@ -23,6 +30,14 @@ async function getSecurityFlags(req, res) {
         if (fileName) filters.fileName = fileName;
         if (dateFrom) filters.dateFrom = new Date(dateFrom);
         if (dateTo) filters.dateTo = new Date(dateTo);
+        
+        // Add text filtering
+        if (descriptionFilter) filters.descriptionFilter = descriptionFilter;
+        if (userFilter) filters.userFilter = userFilter;
+        if (ipFilter) filters.ipFilter = ipFilter;
+        if (fileFilter) filters.fileFilter = fileFilter;
+        if (additionalDataFilter) filters.additionalDataFilter = additionalDataFilter;
+        if (dateTimeFilter) filters.dateTimeFilter = dateTimeFilter;
 
         const flags = await SecurityFlagHandler.getSecurityFlags(
             filters,
@@ -36,7 +51,8 @@ async function getSecurityFlags(req, res) {
             pagination: {
                 limit: parseInt(limit),
                 skip: parseInt(skip)
-            }
+            },
+            appliedFilters: filters
         });
     } catch (error) {
         console.error('Error getting security flags:', error);
