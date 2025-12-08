@@ -7,6 +7,7 @@ async function getSecurityFlags(req, res) {
     try {
         const {
             riskLevel,
+            minRiskLevel,
             ipAddress,
             resolved,
             dateFrom,
@@ -25,6 +26,7 @@ async function getSecurityFlags(req, res) {
 
         const filters = {};
         if (riskLevel) filters.riskLevel = parseInt(riskLevel);
+        if (minRiskLevel !== undefined) filters.minRiskLevel = minRiskLevel === 'true';
         if (ipAddress) filters.ipAddress = ipAddress;
         if (resolved !== undefined) filters.resolved = resolved === 'true';
         if (fileName) filters.fileName = fileName;

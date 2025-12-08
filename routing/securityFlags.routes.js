@@ -13,6 +13,8 @@ securityFlagsRouter.use(express.json());
 
 // Get security flags with filtering
 // GET /security-flags?sessionToken=xxx&riskLevel=3&resolved=false&limit=20&skip=0
+// Additional filtering options:
+// &minRiskLevel=true - Treat riskLevel as minimum value instead of exact match
 // Text filtering options:
 // &descriptionFilter=xxx - Filter by description content
 // &userFilter=xxx - Filter by user names (username/quartzforum name)

@@ -206,7 +206,13 @@ class SecurityFlagHandler {
             const query = {};
 
             // Existing filters
-            if (filters.riskLevel) query.riskLevel = filters.riskLevel;
+            if (filters.riskLevel) {
+                if (filters.minRiskLevel) {
+                    query.riskLevel = { $gte: filters.riskLevel };
+                } else {
+                    query.riskLevel = filters.riskLevel;
+                }
+            }
             if (filters.ipAddress) query.ipAddress = filters.ipAddress;
             if (filters.resolved !== undefined) query.resolved = filters.resolved;
             if (filters.fileName) query.fileName = new RegExp(filters.fileName, 'i');
