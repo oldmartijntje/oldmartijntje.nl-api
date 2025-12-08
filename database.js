@@ -10,6 +10,7 @@ const { implementationKeyJsonSchema } = require("./schemas/implementationKey.sch
 const { quartzForumAccountJsonSchema } = require("./schemas/quartzForumAccount.schema");
 const { quartzForumForumJsonSchema } = require("./schemas/quartzForumForum.schema");
 const { quartzForumMessageJsonSchema } = require("./schemas/quartzForumMessage.schema");
+const { securityFlagJsonSchema } = require("./schemas/securityFlag.schema");
 
 // This has to be done for all collections that we want to have JSON schema validation on
 const sessionTokenSchema = new mongoose.Schema(sessionTokenJsonSchema);
@@ -60,6 +61,9 @@ const quartzForumForums = mongoose.model('QuartzForumForum', quartzForumForumSch
 const quartzForumMessageSchema = new mongoose.Schema(quartzForumMessageJsonSchema);
 const quartzForumMessages = mongoose.model('QuartzForumMessage', quartzForumMessageSchema);
 
+const securityFlagSchema = new mongoose.Schema(securityFlagJsonSchema);
+const securityFlags = mongoose.model('SecurityFlag', securityFlagSchema);
+
 async function connectToDatabase(uri) {
     try {
         const mongoose = require('mongoose');
@@ -82,5 +86,6 @@ module.exports = {
     implementationKeys: implementationKeys,
     quartzForumAccounts: quartzForumAccounts,
     quartzForumForums: quartzForumForums,
-    quartzForumMessages: quartzForumMessages
+    quartzForumMessages: quartzForumMessages,
+    securityFlags: securityFlags
 };

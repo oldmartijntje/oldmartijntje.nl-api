@@ -1,4 +1,5 @@
 const { quartzForumAccounts, implementationKeys } = require('../database.js');
+const { SecurityFlagHandler } = require('../helpers/securityFlag.handler.js');
 
 /**
  * Middleware to authenticate QuartzForum users via access key
@@ -52,6 +53,23 @@ async function validateImplementationKey(req, res, next) {
         const keyData = await implementationKeys.findOne({ implementationKey: implementationKey });
 
         if (!keyData) {
+            // Create security flag for invalid implementation key attempt
+            try {
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: 2,
+                    description: 'Implementation key not found - possible system testing attempt',
+                    fileName: 'quartzforum.auth.js',
+                    implementationKey: implementationKey,
+                    additionalData: {
+                        attemptedKey: implementationKey,
+                        endpoint: req.originalUrl || req.url
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
+
             return res.status(403).json({ message: 'Implementation key not found' });
         }
 

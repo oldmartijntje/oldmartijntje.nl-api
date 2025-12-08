@@ -1,4 +1,5 @@
 const { UserHandler } = require("./user.handler");
+const { SecurityFlagHandler } = require("../helpers/securityFlag.handler.js");
 const mongodb = require('mongodb');
 
 const allowedCharactersUsername = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.🌵✨🗿🫃🏽🔰";
@@ -273,6 +274,25 @@ class UserAuthenticator {
             return false;
         }
         this.#user = this.#userHandlerInstance.getUser()
+        if (this.#user.clearanceLevel > 4) {
+            // Create security flag for high-privilege user login
+            try {
+                await SecurityFlagHandler.createSecurityFlag({
+                    ipAddress: 'unknown', // IP not available in this context
+                    riskLevel: 3,
+                    description: `User with high clearance level (${this.#user.clearanceLevel}) logged in`,
+                    fileName: 'user.authenticator.js',
+                    userId: this.#user._id,
+                    additionalData: {
+                        username: this.#user.username,
+                        clearanceLevel: this.#user.clearanceLevel,
+                        loginMethod: 'password'
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
+        }
         this.#authorise();
         const sessionToken = await this.#userHandlerInstance.createSingularSessionToken();
         this.#sessionToken = sessionToken;

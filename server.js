@@ -12,7 +12,8 @@ const { loginRouter } = require("./authentication/login.routes.js");
 const { jsonRouter } = require("./routing/json.routes.js");
 const { registerRouter } = require("./routing/register.routes.js");
 const { projectDataRouter } = require("./routing/projectData.routes.js");
-const { quartzforumsRouter } = require("./routing/quartzforums.routes.js")
+const { quartzforumsRouter } = require("./routing/quartzforums.routes.js");
+const { securityFlagsRouter } = require("./routing/securityFlags.routes.js");
 
 const MONGO_URI = process.env.DB_URL;
 const port = process.env.API_PORT
@@ -56,6 +57,7 @@ connect(MONGO_URI)
         app.use("/test", testRouter);
         app.use("/projectData", projectDataRouter);
         app.use("/forums", quartzforumsRouter);
+        app.use("/security-flags", securityFlagsRouter);
 
         // Serve QuartzForums frontend
         app.use('/forums', express.static(path.join(__dirname, 'homepage/quartzforums')));
