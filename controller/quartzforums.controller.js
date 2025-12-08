@@ -4,6 +4,7 @@ const { quartzForumAccounts, quartzForumForums, quartzForumMessages, implementat
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { checkAccountCreationLimit, markAccountCreation, checkUserMessageLimit, markUserMessage, checkUserDesignLimit, markUserDesignUpdate } = require('../helpers/rateLimitUtils.js');
+const { SecurityFlagHandler } = require('../helpers/securityFlag.handler.js');
 
 // Helper function to strip HTML tags from text
 function stripHtml(text) {
@@ -132,6 +133,23 @@ async function createAccount(req, res) {
         let { username, password } = req.body;
 
         if (!username || !password) {
+            // Create security flag for invalid account creation attempt
+            try {
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: 3,
+                    description: `QuartzForum account creation attempt with missing credentials`,
+                    fileName: 'quartzforums.controller.js',
+                    additionalData: {
+                        username: username || '[MISSING]',
+                        password: password ? '[PROVIDED]' : '[MISSING]',
+                        endpoint: '/forums/account/register',
+                        action: 'account_creation_invalid_data'
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
             return res.status(400).json({ message: 'Username and password are required' });
         }
 
@@ -139,6 +157,23 @@ async function createAccount(req, res) {
         const clientIp = req.ip || req.connection.remoteAddress;
         const hasCreatedAccount = await checkAccountCreationLimit(clientIp);
         if (hasCreatedAccount) {
+            // Create security flag for rate limit violation
+            try {
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: 2,
+                    description: `QuartzForum account creation rate limit violation`,
+                    fileName: 'quartzforums.controller.js',
+                    additionalData: {
+                        username: username,
+                        endpoint: '/forums/account/register',
+                        action: 'account_creation_rate_limit_violation',
+                        reason: 'multiple_accounts_per_day'
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
             return res.status(429).json({ message: 'You can only create one account per IP address per day' });
         }
 
@@ -186,6 +221,27 @@ async function createAccount(req, res) {
         });
 
         await newUser.save();
+
+        // Create security flag for successful account creation
+        try {
+            await SecurityFlagHandler.createSecurityFlag({
+                req: req,
+                riskLevel: 2,
+                description: `QuartzForum account created successfully for username: ${username}${hasOffensiveUsername ? ' (flagged for profanity)' : ''}`,
+                fileName: 'quartzforums.controller.js',
+                quartzUserId: newUser._id,
+                additionalData: {
+                    username: username,
+                    accountId: newUser._id.toString(),
+                    endpoint: '/forums/account/register',
+                    action: 'account_creation_success',
+                    limboStatus: hasOffensiveUsername,
+                    profanityDetected: hasOffensiveUsername
+                }
+            });
+        } catch (flagError) {
+            console.error('Error creating security flag:', flagError);
+        }
 
         // Mark that this IP has created an account
         await markAccountCreation(clientIp);
@@ -525,6 +581,26 @@ async function deleteMessage(req, res) {
         // Set accountId to null instead of deleting
         message.accountId = null;
         await message.save();
+
+        // Create security flag for message deletion
+        try {
+            await SecurityFlagHandler.createSecurityFlag({
+                req: req,
+                riskLevel: 1,
+                description: `QuartzForum message deleted by user`,
+                fileName: 'quartzforums.controller.js',
+                quartzUserId: user._id,
+                additionalData: {
+                    username: user.name,
+                    messageId: messageId,
+                    endpoint: '/forums/message/:messageId',
+                    action: 'message_delete_success',
+                    messageContent: '[DELETED]'
+                }
+            });
+        } catch (flagError) {
+            console.error('Error creating security flag:', flagError);
+        }
 
         res.status(200).json({
             message: 'Message deleted successfully'

@@ -127,7 +127,7 @@ class UserAuthenticator {
      * }
      * ```
      */
-    async authenticateByCredentialsWithResponseHandling(username, password, res, requiredList = {}) {
+    async authenticateByCredentialsWithResponseHandling(username, password, res, requiredList = {}, req = null) {
         requiredList["username"] = username;
         requiredList["password"] = password;
         const message = this.requiredListFormatter(requiredList);
@@ -135,7 +135,7 @@ class UserAuthenticator {
             res.status(400).send({ "message": message });
             return false;
         }
-        const success = await this.authenticateByLogin(username, password)
+        const success = await this.authenticateByLogin(username, password, req)
         if (!success) {
             res.status(401).send({ "message": "Invalid username and password combination." });
             return false;
@@ -264,7 +264,7 @@ class UserAuthenticator {
      * @param password
      * @returns `boolean` - wether it's a valid login.
      */
-    async authenticateByLogin(username, password) {
+    async authenticateByLogin(username, password, req = null) {
         if (!await this.#userHandlerInstance.findUserByUsername(username)) {
             this.#unAuthorise();
             return false;
@@ -277,9 +277,8 @@ class UserAuthenticator {
         if (this.#user.clearanceLevel > 4) {
             // Create security flag for high-privilege user login
             try {
-                await SecurityFlagHandler.createSecurityFlag({
-                    ipAddress: 'unknown', // IP not available in this context
-                    riskLevel: 3,
+                let data = {
+                    riskLevel: 4,
                     description: `User with high clearance level (${this.#user.clearanceLevel}) logged in`,
                     fileName: 'user.authenticator.js',
                     userId: this.#user._id,
@@ -288,7 +287,13 @@ class UserAuthenticator {
                         clearanceLevel: this.#user.clearanceLevel,
                         loginMethod: 'password'
                     }
-                });
+                }
+                if (req != null) {
+                    data["req"] = req
+                } else {
+                    data['ipAddress'] = 'unknown'
+                }
+                await SecurityFlagHandler.createSecurityFlag();
             } catch (flagError) {
                 console.error('Error creating security flag:', flagError);
             }

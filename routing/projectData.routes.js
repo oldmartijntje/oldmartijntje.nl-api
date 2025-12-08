@@ -92,7 +92,7 @@ projectDataRouter.delete("/", async (req, res) => {
                 const user = auth.getUserData();
                 await SecurityFlagHandler.createSecurityFlag({
                     req: req,
-                    riskLevel: 4,
+                    riskLevel: 3,
                     description: `User attempted level 6 operation with insufficient clearance (level ${user.clearanceLevel})`,
                     fileName: 'projectData.routes.js',
                     userId: user._id,
@@ -182,7 +182,7 @@ projectDataRouter.post("/", async (_req, res) => {
 
                     await SecurityFlagHandler.createSecurityFlag({
                         req: _req,
-                        riskLevel: missingLevel5 ? 4 : 3,
+                        riskLevel: missingLevel5 ? 3 : 1,
                         description: `User attempted project data creation with insufficient clearance (user: ${user.clearanceLevel}, required: ${Math.max(5, clearanceLevelNeeded)})`,
                         fileName: 'projectData.routes.js',
                         userId: user._id,
@@ -290,7 +290,7 @@ projectDataRouter.put("/", async (req, res) => {
 
                 await SecurityFlagHandler.createSecurityFlag({
                     req: req,
-                    riskLevel: missingLevel5 ? 4 : 3,
+                    riskLevel: missingLevel5 ? 3 : 1,
                     description: `User attempted project data update with insufficient clearance (user: ${user.clearanceLevel}, required: ${Math.max(5, clearanceLevelNeeded)})`,
                     fileName: 'projectData.routes.js',
                     userId: user._id,

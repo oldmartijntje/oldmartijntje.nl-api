@@ -57,7 +57,7 @@ async function validateImplementationKey(req, res, next) {
             try {
                 await SecurityFlagHandler.createSecurityFlag({
                     req: req,
-                    riskLevel: 2,
+                    riskLevel: 3,
                     description: 'Implementation key not found - possible system testing attempt',
                     fileName: 'quartzforum.auth.js',
                     implementationKey: implementationKey,

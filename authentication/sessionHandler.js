@@ -45,7 +45,7 @@ class SessionHandler {
                     try {
                         await SecurityFlagHandler.createSecurityFlag({
                             req: req,
-                            riskLevel: 5,
+                            riskLevel: 4,
                             description: `IP blacklisted due to severe rate limit violation (${session.calls} calls)`,
                             fileName: 'sessionHandler.js',
                             additionalData: {
@@ -64,7 +64,7 @@ class SessionHandler {
                     try {
                         await SecurityFlagHandler.createSecurityFlag({
                             req: req,
-                            riskLevel: 2,
+                            riskLevel: 3,
                             description: `IP exceeded rate limit (${session.calls}/${limit} calls per minute)`,
                             fileName: 'sessionHandler.js',
                             additionalData: {

@@ -3,6 +3,7 @@ const { SessionHandler } = require("../authentication/sessionHandler");
 const { displayItems } = require("../database");
 const settings = require('../settings.json');
 const { UserAuthenticator } = require("../authentication/user.authenticator");
+const { SecurityFlagHandler } = require("../helpers/securityFlag.handler.js");
 
 const jsonRouter = express.Router();
 jsonRouter.use(express.json());
@@ -62,9 +63,53 @@ jsonRouter.delete("/displayItems", async (req, res) => {
             return;
         }
         if (!auth.checkAuthorityLevel(6)) {
+            // Create security flag for insufficient authorization attempt
+            try {
+                const user = auth.getUserData();
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: 3,
+                    description: `User attempted display item deletion with insufficient clearance (level ${user.clearanceLevel})`,
+                    fileName: 'json.routes.js',
+                    userId: user._id,
+                    additionalData: {
+                        username: user.username,
+                        userClearanceLevel: user.clearanceLevel,
+                        requiredClearanceLevel: 6,
+                        attemptedAction: 'delete_display_item',
+                        displayItemId: id,
+                        endpoint: '/getData/displayItems',
+                        possibleFrontendBypass: true
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
         }
+        
+        // Create security flag for display item deletion attempt
+        try {
+            const user = auth.getUserData();
+            await SecurityFlagHandler.createSecurityFlag({
+                req: req,
+                riskLevel: 3,
+                description: `User deleted display item (ID: ${id})`,
+                fileName: 'json.routes.js',
+                userId: user._id,
+                additionalData: {
+                    username: user.username,
+                    clearanceLevel: user.clearanceLevel,
+                    action: 'delete_display_item_success',
+                    displayItemId: id,
+                    endpoint: '/getData/displayItems'
+                }
+            });
+        } catch (flagError) {
+            console.error('Error creating security flag:', flagError);
+        }
+        
         displayItems.deleteOne({ _id: id }).then((result) => {
             if (result.deletedCount == 0) {
                 return res.status(404).send({ message: "Project not found" });
@@ -139,9 +184,55 @@ jsonRouter.post("/displayItems", async (_req, res) => {
                 return;
             }
             if (!auth.checkAuthorityLevel(5)) {
+                // Create security flag for insufficient authorization attempt
+                try {
+                    const user = auth.getUserData();
+                    await SecurityFlagHandler.createSecurityFlag({
+                        req: _req,
+                        riskLevel: 3,
+                        description: `User attempted display item creation with insufficient clearance (level ${user.clearanceLevel})`,
+                        fileName: 'json.routes.js',
+                        userId: user._id,
+                        additionalData: {
+                            username: user.username,
+                            userClearanceLevel: user.clearanceLevel,
+                            requiredClearanceLevel: 5,
+                            attemptedAction: 'create_display_item',
+                            endpoint: '/getData/displayItems',
+                            itemTitle: data.title,
+                            itemType: data.displayItemType,
+                            possibleFrontendBypass: true
+                        }
+                    });
+                } catch (flagError) {
+                    console.error('Error creating security flag:', flagError);
+                }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
+            
+            // Create security flag for display item creation attempt
+            try {
+                const user = auth.getUserData();
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: _req,
+                    riskLevel: 2,
+                    description: `User created display item: ${data.title}`,
+                    fileName: 'json.routes.js',
+                    userId: user._id,
+                    additionalData: {
+                        username: user.username,
+                        clearanceLevel: user.clearanceLevel,
+                        action: 'create_display_item_success',
+                        itemTitle: data.title,
+                        itemType: data.displayItemType,
+                        endpoint: '/getData/displayItems'
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
+            
             const project = new displayItems(data);
             project.save().then((result) => {
                 res.status(200).send({ message: "Project created", project: result });
@@ -224,9 +315,55 @@ jsonRouter.put("/displayItems", async (req, res) => {
             return;
         }
         if (!auth.checkAuthorityLevel(5)) {
+            // Create security flag for insufficient authorization attempt
+            try {
+                const user = auth.getUserData();
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: 3,
+                    description: `User attempted display item update with insufficient clearance (level ${user.clearanceLevel})`,
+                    fileName: 'json.routes.js',
+                    userId: user._id,
+                    additionalData: {
+                        username: user.username,
+                        userClearanceLevel: user.clearanceLevel,
+                        requiredClearanceLevel: 5,
+                        attemptedAction: 'update_display_item',
+                        displayItemId: data._id,
+                        itemTitle: data.title,
+                        endpoint: req.originalUrl || req.url,
+                        possibleFrontendBypass: true
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
         }
+        
+        // Create security flag for display item update attempt
+        try {
+            const user = auth.getUserData();
+            await SecurityFlagHandler.createSecurityFlag({
+                req: req,
+                riskLevel: 2,
+                description: `User updated display item: ${data.title || data._id}`,
+                fileName: 'json.routes.js',
+                userId: user._id,
+                additionalData: {
+                    username: user.username,
+                    clearanceLevel: user.clearanceLevel,
+                    action: 'update_display_item_success',
+                    displayItemId: data._id,
+                    itemTitle: data.title,
+                    endpoint: req.originalUrl || req.url
+                }
+            });
+        } catch (flagError) {
+            console.error('Error creating security flag:', flagError);
+        }
+        
         displayItems.updateOne({ _id: data._id }, data).then((result) => {
             if (!result) {
                 return res.status(404).send({ message: "Project not found" });
