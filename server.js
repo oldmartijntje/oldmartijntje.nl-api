@@ -111,7 +111,7 @@ connect(MONGO_URI)
                     additionalData: {
                         port: port,
                         startupTime: new Date().toISOString(),
-                        environment: process.env.NODE_ENV || 'development',
+                        environment: process.env.NODE_ENV || 'undefined',
                         startupReason: 'server initialization'
                     }
                 }).catch(console.error);
