@@ -1,5 +1,6 @@
 const express = require("express");
 const { SessionHandler } = require("../authentication/sessionHandler");
+const { SecurityFlagHandler } = require("../helpers/securityFlag.handler.js");
 const { displayItems, projectData } = require("../database");
 const settings = require('../settings.json');
 const { UserAuthenticator } = require("../authentication/user.authenticator");
@@ -86,8 +87,51 @@ projectDataRouter.delete("/", async (req, res) => {
             return;
         }
         if (!auth.checkAuthorityLevel(6)) {
+            // Create security flag for insufficient authorization attempt
+            try {
+                const user = auth.getUserData();
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: 4,
+                    description: `User attempted level 6 operation with insufficient clearance (level ${user.clearanceLevel})`,
+                    fileName: 'projectData.routes.js',
+                    userId: user._id,
+                    additionalData: {
+                        username: user.username,
+                        userClearanceLevel: user.clearanceLevel,
+                        requiredClearanceLevel: 6,
+                        attemptedAction: 'delete_project_data',
+                        projectDataId: id,
+                        endpoint: req.originalUrl || req.url,
+                        possibleFrontendBypass: true
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
+        }
+
+        // Create security flag for high-level project data deletion
+        try {
+            const user = auth.getUserData();
+            await SecurityFlagHandler.createSecurityFlag({
+                req: req,
+                riskLevel: 3,
+                description: `User with clearance level 6+ deleted project data (ID: ${id})`,
+                fileName: 'projectData.routes.js',
+                userId: user._id,
+                additionalData: {
+                    username: user.username,
+                    clearanceLevel: user.clearanceLevel,
+                    action: 'delete_project_data',
+                    projectDataId: id,
+                    endpoint: '/projectData/'
+                }
+            });
+        } catch (flagError) {
+            console.error('Error creating security flag:', flagError);
         }
         projectData.deleteOne({ _id: id }).then((result) => {
             if (result.deletedCount == 0) {
@@ -130,8 +174,60 @@ projectDataRouter.post("/", async (_req, res) => {
                 return;
             }
             if (!auth.checkAuthorityLevel(5) || !auth.checkAuthorityLevel(clearanceLevelNeeded)) {
+                // Create security flag for insufficient authorization attempt
+                try {
+                    const user = auth.getUserData();
+                    const missingLevel5 = !auth.checkAuthorityLevel(5);
+                    const missingClearance = !auth.checkAuthorityLevel(clearanceLevelNeeded);
+
+                    await SecurityFlagHandler.createSecurityFlag({
+                        req: _req,
+                        riskLevel: missingLevel5 ? 4 : 3,
+                        description: `User attempted project data creation with insufficient clearance (user: ${user.clearanceLevel}, required: ${Math.max(5, clearanceLevelNeeded)})`,
+                        fileName: 'projectData.routes.js',
+                        userId: user._id,
+                        additionalData: {
+                            username: user.username,
+                            userClearanceLevel: user.clearanceLevel,
+                            requiredMinimumLevel: 5,
+                            requiredClearanceLevel: clearanceLevelNeeded,
+                            attemptedAction: 'create_project_data',
+                            projectId: projectId,
+                            endpoint: _req.originalUrl || _req.url,
+                            missingLevel5: missingLevel5,
+                            missingDataClearance: missingClearance,
+                            possibleFrontendBypass: true
+                        }
+                    });
+                } catch (flagError) {
+                    console.error('Error creating security flag:', flagError);
+                }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
+            }
+
+            // Create security flag for high-clearance project data creation
+            if (clearanceLevelNeeded >= 4) {
+                try {
+                    const user = auth.getUserData();
+                    await SecurityFlagHandler.createSecurityFlag({
+                        req: _req,
+                        riskLevel: 2,
+                        description: `User created project data with high clearance requirement (level ${clearanceLevelNeeded})`,
+                        fileName: 'projectData.routes.js',
+                        userId: user._id,
+                        additionalData: {
+                            username: user.username,
+                            userClearanceLevel: user.clearanceLevel,
+                            requiredClearanceLevel: clearanceLevelNeeded,
+                            action: 'create_project_data',
+                            projectId: projectId,
+                            endpoint: '/projectData/'
+                        }
+                    });
+                } catch (flagError) {
+                    console.error('Error creating security flag:', flagError);
+                }
             }
             const projectDataData = new projectData(mergdedData);
             projectDataData.save().then((result) => {
@@ -186,8 +282,62 @@ projectDataRouter.put("/", async (req, res) => {
             return;
         }
         if (!auth.checkAuthorityLevel(5) || !auth.checkAuthorityLevel(clearanceLevelNeeded)) {
+            // Create security flag for insufficient authorization attempt
+            try {
+                const user = auth.getUserData();
+                const missingLevel5 = !auth.checkAuthorityLevel(5);
+                const missingClearance = !auth.checkAuthorityLevel(clearanceLevelNeeded);
+
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: missingLevel5 ? 4 : 3,
+                    description: `User attempted project data update with insufficient clearance (user: ${user.clearanceLevel}, required: ${Math.max(5, clearanceLevelNeeded)})`,
+                    fileName: 'projectData.routes.js',
+                    userId: user._id,
+                    additionalData: {
+                        username: user.username,
+                        userClearanceLevel: user.clearanceLevel,
+                        requiredMinimumLevel: 5,
+                        requiredClearanceLevel: clearanceLevelNeeded,
+                        attemptedAction: 'update_project_data',
+                        projectId: projectId,
+                        projectDataId: _id,
+                        endpoint: req.originalUrl || req.url,
+                        missingLevel5: missingLevel5,
+                        missingDataClearance: missingClearance,
+                        possibleFrontendBypass: true
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
+        }
+
+        // Create security flag for high-clearance project data updates
+        if (clearanceLevelNeeded >= 4) {
+            try {
+                const user = auth.getUserData();
+                await SecurityFlagHandler.createSecurityFlag({
+                    req: req,
+                    riskLevel: 2,
+                    description: `User updated project data with high clearance requirement (level ${clearanceLevelNeeded})`,
+                    fileName: 'projectData.routes.js',
+                    userId: user._id,
+                    additionalData: {
+                        username: user.username,
+                        userClearanceLevel: user.clearanceLevel,
+                        requiredClearanceLevel: clearanceLevelNeeded,
+                        action: 'update_project_data',
+                        projectId: projectId,
+                        projectDataId: _id,
+                        endpoint: '/projectData/'
+                    }
+                });
+            } catch (flagError) {
+                console.error('Error creating security flag:', flagError);
+            }
         }
         projectData.updateOne({ _id: _id }, mergdedData).then((result) => {
             if (!result) {
