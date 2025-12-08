@@ -5,6 +5,7 @@ const expressStatic = require('express').static;
 const { connect, users, sessionTokens, implementationKeys, quartzForumAccounts, quartzForumForums, quartzForumMessages } = require("./database.js");
 const { exit } = require("process");
 const settings = require("./settings");
+const { requestLogger } = require("./helpers/requestLogger.js");
 require('dotenv').config();
 
 const { loginRouter } = require("./authentication/login.routes.js");
@@ -43,6 +44,10 @@ connect(MONGO_URI)
     .then(async () => {
         const app = express();
         app.set('trust proxy', true);
+        
+        // Add request logging middleware (before other middlewares)
+        app.use(requestLogger.middleware());
+        
         app.use(cors());
         app.use(expressStatic(staticHtmlPath));
         app.use("/login", loginRouter);
