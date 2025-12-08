@@ -84,14 +84,13 @@ async function resolveSecurityFlag(req, res) {
         const { flagId } = req.params;
         const { resolvedNotes } = req.body;
 
-        // You would need to get the resolving user's ID from authentication
-        // For now, using a placeholder - replace with actual user authentication
-        const resolvedByUserId = req.user?.id || req.body.resolvedByUserId;
+        // Get the resolving user's ID from the authenticated session
+        const resolvedByUserId = req.resolvedByUserId;
 
         if (!resolvedByUserId) {
-            return res.status(400).json({
+            return res.status(401).json({
                 success: false,
-                message: 'Resolver user ID is required'
+                message: 'Authentication required to resolve security flags'
             });
         }
 

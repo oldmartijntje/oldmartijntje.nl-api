@@ -59,26 +59,28 @@ securityFlagsRouter.get('/', async (req, res) => {
 
 // Resolve a security flag
 // PUT /security-flags/:flagId/resolve
-// securityFlagsRouter.put('/:flagId/resolve', async (req, res) => {
-//     try {
-//         const sessionTokenString = req.body.sessionToken;
-//         const sessionH = new SessionHandler();
-//         sessionH.rateLimitMiddleware(req, res, async () => {
-//             const auth = new UserAuthenticator();
-//             const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, false, res);
-//             if (!authenticationSuccess) {
-//                 return;
-//             }
-//             if (!auth.checkAuthorityLevel(5)) {
-//                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
-//                 return;
-//             }
-//             await resolveSecurityFlag(req, res);
-//         });
-//     } catch (error) {
-//         res.status(500).send({ "message": error.message });
-//     }
-// });
+securityFlagsRouter.put('/:flagId/resolve', async (req, res) => {
+    try {
+        const sessionTokenString = req.body.sessionToken;
+        const sessionH = new SessionHandler();
+        sessionH.rateLimitMiddleware(req, res, async () => {
+            const auth = new UserAuthenticator();
+            const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, false, res);
+            if (!authenticationSuccess) {
+                return;
+            }
+            if (!auth.checkAuthorityLevel(5)) {
+                res.status(403).send({ "message": "You do not have the required clearance level for this action." });
+                return;
+            }
+            // Pass the authenticated user's ID to the controller
+            req.resolvedByUserId = auth.getUserData()._id;
+            await resolveSecurityFlag(req, res);
+        });
+    } catch (error) {
+        res.status(500).send({ "message": error.message });
+    }
+});
 
 // Create a manual security flag (for testing/manual reporting)
 // POST /security-flags
