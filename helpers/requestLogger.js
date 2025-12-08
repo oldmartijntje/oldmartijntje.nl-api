@@ -18,10 +18,10 @@ class RequestLogger {
         const year = now.getFullYear();
         const month = (now.getMonth() + 1).toString().padStart(2, '0');
         const day = now.getDate().toString().padStart(2, '0');
-        
+
         const yearPath = path.join(this.logsBasePath, year.toString());
         const monthPath = path.join(yearPath, month);
-        
+
         // Create directory structure if it doesn't exist
         if (!fs.existsSync(yearPath)) {
             fs.mkdirSync(yearPath, { recursive: true });
@@ -29,7 +29,7 @@ class RequestLogger {
         if (!fs.existsSync(monthPath)) {
             fs.mkdirSync(monthPath, { recursive: true });
         }
-        
+
         return path.join(monthPath, `day${day}.log`);
     }
 
@@ -41,7 +41,7 @@ class RequestLogger {
         const url = req.originalUrl || req.url;
         const statusCode = res.statusCode;
         const contentLength = res.get('Content-Length') || '-';
-        
+
         // Format: [timestamp] IP "METHOD URL HTTP/1.1" status contentLength "userAgent" responseTimeMs
         return `[${timestamp}] ${ip} "${method} ${url} HTTP/1.1" ${statusCode} ${contentLength} "${userAgent}" ${responseTime}ms\n`;
     }
@@ -50,7 +50,7 @@ class RequestLogger {
         try {
             const logFilePath = this.getLogFilePath();
             const logEntry = this.formatLogEntry(req, res, responseTime);
-            
+
             fs.appendFileSync(logFilePath, logEntry, 'utf8');
         } catch (error) {
             console.error('Error writing to log file:', error);
@@ -61,7 +61,7 @@ class RequestLogger {
     middleware() {
         return (req, res, next) => {
             const start = Date.now();
-            
+
             // Override res.end to capture when response is sent
             const originalEnd = res.end;
             res.end = (...args) => {
@@ -69,7 +69,7 @@ class RequestLogger {
                 this.log(req, res, responseTime);
                 originalEnd.apply(res, args);
             };
-            
+
             next();
         };
     }
