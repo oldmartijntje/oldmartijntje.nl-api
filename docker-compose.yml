@@ -4,3 +4,5 @@ services:
     image: ghcr.io/oldmartijntje/oldmartijntje.nl-api:main
     ports:
       - "3000:3000"
+    # Enable better IP forwarding in Docker
+    network_mode: "bridge"

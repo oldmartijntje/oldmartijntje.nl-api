@@ -36,6 +36,29 @@ testRouter.get("/visits", async (_req, res) => {
     res.status(200).send({ "message": "We have had " + visit + " visits since startup!" });
 });
 
+// Debug endpoint to test IP extraction
+// testRouter.get("/debug-ip", async (req, res) => {
+//     const { SecurityFlagHandler } = require("./helpers/securityFlag.handler.js");
+
+//     const ipDebugInfo = {
+//         extractedIP: SecurityFlagHandler.extractIpAddress(req),
+//         sources: {
+//             'req.ip': req.ip,
+//             'x-forwarded-for': req.headers['x-forwarded-for'],
+//             'x-real-ip': req.headers['x-real-ip'],
+//             'x-client-ip': req.headers['x-client-ip'],
+//             'cf-connecting-ip': req.headers['cf-connecting-ip'],
+//             'connection.remoteAddress': req.connection?.remoteAddress,
+//             'socket.remoteAddress': req.socket?.remoteAddress,
+//         },
+//         headers: req.headers,
+//         userAgent: req.get('User-Agent')
+//     };
+
+//     console.log('[DEBUG] IP extraction test:', ipDebugInfo);
+//     res.status(200).json(ipDebugInfo);
+// });
+
 if (!MONGO_URI) {
     console.error("No MONGO_URI environment variable has been defined");
     process.exit(1);
@@ -44,7 +67,14 @@ if (!MONGO_URI) {
 connect(MONGO_URI)
     .then(async () => {
         const app = express();
+
+        // Configure proxy trust for Docker and reverse proxy environments
+        // Trust all proxies - adjust this in production for better security
         app.set('trust proxy', true);
+
+        // Alternative: Trust specific proxy hops (uncomment and adjust as needed)
+        // app.set('trust proxy', 1); // trust first proxy
+        // app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // trust local ranges
 
         // Add request logging middleware (before other middlewares)
         app.use(requestLogger.middleware());

@@ -47,6 +47,19 @@ class SecurityFlagHandler {
                     requestHeaders: this.sanitizeHeaders(req.headers),
                     ipAddress: this.extractIpAddress(req)
                 };
+
+                // Debug logging for IP extraction (remove in production if needed)
+                if (extractedData.ipAddress === 'unknown') {
+                    console.warn('[SECURITY FLAG DEBUG] IP extraction failed. Available sources:', {
+                        'req.ip': req.ip,
+                        'x-forwarded-for': req.headers['x-forwarded-for'],
+                        'x-real-ip': req.headers['x-real-ip'],
+                        'x-client-ip': req.headers['x-client-ip'],
+                        'connection.remoteAddress': req.connection?.remoteAddress,
+                        'socket.remoteAddress': req.socket?.remoteAddress,
+                        'cf-connecting-ip': req.headers['cf-connecting-ip']
+                    });
+                }
             }
 
             const securityFlag = new securityFlags({
@@ -82,12 +95,74 @@ class SecurityFlagHandler {
      * @returns {string} IP address
      */
     static extractIpAddress(req) {
-        return req.ip ||
-            req.connection?.remoteAddress ||
-            req.socket?.remoteAddress ||
-            req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-            req.headers['x-real-ip'] ||
-            'unknown';
+        // Priority order for extracting IP addresses, especially in containerized environments
+        const possibleIPs = [
+            // First check proxy headers (most reliable in Docker/proxy setups)
+            req.headers['x-forwarded-for']?.split(',')[0]?.trim(),
+            req.headers['x-real-ip']?.trim(),
+            req.headers['x-client-ip']?.trim(),
+            req.headers['cf-connecting-ip']?.trim(), // Cloudflare
+            req.headers['x-original-forwarded-for']?.split(',')[0]?.trim(),
+
+            // Then check Express.js extracted IP (works when trust proxy is set correctly)
+            req.ip,
+
+            // Finally fallback to connection IPs (usually Docker internal IPs in containers)
+            req.connection?.remoteAddress,
+            req.socket?.remoteAddress,
+            req.connection?.socket?.remoteAddress
+        ];
+
+        // Find the first valid IP address that's not a local/private network address
+        for (const ip of possibleIPs) {
+            if (ip && this.isValidPublicIP(ip)) {
+                return ip;
+            }
+        }
+
+        // If no public IP found, return the first available IP
+        for (const ip of possibleIPs) {
+            if (ip && ip !== '::1' && ip !== '127.0.0.1') {
+                return ip;
+            }
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Check if an IP address is a valid public IP (not local/private)
+     * @param {string} ip - IP address to validate
+     * @returns {boolean} True if IP is likely a public IP
+     */
+    static isValidPublicIP(ip) {
+        if (!ip || typeof ip !== 'string') return false;
+
+        // Remove any port numbers
+        const cleanIP = ip.split(':')[0];
+
+        // Basic IP format validation
+        const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+
+        if (!ipv4Regex.test(cleanIP) && !ipv6Regex.test(cleanIP)) {
+            return false;
+        }
+
+        // Check if it's not a private/local IP range
+        const privateRanges = [
+            /^127\./, // 127.0.0.0/8 - Loopback
+            /^10\./, // 10.0.0.0/8 - Private
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12 - Private
+            /^192\.168\./, // 192.168.0.0/16 - Private
+            /^169\.254\./, // 169.254.0.0/16 - Link-local
+            /^::1$/, // IPv6 loopback
+            /^fe80:/, // IPv6 link-local
+            /^fc00:/, // IPv6 unique local
+            /^fd00:/ // IPv6 unique local
+        ];
+
+        return !privateRanges.some(range => range.test(cleanIP));
     }
 
     /**
