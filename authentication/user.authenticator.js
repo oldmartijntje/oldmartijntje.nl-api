@@ -293,7 +293,7 @@ class UserAuthenticator {
                 } else {
                     data['ipAddress'] = 'unknown'
                 }
-                await SecurityFlagHandler.createSecurityFlag();
+                await SecurityFlagHandler.createSecurityFlag(data);
             } catch (flagError) {
                 console.error('Error creating security flag:', flagError);
             }
