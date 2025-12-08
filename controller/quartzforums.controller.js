@@ -3,6 +3,7 @@
 const { quartzForumAccounts, quartzForumForums, quartzForumMessages, implementationKeys } = require('../database.js');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { checkAccountCreationLimit, markAccountCreation, checkUserMessageLimit, markUserMessage, checkUserDesignLimit, markUserDesignUpdate } = require('../helpers/rateLimitUtils.js');
 
 // Helper function to strip HTML tags from text
 function stripHtml(text) {
@@ -134,6 +135,13 @@ async function createAccount(req, res) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
 
+        // Check IP rate limit for account creation (1 per day)
+        const clientIp = req.ip || req.connection.remoteAddress;
+        const hasCreatedAccount = await checkAccountCreationLimit(clientIp);
+        if (hasCreatedAccount) {
+            return res.status(429).json({ message: 'You can only create one account per IP address per day' });
+        }
+
         // Validate password length
         if (password.length < 6) {
             return res.status(400).json({ message: 'Password must be at least 6 characters long' });
@@ -178,6 +186,9 @@ async function createAccount(req, res) {
         });
 
         await newUser.save();
+
+        // Mark that this IP has created an account
+        await markAccountCreation(clientIp);
 
         res.status(201).json({
             userId: newUser._id,
@@ -433,6 +444,12 @@ async function postMessage(req, res) {
             return res.status(400).json({ message: 'Implementation key, subpage, and content are required' });
         }
 
+        // Check user rate limit for messages (1 per hour)
+        const hasPostedRecently = await checkUserMessageLimit(user._id);
+        if (hasPostedRecently) {
+            return res.status(429).json({ message: 'You can only post one message per hour' });
+        }
+
         // Sanitize content input
         content = sanitizeInput(content);
 
@@ -475,6 +492,9 @@ async function postMessage(req, res) {
         });
 
         await message.save();
+
+        // Mark that this user has posted a message
+        await markUserMessage(user._id);
 
         res.status(201).json({
             messageId: message._id,
@@ -1037,6 +1057,12 @@ async function updateUserDesign(req, res) {
             return res.status(401).json({ message: 'Invalid access key' });
         }
 
+        // Check user rate limit for design updates (1 per hour)
+        const hasUpdatedRecently = await checkUserDesignLimit(user._id);
+        if (hasUpdatedRecently) {
+            return res.status(429).json({ message: 'You can only update your design once per hour' });
+        }
+
         // Validate footer input
         if (footer !== undefined) {
             if (typeof footer !== 'string') {
@@ -1082,6 +1108,9 @@ async function updateUserDesign(req, res) {
         if (!updatedUser) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        // Mark that this user has updated their design
+        await markUserDesignUpdate(user._id);
 
         res.status(200).json({
             message: 'Design updated successfully',

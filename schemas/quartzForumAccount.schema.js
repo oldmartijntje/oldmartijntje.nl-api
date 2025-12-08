@@ -37,6 +37,14 @@ const quartzForumAccountJsonSchema = {
     admin: {
         type: Boolean,
         default: false
+    },
+    lastMessagePost: {
+        type: Date,
+        required: false
+    },
+    lastDesignUpdate: {
+        type: Date,
+        required: false
     }
 };
 
