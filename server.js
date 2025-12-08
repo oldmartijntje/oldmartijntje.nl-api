@@ -93,27 +93,6 @@ connect(MONGO_URI)
         // Serve QuartzForums frontend
         app.use('/forums', express.static(path.join(__dirname, 'homepage/quartzforums')));
 
-        // Global error handler for Express
-        app.use(async (err, req, res, next) => {
-            console.error('[EXPRESS ERROR]', err);
-            
-            // Create security flag for Express errors
-            await createCrashSecurityFlag('expressError', err, {
-                url: req.originalUrl || req.url,
-                method: req.method,
-                userAgent: req.get('User-Agent'),
-                ipAddress: SecurityFlagHandler.extractIpAddress(req),
-                headers: SecurityFlagHandler.sanitizeHeaders(req.headers)
-            }).catch(console.error);
-
-            // Send error response
-            res.status(500).json({
-                success: false,
-                message: 'Internal server error',
-                timestamp: new Date().toISOString()
-            });
-        });
-
         // start the Express server
         const server = app.listen(port, async () => {
             console.log(`Server running at http://localhost:${port}...`);
@@ -124,115 +103,23 @@ connect(MONGO_URI)
                              process.env.npm_lifecycle_event === 'dev';
                              
             if (!isDevMode) {
-                await createCrashSecurityFlag('serverStartup', null, {
-                    port: port,
-                    startupTime: new Date().toISOString(),
-                    environment: process.env.NODE_ENV || 'development',
-                    startupReason: 'server initialization'
+                await SecurityFlagHandler.createSecurityFlag({
+                    ipAddress: 'server',
+                    riskLevel: 3,
+                    description: 'Server started - could indicate update or restart after crash',
+                    fileName: 'server.js',
+                    additionalData: {
+                        port: port,
+                        startupTime: new Date().toISOString(),
+                        environment: process.env.NODE_ENV || 'development',
+                        startupReason: 'server initialization'
+                    }
                 }).catch(console.error);
             }
-            
-        }).on('error', async (err) => {
+        }).on('error', (err) => {
             console.error('Server startup error:', err);
-            await createCrashSecurityFlag('serverStartupError', err);
             exit(1);
-        });
-
-        // Handle server close events
-        server.on('close', async () => {
-            console.log('[INFO] Server closing');
-            await createCrashSecurityFlag('serverClose', null, {
-                shutdownReason: 'server close event'
-            });
         });
 
     })
     .catch(error => console.error(error));
-
-// Crash detection and security flag creation
-async function createCrashSecurityFlag(crashType, error, additionalData = {}) {
-    try {
-        // Adjust risk level for server startup
-        const riskLevel = crashType === 'serverStartup' ? 3 : 4;
-        
-        await SecurityFlagHandler.createSecurityFlag({
-            ipAddress: 'server',
-            riskLevel: riskLevel,
-            description: crashType === 'serverStartup' ? 
-                'Server started - could indicate update or restart after crash' : 
-                `Server crash detected: ${crashType}`,
-            fileName: 'server.js',
-            additionalData: {
-                crashType,
-                error: error ? {
-                    message: error.message,
-                    stack: error.stack,
-                    name: error.name
-                } : null,
-                timestamp: new Date().toISOString(),
-                processId: process.pid,
-                nodeVersion: process.version,
-                uptime: process.uptime(),
-                memoryUsage: process.memoryUsage(),
-                ...additionalData
-            }
-        });
-        console.log(`[SECURITY] Created security flag for ${crashType}`);
-    } catch (flagError) {
-        console.error(`[ERROR] Failed to create security flag for crash: ${flagError.message}`);
-    }
-}
-
-// Handle uncaught exceptions
-process.on('uncaughtException', async (error) => {
-    console.error('[FATAL] Uncaught Exception:', error);
-    await createCrashSecurityFlag('uncaughtException', error);
-    
-    // Give some time for the security flag to be saved before exiting
-    setTimeout(() => {
-        process.exit(1);
-    }, 1000);
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', async (reason, promise) => {
-    console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
-    await createCrashSecurityFlag('unhandledRejection', reason instanceof Error ? reason : new Error(String(reason)), {
-        promise: promise.toString()
-    });
-    
-    // Give some time for the security flag to be saved before exiting
-    setTimeout(() => {
-        process.exit(1);
-    }, 1000);
-});
-
-// Handle SIGTERM (graceful shutdown)
-process.on('SIGTERM', async () => {
-    console.log('[INFO] SIGTERM received, shutting down gracefully');
-    await createCrashSecurityFlag('SIGTERM', null, {
-        shutdownType: 'graceful'
-    });
-    process.exit(0);
-});
-
-// Handle SIGINT (Ctrl+C)
-process.on('SIGINT', async () => {
-    console.log('[INFO] SIGINT received, shutting down gracefully');
-    await createCrashSecurityFlag('SIGINT', null, {
-        shutdownType: 'manual'
-    });
-    process.exit(0);
-});
-
-// Handle other termination signals
-process.on('SIGHUP', async () => {
-    console.log('[INFO] SIGHUP received');
-    await createCrashSecurityFlag('SIGHUP', null);
-});
-
-process.on('SIGQUIT', async () => {
-    console.log('[INFO] SIGQUIT received');
-    await createCrashSecurityFlag('SIGQUIT', null);
-    process.exit(0);
-});
