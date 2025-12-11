@@ -13,7 +13,7 @@ async function authenticateAccessKey(req, res, next) {
             return res.status(401).json({ message: 'Access key required' });
         }
 
-        const user = await quartzForumAccounts.findOne({ accessKey: accessKey });
+        const user = await quartzForumAccounts.findOne({ accessKey: { $eq: accessKey } });
 
         if (!user) {
             return res.status(401).json({ message: 'Invalid access key' });
@@ -50,7 +50,7 @@ async function validateImplementationKey(req, res, next) {
             return res.status(400).json({ message: 'Implementation key cannot be empty' });
         }
 
-        const keyData = await implementationKeys.findOne({ implementationKey: implementationKey });
+        const keyData = await implementationKeys.findOne({ implementationKey: { $eq: implementationKey } });
 
         if (!keyData) {
             // Create security flag for invalid implementation key attempt

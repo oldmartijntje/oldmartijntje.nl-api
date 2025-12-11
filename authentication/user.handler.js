@@ -39,7 +39,7 @@ class UserHandler {
     async createUser(userData) {
         try {
             const nameExists = await users.findOne({
-                username: new RegExp(`^${userData.username}$`, 'i')
+                username: { $eq: new RegExp(`^${userData.username}$`, 'i') }
             }).lean();
             if (nameExists) {
                 return false;
@@ -115,7 +115,7 @@ class UserHandler {
      */
     async validateActivationCode(code, deleteCode = false) {
         try {
-            const codeObject = await registrationCodes.findOne({ code: code }).lean();
+            const codeObject = await registrationCodes.findOne({ code: { $eq: code } }).lean();
             if (!codeObject) {
                 return false;
             }
@@ -131,7 +131,7 @@ class UserHandler {
 
     async deleteActivationCode(code) {
         try {
-            await registrationCodes.deleteOne({ code: code });
+            await registrationCodes.deleteOne({ code: { $eq: code } });
             return true;
         }
         catch (error) {
@@ -149,7 +149,7 @@ class UserHandler {
     */
     async findUserByUsername(username) {
         try {
-            const user = await users.findOne({ username: username }).lean();
+            const user = await users.findOne({ username: { $eq: username } }).lean();
             if (!user) {
                 return false;
             } else {
@@ -337,7 +337,7 @@ class UserHandler {
      */
     async removeSessionToken(sessionToken) {
         try {
-            const deleteResult = await sessionTokens.deleteOne({ identifier: sessionToken });
+            const deleteResult = await sessionTokens.deleteOne({ identifier: { $eq: sessionToken } });
             if (deleteResult.deletedCount === 1) {
                 return true;
             } else {
@@ -364,7 +364,7 @@ class UserHandler {
 
         try {
             for (const user of usersToProcess) {
-                await sessionTokens.deleteMany({ userId: user._id });
+                await sessionTokens.deleteMany({ userId: { $eq: user._id } });
             }
             return true;
         } catch (error) {
@@ -411,9 +411,9 @@ class UserHandler {
      */
     async getUserIdBySessionToken(sessionToken) {
         try {
-            let sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
+            let sessionTokenObject = await sessionTokens.findOne({ identifier: { $eq: sessionToken } }).lean();
             if (!sessionTokenObject) {
-                sessionTokenObject = await users.findOne({ guestAccountIdentifier: sessionToken }).lean()
+                sessionTokenObject = await users.findOne({ guestAccountIdentifier: { $eq: sessionToken } }).lean()
                 sessionTokenObject.userId = sessionTokenObject._id;
             }
             return `${sessionTokenObject.userId}`;

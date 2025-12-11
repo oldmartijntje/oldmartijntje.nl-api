@@ -203,7 +203,7 @@ async function createAccount(req, res) {
         }
 
         // Check if username already exists
-        const existingUser = await quartzForumAccounts.findOne({ name: username });
+        const existingUser = await quartzForumAccounts.findOne({ name: { $eq: username } });
         if (existingUser) {
             return res.status(400).json({ message: 'Username already exists' });
         }
@@ -390,7 +390,7 @@ async function deleteAccount(req, res) {
         // Sanitize username input
         username = sanitizeInput(username);
 
-        const user = await quartzForumAccounts.findOne({ name: username });
+        const user = await quartzForumAccounts.findOne({ name: { $eq: username } });
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -523,8 +523,8 @@ async function postMessage(req, res) {
 
         // Find or create forum
         let forum = await quartzForumForums.findOne({
-            implementationKey: implementationKey,
-            subpage: subpage
+            implementationKey: { $eq: implementationKey },
+            subpage: { $eq: subpage }
         });
 
         if (!forum) {
@@ -791,7 +791,7 @@ async function adminDeleteAccount(req, res) {
         const { accessKey } = req.body;
 
         // Verify admin access
-        const adminUser = await quartzForumAccounts.findOne({ accessKey });
+        const adminUser = await quartzForumAccounts.findOne({ accessKey: { $eq: accessKey } });
         if (!adminUser || !adminUser.admin) {
             return res.status(403).json({ message: 'Admin access required' });
         }
@@ -819,7 +819,7 @@ async function adminDeleteAccount(req, res) {
 
         // Set all user's messages' accountId to null
         await quartzForumMessages.updateMany(
-            { accountId: targetUser._id },
+            { accountId: { $eq: targetUser._id } },
             { $set: { accountId: null } }
         );
 
@@ -844,7 +844,7 @@ async function getForum(req, res) {
         // Check if requester is admin
         let isAdmin = false;
         if (requesterAccessKey) {
-            const requesterUser = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
+            const requesterUser = await quartzForumAccounts.findOne({ accessKey: { $eq: requesterAccessKey } });
             isAdmin = requesterUser?.admin || false;
         }
 
@@ -861,8 +861,8 @@ async function getForum(req, res) {
         }
 
         const forum = await quartzForumForums.findOne({
-            implementationKey: implementationKey,
-            subpage: subpage
+            implementationKey: { $eq: implementationKey },
+            subpage: { $eq: subpage }
         });
 
         if (!forum) {
@@ -1101,7 +1101,7 @@ async function getImplementationKey(req, res) {
             return res.status(400).json({ message: 'Implementation key cannot be empty' });
         }
 
-        const implementationKeyData = await implementationKeys.findOne({ implementationKey: key });
+        const implementationKeyData = await implementationKeys.findOne({ implementationKey: { $eq: key } });
 
         if (!implementationKeyData) {
             return res.status(404).json({ message: 'Implementation key not found' });
@@ -1128,7 +1128,7 @@ async function updateUserDesign(req, res) {
         }
 
         // Find the user by access key
-        const user = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
+        const user = await quartzForumAccounts.findOne({ accessKey: { $eq: requesterAccessKey } });
         if (!user) {
             return res.status(401).json({ message: 'Invalid access key' });
         }
@@ -1165,13 +1165,13 @@ async function updateUserDesign(req, res) {
 
                 // Also set all existing messages from this user to limbo
                 await quartzForumMessages.updateMany(
-                    { accountId: user._id },
+                    { accountId: { $eq: user._id } },
                     { $set: { limbo: true } }
                 );
             }
         }        // Update user design
         const updatedUser = await quartzForumAccounts.findOneAndUpdate(
-            { _id: user._id },
+            { _id: { $eq: user._id } },
             {
                 $set: {
                     'design.footer': footer || '',

@@ -2,7 +2,7 @@
 const { sessions, quartzForumAccounts } = require("../database");
 
 const getSession = async (ip) => {
-    return await sessions.findOne({ ipAddress: ip });
+    return await sessions.findOne({ ipAddress: { $eq: ip } });
 };
 
 const createSession = async (ip) => {
@@ -36,7 +36,7 @@ const checkAccountCreationLimit = async (ip) => {
 
     // Check if there's a session for this IP with account creation in the last 24 hours
     const session = await sessions.findOne({
-        ipAddress: ip,
+        ipAddress: { $eq: ip },
         lastAccountCreation: { $gte: twentyFourHoursAgo }
     });
 
@@ -45,7 +45,7 @@ const checkAccountCreationLimit = async (ip) => {
 
 // Mark that an IP has created an account
 const markAccountCreation = async (ip) => {
-    let session = await sessions.findOne({ ipAddress: ip });
+    let session = await sessions.findOne({ ipAddress: { $eq: ip } });
 
     if (!session) {
         session = new sessions({

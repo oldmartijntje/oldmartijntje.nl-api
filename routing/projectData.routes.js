@@ -133,7 +133,7 @@ projectDataRouter.delete("/", async (req, res) => {
         } catch (flagError) {
             console.error('Error creating security flag:', flagError);
         }
-        projectData.deleteOne({ _id: id }).then((result) => {
+        projectData.deleteOne({ _id: { $eq: id } }).then((result) => {
             if (result.deletedCount == 0) {
                 return res.status(404).send({ message: "projectData not found" });
             }
@@ -339,7 +339,7 @@ projectDataRouter.put("/", async (req, res) => {
                 console.error('Error creating security flag:', flagError);
             }
         }
-        projectData.updateOne({ _id: _id }, mergdedData).then((result) => {
+        projectData.updateOne({ _id: { $eq: _id } }, mergdedData).then((result) => {
             if (!result) {
                 return res.status(404).send({ message: "Project not found" });
             }

@@ -221,11 +221,11 @@ class SecurityFlagHandler {
             if (filters.descriptionFilter) {
                 query.description = new RegExp(filters.descriptionFilter, 'i');
             }
-            
+
             if (filters.ipFilter) {
                 query.ipAddress = new RegExp(filters.ipFilter, 'i');
             }
-            
+
             if (filters.fileFilter) {
                 query.fileName = new RegExp(filters.fileFilter, 'i');
             }
@@ -237,12 +237,12 @@ class SecurityFlagHandler {
             }
 
             let aggregationPipeline = [];
-            
+
             // Build the initial match stage
             if (Object.keys(query).length > 0) {
                 aggregationPipeline.push({ $match: query });
             }
-            
+
             // Populate user references
             aggregationPipeline.push(
                 {
@@ -283,7 +283,7 @@ class SecurityFlagHandler {
                     },
                     additionalDataText: {
                         $function: {
-                            body: function(obj) {
+                            body: function (obj) {
                                 if (!obj || typeof obj !== 'object') return '';
                                 return JSON.stringify(obj).toLowerCase();
                             },
@@ -373,7 +373,7 @@ class SecurityFlagHandler {
     static async resolveSecurityFlag(flagId, resolvedByUserId, resolvedNotes = '') {
         try {
             return await securityFlags.findByIdAndUpdate(
-                flagId,
+                { $eq: flagId },
                 {
                     resolved: true,
                     resolvedBy: resolvedByUserId,

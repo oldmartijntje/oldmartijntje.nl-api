@@ -88,7 +88,7 @@ jsonRouter.delete("/displayItems", async (req, res) => {
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
         }
-        
+
         // Create security flag for display item deletion attempt
         try {
             const user = auth.getUserData();
@@ -109,8 +109,8 @@ jsonRouter.delete("/displayItems", async (req, res) => {
         } catch (flagError) {
             console.error('Error creating security flag:', flagError);
         }
-        
-        displayItems.deleteOne({ _id: id }).then((result) => {
+
+        displayItems.deleteOne({ _id: { $eq: id } }).then((result) => {
             if (result.deletedCount == 0) {
                 return res.status(404).send({ message: "Project not found" });
             }
@@ -210,7 +210,7 @@ jsonRouter.post("/displayItems", async (_req, res) => {
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
-            
+
             // Create security flag for display item creation attempt
             try {
                 const user = auth.getUserData();
@@ -232,7 +232,7 @@ jsonRouter.post("/displayItems", async (_req, res) => {
             } catch (flagError) {
                 console.error('Error creating security flag:', flagError);
             }
-            
+
             const project = new displayItems(data);
             project.save().then((result) => {
                 res.status(200).send({ message: "Project created", project: result });
@@ -341,7 +341,7 @@ jsonRouter.put("/displayItems", async (req, res) => {
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
         }
-        
+
         // Create security flag for display item update attempt
         try {
             const user = auth.getUserData();
@@ -363,8 +363,8 @@ jsonRouter.put("/displayItems", async (req, res) => {
         } catch (flagError) {
             console.error('Error creating security flag:', flagError);
         }
-        
-        displayItems.updateOne({ _id: data._id }, data).then((result) => {
+
+        displayItems.updateOne({ _id: { $eq: data._id } }, data).then((result) => {
             if (!result) {
                 return res.status(404).send({ message: "Project not found" });
             }
