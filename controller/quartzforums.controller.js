@@ -318,7 +318,7 @@ async function login(req, res) {
         // Sanitize username input
         username = sanitizeInput(username);
 
-        const user = await quartzForumAccounts.findOne({ name: username });
+        const user = await quartzForumAccounts.findOne({ name: { $eq: username } });
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -644,7 +644,7 @@ async function adminAddToLimbo(req, res) {
         const { accessKey } = req.body;
 
         // Verify admin access
-        const adminUser = await quartzForumAccounts.findOne({ accessKey });
+        const adminUser = await quartzForumAccounts.findOne({ accessKey: { $eq: accessKey } });
         if (!adminUser || !adminUser.admin) {
             return res.status(403).json({ message: 'Admin access required' });
         }
