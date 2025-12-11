@@ -78,3 +78,19 @@ Mongoose before 8.9.5 can improperly use a nested $where filter with a populate(
 Content Security Policy (CSP) is a first line of defense against common attacks including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft via account takeovers to site defacement or distribution of malware. CSP config allows you to declare what content can be loaded and executed via a standard HTTP header. You can whitelist JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.
 
 > I have assessed this issue by installing the helmet package and adding a CSP configuration
+
+## CSP config allows inline javascript
+
+**TL;DR**
+
+Content Security Policy (CSP) is a first line of defense against common attacks including Cross Site Scripting (XSS) and data injection attacks. In this case your CSP header is set, but it's configured to still allow for inline javascript. Inline JS is one of the most common techniques used in XSS. Blocking inline javascript blocks an entire class of attacks. Adding this defense has a high return on investment.
+
+**Issue Found:**
+
+URL: `https://api.oldmartijntje.nl`
+
+- **Risk Level:** High
+- **Problem:** `script-src` includes `'unsafe-inline'`
+- **Evidence:** `default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self';font-src 'self';object-src 'none';media-src 'self';frame-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests`
+
+> Fixed by removing `'unsafe-inline'` from the `scriptSrc` directive in the helmet CSP configuration in `server.js`. The CSP now properly blocks inline JavaScript execution, preventing a significant class of XSS attacks.
