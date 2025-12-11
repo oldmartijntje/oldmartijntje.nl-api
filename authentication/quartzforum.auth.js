@@ -94,7 +94,7 @@ async function checkRequesterLimbo(req, res, next) {
         const requesterAccessKey = req.query.requesterAccessKey;
 
         if (requesterAccessKey) {
-            const user = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
+            const user = await quartzForumAccounts.findOne({ accessKey: { $eq: requesterAccessKey } });
             if (user) {
                 req.requesterInLimbo = user.limbo;
             }

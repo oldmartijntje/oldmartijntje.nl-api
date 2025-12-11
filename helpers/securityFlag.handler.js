@@ -373,7 +373,7 @@ class SecurityFlagHandler {
     static async resolveSecurityFlag(flagId, resolvedByUserId, resolvedNotes = '') {
         try {
             return await securityFlags.findByIdAndUpdate(
-                { $eq: flagId },
+                flagId,
                 {
                     resolved: true,
                     resolvedBy: resolvedByUserId,

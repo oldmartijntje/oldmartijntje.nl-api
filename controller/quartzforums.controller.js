@@ -273,7 +273,7 @@ async function validateAccessKey(req, res) {
             });
         }
 
-        const user = await quartzForumAccounts.findOne({ accessKey });
+        const user = await quartzForumAccounts.findOne({ accessKey: { $eq: accessKey } });
 
         if (!user) {
             return res.status(200).json({
@@ -355,7 +355,7 @@ async function resetAccessKey(req, res) {
         // Sanitize username input
         username = sanitizeInput(username);
 
-        const user = await quartzForumAccounts.findOne({ name: username });
+        const user = await quartzForumAccounts.findOne({ name: { $eq: username } });
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -437,7 +437,7 @@ async function getUserProfile(req, res) {
         // Check if requester is admin
         let requesterIsAdmin = false;
         if (requesterAccessKey) {
-            const requesterUser = await quartzForumAccounts.findOne({ accessKey: requesterAccessKey });
+            const requesterUser = await quartzForumAccounts.findOne({ accessKey: { $eq: requesterAccessKey } });
             if (requesterUser) {
                 requesterIsAdmin = requesterUser.admin || false;
             }
@@ -750,7 +750,7 @@ async function adminRemoveFromLimbo(req, res) {
         const { accessKey } = req.body;
 
         // Verify admin access
-        const adminUser = await quartzForumAccounts.findOne({ accessKey });
+        const adminUser = await quartzForumAccounts.findOne({ accessKey: { $eq: accessKey } });
         if (!adminUser || !adminUser.admin) {
             return res.status(403).json({ message: 'Admin access required' });
         }

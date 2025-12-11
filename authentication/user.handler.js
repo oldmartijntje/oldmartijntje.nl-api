@@ -310,9 +310,9 @@ class UserHandler {
     async validateSessionToken(sessionToken) {
         try {
             // check if the session token is valid by checking if it exists and if it's not expired
-            let sessionTokenObject = await sessionTokens.findOne({ identifier: sessionToken }).lean();
+            let sessionTokenObject = await sessionTokens.findOne({ identifier: { $eq: sessionToken } }).lean();
             if (!sessionTokenObject) {
-                sessionTokenObject = await users.findOne({ guestAccountIdentifier: sessionToken }).lean()
+                sessionTokenObject = await users.findOne({ guestAccountIdentifier: { $eq: sessionToken } }).lean()
                 if (!sessionTokenObject) {
                     return false;
                 }
