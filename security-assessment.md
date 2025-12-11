@@ -70,3 +70,11 @@ This is the package maintainer's summary.
 Mongoose before 8.9.5 can improperly use a nested $where filter with a populate() match, leading to search injection. NOTE: this issue exists because of an incomplete fix for CVE-2024-53900.The worst case impact for these vulnerabilities can be "Attacker can inject own code to run".
 
 > fixed by updating to 9.0.1
+
+## Content Security Policy (CSP) header not set
+
+**TL;DR**
+
+Content Security Policy (CSP) is a first line of defense against common attacks including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft via account takeovers to site defacement or distribution of malware. CSP config allows you to declare what content can be loaded and executed via a standard HTTP header. You can whitelist JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.
+
+> I have assessed this issue by installing the helmet package and adding a CSP configuration

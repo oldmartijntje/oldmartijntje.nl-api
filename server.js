@@ -2,6 +2,7 @@ const cors = require("cors");
 const path = require('path');
 const express = require("express");
 const expressStatic = require('express').static;
+const helmet = require("helmet");
 const { connect, users, sessionTokens, implementationKeys, quartzForumAccounts, quartzForumForums, quartzForumMessages } = require("./database.js");
 const { exit } = require("process");
 const settings = require("./settings");
@@ -80,6 +81,24 @@ connect(MONGO_URI)
         // Add request logging middleware (before other middlewares)
         app.use(requestLogger.middleware());
 
+        // Security headers with Content-Security-Policy
+        app.use(helmet({
+            contentSecurityPolicy: {
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: ["'self'", "'unsafe-inline'"],
+                    styleSrc: ["'self'", "'unsafe-inline'"],
+                    imgSrc: ["'self'", "data:", "https:"],
+                    connectSrc: ["'self'"],
+                    fontSrc: ["'self'"],
+                    objectSrc: ["'none'"],
+                    mediaSrc: ["'self'"],
+                    frameSrc: ["'none'"],
+                },
+            },
+            crossOriginEmbedderPolicy: false,
+        }));
+
         app.use(cors());
         app.use(expressStatic(staticHtmlPath));
         app.use("/login", loginRouter);
@@ -96,12 +115,12 @@ connect(MONGO_URI)
         // start the Express server
         const server = app.listen(port, async () => {
             console.log(`Server running at http://localhost:${port}...`);
-            
+
             // Create security flag for server startup (skip if running with nodemon/dev mode)
-            const isDevMode = process.env.NODE_ENV === 'development' || 
-                             process.argv.some(arg => arg.includes('nodemon')) ||
-                             process.env.npm_lifecycle_event === 'dev';
-                             
+            const isDevMode = process.env.NODE_ENV === 'development' ||
+                process.argv.some(arg => arg.includes('nodemon')) ||
+                process.env.npm_lifecycle_event === 'dev';
+
             if (!isDevMode) {
                 await SecurityFlagHandler.createSecurityFlag({
                     ipAddress: 'server',
