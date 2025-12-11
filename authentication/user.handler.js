@@ -96,7 +96,7 @@ class UserHandler {
     async deleteRegistrationCode(code) {
         try {
             await registrationCodes.deleteOne({
-                code
+                code: { $eq: code }
             });
             return true;
         }
