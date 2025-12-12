@@ -116,10 +116,10 @@ securityFlagsRouter.put('/:flagId/resolve', async (req, res) => {
 // });
 
 // Delete all resolved security flags
-// DELETE /security-flags/resolved
+// DELETE /security-flags/resolved?sessionToken=xxx&dateTime=2025-12-01T00:00:00.000Z
 securityFlagsRouter.delete('/resolved', async (req, res) => {
     try {
-        const sessionTokenString = req.body.sessionToken;
+        const sessionTokenString = req.query.sessionToken;
         const sessionH = new SessionHandler();
         sessionH.rateLimitMiddleware(req, res, async () => {
             const auth = new UserAuthenticator();
