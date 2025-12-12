@@ -200,10 +200,10 @@ async function createSecurityFlag(req, res) {
 async function deleteResolvedSecurityFlags(req, res) {
     try {
         const { dateTime } = req.body;
-        
+
         // If dateTime is not provided, default to start of today (everything before today)
         const cutoffDate = dateTime ? new Date(dateTime) : new Date(new Date().setHours(0, 0, 0, 0));
-        
+
         const result = await SecurityFlagHandler.deleteResolvedSecurityFlags(cutoffDate);
 
         res.json({

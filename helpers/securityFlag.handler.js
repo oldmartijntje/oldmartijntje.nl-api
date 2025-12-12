@@ -172,7 +172,7 @@ class SecurityFlagHandler {
      */
     static async deleteResolvedSecurityFlags(dateTime = new Date(new Date().setHours(0, 0, 0, 0))) {
         try {
-            const result = await securityFlags.deleteMany({ 
+            const result = await securityFlags.deleteMany({
                 resolved: true,
                 dateTime: { $lt: dateTime }
             });
