@@ -166,7 +166,26 @@ class SecurityFlagHandler {
     }
 
     /**
-     * Sanitize headers to remove sensitive information
+     * Delete all resolved security flags before a certain date
+     * @param {Date} dateTime - Delete flags resolved before this date (defaults to start of today)
+     * @returns {Promise<Object>} Result with deletedCount
+     */
+    static async deleteResolvedSecurityFlags(dateTime = new Date(new Date().setHours(0, 0, 0, 0))) {
+        try {
+            const result = await securityFlags.deleteMany({ 
+                resolved: true,
+                dateTime: { $lt: dateTime }
+            });
+            console.log(`[SECURITY FLAGS] Deleted ${result.deletedCount} resolved security flags from before ${dateTime.toISOString()}`);
+            return result;
+        } catch (error) {
+            console.error('Error deleting resolved security flags:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Sanitize request headers by removing sensitive information
      * @param {Object} headers - Request headers
      * @returns {Object} Sanitized headers
      */

@@ -32,7 +32,7 @@ async function getSecurityFlags(req, res) {
         if (fileName) filters.fileName = fileName;
         if (dateFrom) filters.dateFrom = new Date(dateFrom);
         if (dateTo) filters.dateTo = new Date(dateTo);
-        
+
         // Add text filtering
         if (descriptionFilter) filters.descriptionFilter = descriptionFilter;
         if (userFilter) filters.userFilter = userFilter;
@@ -194,9 +194,39 @@ async function createSecurityFlag(req, res) {
     }
 }
 
+/**
+ * Delete all resolved security flags
+ */
+async function deleteResolvedSecurityFlags(req, res) {
+    try {
+        const { dateTime } = req.body;
+        
+        // If dateTime is not provided, default to start of today (everything before today)
+        const cutoffDate = dateTime ? new Date(dateTime) : new Date(new Date().setHours(0, 0, 0, 0));
+        
+        const result = await SecurityFlagHandler.deleteResolvedSecurityFlags(cutoffDate);
+
+        res.json({
+            success: true,
+            data: {
+                deletedCount: result.deletedCount,
+                deletedBefore: cutoffDate
+            },
+            message: `Successfully deleted ${result.deletedCount} resolved security flag(s) from before ${cutoffDate.toISOString()}`
+        });
+    } catch (error) {
+        console.error('Error deleting resolved security flags:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting resolved security flags'
+        });
+    }
+}
+
 module.exports = {
     getSecurityFlags,
     getSecurityStats,
     resolveSecurityFlag,
-    createSecurityFlag
+    createSecurityFlag,
+    deleteResolvedSecurityFlags
 };

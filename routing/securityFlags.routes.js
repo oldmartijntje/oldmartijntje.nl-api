@@ -5,7 +5,8 @@ const {
     getSecurityFlags,
     getSecurityStats,
     resolveSecurityFlag,
-    createSecurityFlag
+    createSecurityFlag,
+    deleteResolvedSecurityFlags
 } = require('../controller/securityFlags.controller.js');
 
 const securityFlagsRouter = express.Router();
@@ -113,6 +114,29 @@ securityFlagsRouter.put('/:flagId/resolve', async (req, res) => {
 //         res.status(500).send({ "message": error.message });
 //     }
 // });
+
+// Delete all resolved security flags
+// DELETE /security-flags/resolved
+securityFlagsRouter.delete('/resolved', async (req, res) => {
+    try {
+        const sessionTokenString = req.body.sessionToken;
+        const sessionH = new SessionHandler();
+        sessionH.rateLimitMiddleware(req, res, async () => {
+            const auth = new UserAuthenticator();
+            const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, false, res);
+            if (!authenticationSuccess) {
+                return;
+            }
+            if (!auth.checkAuthorityLevel(5)) {
+                res.status(403).send({ "message": "You do not have the required clearance level for this action." });
+                return;
+            }
+            await deleteResolvedSecurityFlags(req, res);
+        });
+    } catch (error) {
+        res.status(500).send({ "message": error.message });
+    }
+});
 
 module.exports = {
     securityFlagsRouter: securityFlagsRouter
