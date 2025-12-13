@@ -67,16 +67,19 @@ logsRouter.get('/download', async (req, res) => {
 
                 for (const entry of entries) {
                     const fullPath = path.join(dir, entry.name);
-                    const relPath = path.join(relativePath, entry.name);
+                    const relPath = relativePath ? path.join(relativePath, entry.name) : entry.name;
 
                     if (entry.isDirectory()) {
                         collectLogsRecursively(fullPath, relPath);
                     } else if (entry.isFile() && entry.name.endsWith('.log')) {
                         // Extract date from path (e.g., 2025/12/day13.log -> 2025-12-13)
-                        const pathParts = relPath.split(path.sep);
+                        // Split using forward slashes (normalized path separator)
+                        const pathParts = relPath.split(/[\/\\]/);
+
+                        // Need at least year/month/dayXX.log structure
                         if (pathParts.length >= 3) {
-                            const year = pathParts[0];
-                            const month = pathParts[1];
+                            const year = pathParts[pathParts.length - 3];
+                            const month = pathParts[pathParts.length - 2];
                             const dayMatch = entry.name.match(/day(\d+)\.log/);
 
                             if (dayMatch) {
