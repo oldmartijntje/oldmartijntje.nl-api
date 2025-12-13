@@ -86,11 +86,25 @@ connect(MONGO_URI)
             contentSecurityPolicy: {
                 directives: {
                     defaultSrc: ["'self'"],
-                    scriptSrc: ["'self'"],
-                    styleSrc: ["'self'", "'unsafe-inline'"],
+                    scriptSrc: [
+                        "'self'",
+                        "https://cdn.jsdelivr.net",
+                        "'sha256-N0fgNp4yOVyjxjLTn0+UP4FUZFXoU9sgFBv3SrltU58='", // inline initialization script
+                    ],
+                    scriptSrcAttr: [
+                        "'unsafe-hashes'",
+                        "'sha256-8/WewiwSfj8knJWWbOP8484yRlaU6pIpNpxqqdjwbDQ='", // onclick="app.logout()"
+                        "'sha256-zshLM1vQ3g1HYt6vKqvWRhHCZzImxa6TrRXBU77yaFQ='", // onclick="app.showAuthModal('register')"
+                        "'sha256-WvxQe51o6DlQx077f3Xr1wUjU8+DczU0qDr7mgpoxEM='", // onclick="app.showAuthModal('login')"
+                    ],
+                    styleSrc: [
+                        "'self'",
+                        "'unsafe-inline'",
+                        "https://cdn.jsdelivr.net"
+                    ],
                     imgSrc: ["'self'", "data:", "https:"],
                     connectSrc: ["'self'"],
-                    fontSrc: ["'self'"],
+                    fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
                     objectSrc: ["'none'"],
                     mediaSrc: ["'self'"],
                     frameSrc: ["'none'"],
