@@ -30,13 +30,12 @@ sessionSchema.index({ lastCall: 1 }, { expireAfterSeconds: 60 * 60 });
 const sessions = mongoose.model('session', sessionSchema);
 
 const userSchema = new mongoose.Schema(userJsonSchema);
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     // Check if the password field is modified
     if (this.isModified('password')) {
         const hashedPassword = await hash(this.password, 12);
         this.password = hashedPassword;
     }
-    next();
 });
 const users = mongoose.model('user', userSchema);
 
@@ -45,12 +44,11 @@ const implementationKeySchema = new mongoose.Schema(implementationKeyJsonSchema)
 const implementationKeys = mongoose.model('ImplementationKey', implementationKeySchema);
 
 const quartzForumAccountSchema = new mongoose.Schema(quartzForumAccountJsonSchema);
-quartzForumAccountSchema.pre('save', async function (next) {
+quartzForumAccountSchema.pre('save', async function () {
     if (this.isModified('password')) {
         const hashedPassword = await hash(this.password, 12);
         this.password = hashedPassword;
     }
-    next();
 });
 const quartzForumAccounts = mongoose.model('QuartzForumAccount', quartzForumAccountSchema);
 
