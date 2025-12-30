@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(userJsonSchema);
 userSchema.pre('save', async function (next) {
     // Check if the password field is modified
     if (this.isModified('password')) {
-        const hashedPassword = await hash(this.password, 10);
+        const hashedPassword = await hash(this.password, 12);
         this.password = hashedPassword;
     }
     next();
@@ -47,7 +47,7 @@ const implementationKeys = mongoose.model('ImplementationKey', implementationKey
 const quartzForumAccountSchema = new mongoose.Schema(quartzForumAccountJsonSchema);
 quartzForumAccountSchema.pre('save', async function (next) {
     if (this.isModified('password')) {
-        const hashedPassword = await hash(this.password, 10);
+        const hashedPassword = await hash(this.password, 12);
         this.password = hashedPassword;
     }
     next();
