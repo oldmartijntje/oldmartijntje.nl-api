@@ -5,11 +5,42 @@ class RequestLogger {
     constructor() {
         this.logsBasePath = path.join(__dirname, '..', 'logs');
         this.ensureLogsDirectory();
+
+        // Initialize buffers and flush interval
+        this.logBuffer = [];
+        this.flushInterval = 10000; // Flush every 5 seconds
+        this.startBufferFlusher();
     }
 
     ensureLogsDirectory() {
         if (!fs.existsSync(this.logsBasePath)) {
             fs.mkdirSync(this.logsBasePath, { recursive: true });
+        }
+    }
+
+    startBufferFlusher() {
+        this.flushTimer = setInterval(() => {
+            this.flushBuffer();
+        }, this.flushInterval);
+
+        // Ensure buffer is flushed on process exit
+        process.on('exit', () => this.flushBuffer());
+        process.on('SIGINT', () => {
+            this.flushBuffer();
+            process.exit();
+        });
+    }
+
+    flushBuffer() {
+        if (this.logBuffer.length === 0) return;
+
+        try {
+            const logFilePath = this.getLogFilePath();
+            const logData = this.logBuffer.join('');
+            fs.appendFileSync(logFilePath, logData, 'utf8');
+            this.logBuffer = []; // Clear the buffer after flushing
+        } catch (error) {
+            console.error(`Error flushing log buffer: ${error}`);
         }
     }
 
@@ -68,24 +99,14 @@ class RequestLogger {
             message: message
         };
 
-        try {
-            const logFilePath = this.getLogFilePath();
-            fs.appendFileSync(logFilePath, JSON.stringify(logEntry) + '\n', 'utf8');
-        } catch (error) {
-            requestLogger.logInternalString("ERROR", `Error writing to log file: ${error}`);
-        }
+        this.logBuffer.push(JSON.stringify(logEntry) + '\n');
     }
 
     logUserFlow(data) {
         data.logType = "USER_FLOW";
         data.timestamp = new Date().toISOString();
 
-        try {
-            const logFilePath = this.getLogFilePath();
-            fs.appendFileSync(logFilePath, JSON.stringify(data) + '\n', 'utf8');
-        } catch (error) {
-            requestLogger.logInternalString("ERROR", `Error writing to log file: ${error}`);
-        }
+        this.logBuffer.push(JSON.stringify(data) + '\n');
     }
 
     failedSecurityFlag(error) {
