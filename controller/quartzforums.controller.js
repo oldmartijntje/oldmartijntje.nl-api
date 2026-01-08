@@ -1,5 +1,3 @@
-
-
 const { quartzForumAccounts, quartzForumForums, quartzForumMessages, implementationKeys } = require('../database.js');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
@@ -214,7 +212,8 @@ async function createAccount(req, res) {
 
         const newUser = new quartzForumAccounts({
             name: username,
-            password: password, // Will be hashed by pre-save middleware
+            password: password // Will be hashed by pre-save middleware
+            ,
             accessKey: accessKey,
             limbo: hasOffensiveUsername, // Set limbo status based on username profanity
             admin: false // Default to non-admin
@@ -509,7 +508,7 @@ async function postMessage(req, res) {
         // Sanitize content input
         content = sanitizeInput(content);
 
-        if (!content.trim()) {
+        if (typeof content !== 'string' || !content.trim()) {
             return res.status(400).json({ message: 'Message content cannot be empty or contain only HTML' });
         }
 
