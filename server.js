@@ -96,6 +96,68 @@ connect(MONGO_URI)
         // Serve QuartzForums frontend
         app.use('/forums', express.static(path.join(__dirname, 'homepage/quartzforums')));
 
+        // In-memory buffer for 404 requests
+        const notFoundBuffer = [];
+        const BUFFER_LIMIT = 50; // Maximum number of entries before flushing
+        const FLUSH_INTERVAL = 60000; // Flush every 60 seconds
+
+        // Middleware to capture 404 requests
+        app.use((req, res, next) => {
+            res.status(404);
+
+            // Collect request details
+            const notFoundEntry = {
+                url: req.originalUrl,
+                ip: req.ip,
+                method: req.method,
+                headers: req.headers,
+                timestamp: new Date().toISOString(),
+            };
+
+            // Add to buffer
+            notFoundBuffer.push(notFoundEntry);
+
+            // Respond to the client
+            res.json({
+                message: "Not Found",
+                details: "This endpoint does not exist."
+            });
+
+            // Check if buffer needs to be flushed
+            if (notFoundBuffer.length >= BUFFER_LIMIT) {
+                flushNotFoundBuffer();
+            }
+        });
+
+        // Periodic buffer flushing
+        setInterval(flushNotFoundBuffer, FLUSH_INTERVAL);
+
+        // Function to flush the buffer to the database
+        async function flushNotFoundBuffer() {
+            if (notFoundBuffer.length === 0) return;
+
+            const entriesToFlush = notFoundBuffer.splice(0, notFoundBuffer.length);
+
+            try {
+                for (const entry of entriesToFlush) {
+                    await SecurityFlagHandler.createSecurityFlag({
+                        ipAddress: entry.ip,
+                        riskLevel: 1, // Low risk for 404 tracking
+                        description: `404 Not Found: ${entry.url}`,
+                        fileName: 'server.js',
+                        additionalData: {
+                            method: entry.method,
+                            headers: entry.headers,
+                            timestamp: entry.timestamp,
+                        }
+                    });
+                }
+                console.log(`[INFO] Flushed ${entriesToFlush.length} 404 entries to the database.`);
+            } catch (error) {
+                console.error('[ERROR] Failed to flush 404 buffer:', error);
+            }
+        }
+
         // start the Express server
         const server = app.listen(port, async () => {
             console.log(`Server running at http://localhost:${port}...`);
