@@ -4,6 +4,7 @@ const { displayItems } = require("../database");
 const settings = require('../settings.json');
 const { UserAuthenticator } = require("../authentication/user.authenticator");
 const { SecurityFlagHandler } = require("../helpers/securityFlag.handler.js");
+const { requestLogger } = require("../helpers/requestLogger.js");
 
 const jsonRouter = express.Router();
 jsonRouter.use(express.json());
@@ -83,7 +84,7 @@ jsonRouter.delete("/displayItems", async (req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
@@ -107,7 +108,7 @@ jsonRouter.delete("/displayItems", async (req, res) => {
                 }
             });
         } catch (flagError) {
-            console.error('Error creating security flag:', flagError);
+            requestLogger.failedSecurityFlag(flagError);
         }
 
         displayItems.deleteOne({ _id: { $eq: id } }).then((result) => {
@@ -205,7 +206,7 @@ jsonRouter.post("/displayItems", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError);
                 }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
@@ -230,7 +231,7 @@ jsonRouter.post("/displayItems", async (_req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
 
             const project = new displayItems(data);
@@ -336,7 +337,7 @@ jsonRouter.put("/displayItems", async (req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
@@ -361,7 +362,7 @@ jsonRouter.put("/displayItems", async (req, res) => {
                 }
             });
         } catch (flagError) {
-            console.error('Error creating security flag:', flagError);
+            requestLogger.failedSecurityFlag(flagError);
         }
 
         displayItems.updateOne({ _id: { $eq: data._id } }, data).then((result) => {

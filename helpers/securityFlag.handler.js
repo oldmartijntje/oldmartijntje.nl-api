@@ -1,4 +1,5 @@
 const { securityFlags } = require('../database.js');
+const { requestLogger } = require('../helpers/requestLogger');
 
 /**
  * SecurityFlag utility class for creating and managing security flags
@@ -84,7 +85,7 @@ class SecurityFlagHandler {
 
             return savedFlag;
         } catch (error) {
-            console.error('Error creating security flag:', error);
+            requestLogger.logInternalString("ERROR", `Error creating security flag: ${error}`);
             throw error;
         }
     }
@@ -179,7 +180,7 @@ class SecurityFlagHandler {
             console.log(`[SECURITY FLAGS] Deleted ${result.deletedCount} resolved security flags from before ${dateTime.toISOString()}`);
             return result;
         } catch (error) {
-            console.error('Error deleting resolved security flags:', error);
+            requestLogger.logInternalString("ERROR", `Error deleting resolved security flags: ${error}`);
             throw error;
         }
     }
@@ -377,7 +378,7 @@ class SecurityFlagHandler {
 
             return await securityFlags.aggregate(aggregationPipeline);
         } catch (error) {
-            console.error('Error getting security flags:', error);
+            requestLogger.logInternalString("ERROR", `Error getting security flags: ${error}`);
             throw error;
         }
     }
@@ -402,7 +403,7 @@ class SecurityFlagHandler {
                 { new: true }
             );
         } catch (error) {
-            console.error('Error resolving security flag:', error);
+            requestLogger.logInternalString("ERROR", `Error resolving security flag: ${error}`);
             throw error;
         }
     }

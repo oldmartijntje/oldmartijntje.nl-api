@@ -2,6 +2,7 @@ const express = require("express");
 const { UserAuthenticator } = require("./user.authenticator");
 const { SessionHandler } = require("../authentication/sessionHandler");
 const { SecurityFlagHandler } = require("../helpers/securityFlag.handler.js");
+const { requestLogger } = require("../helpers/requestLogger.js");
 
 const loginRouter = express.Router();
 loginRouter.use(express.json());
@@ -34,11 +35,11 @@ loginRouter.post("/", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError)
                 }
                 return;
             }
-            
+
             // Create security flag for successful login
             try {
                 await SecurityFlagHandler.createSecurityFlag({
@@ -55,9 +56,9 @@ loginRouter.post("/", async (_req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError)
             }
-            
+
             const sessionToken = auth.getSessionToken();
             if (sessionToken) {
                 const response = { "message": "Logged in succesfully", success: true, "data": auth.getUserData() };
@@ -82,7 +83,7 @@ loginRouter.post("/validateToken", async (_req, res) => {
         const sessionTokenString = _req.body.sessionToken;
         const sessionH = new SessionHandler();
         sessionH.rateLimitMiddleware(_req, res, async () => {
-            const auth = new UserAuthenticator();  
+            const auth = new UserAuthenticator();
             const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, username, res);
             if (!authenticationSuccess) {
                 // Create security flag for failed token validation
@@ -100,7 +101,7 @@ loginRouter.post("/validateToken", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError)
                 }
                 return;
             }
@@ -121,7 +122,7 @@ loginRouter.post("/refreshToken", async (_req, res) => {
         const sessionTokenString = _req.body.sessionToken;
         const sessionH = new SessionHandler();
         sessionH.rateLimitMiddleware(_req, res, async () => {
-            const auth = new UserAuthenticator();  
+            const auth = new UserAuthenticator();
             const authenticationSuccess = await auth.authenticateBySessionTokenWithResponseHandling(sessionTokenString, res);
             if (!authenticationSuccess) {
                 // Create security flag for failed token refresh
@@ -138,11 +139,11 @@ loginRouter.post("/refreshToken", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError)
                 }
                 return;
             }
-            
+
             const sessionToken = auth.refreshSessionToken();
             if (sessionToken) {
                 // Create security flag for successful token refresh
@@ -161,9 +162,9 @@ loginRouter.post("/refreshToken", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError)
                 }
-                
+
                 const response = { "message": "Logged in succesfully", success: true, "data": auth.getUserData() };
                 response["sessionToken"] = sessionToken;
                 res.status(200).send(response);

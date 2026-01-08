@@ -26,7 +26,7 @@ async function authenticateAccessKey(req, res, next) {
         req.quartzUser = user;
         next();
     } catch (error) {
-        console.error('Authentication error:', error);
+        requestLogger.logInternalString("ERROR", `Authentication error: ${error}`);
         res.status(500).json({ message: 'Internal server error' });
     }
 }

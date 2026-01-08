@@ -18,7 +18,7 @@ registerRouter.post("/", async (_req, res) => {
         const sessionH = new SessionHandler();
         sessionH.rateLimitMiddleware(_req, res, async () => {
             const auth = new UserAuthenticator();
-            
+
             // Create security flag for account creation attempt
             try {
                 await SecurityFlagHandler.createSecurityFlag({
@@ -34,9 +34,9 @@ registerRouter.post("/", async (_req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
-            
+
             await auth.createAccount(username, password, activationCode, res);
         });
     } catch (error) {
@@ -82,7 +82,7 @@ registerRouter.post("/generate", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError);
                 }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
@@ -113,12 +113,12 @@ registerRouter.post("/generate", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError);
                 }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
-            
+
             // Create security flag for successful registration code generation
             try {
                 const user = auth.getUserData();
@@ -139,9 +139,9 @@ registerRouter.post("/generate", async (_req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
-            
+
             await auth.createRegistratonCodeHandling(clearanceLevel, role, textNote, res);
 
 
@@ -185,7 +185,7 @@ registerRouter.post("/find", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError);
                 }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
@@ -239,12 +239,12 @@ registerRouter.post("/delete", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError);
                 }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
             }
-            
+
             // Create security flag for registration code deletion attempt
             try {
                 const user = auth.getUserData();
@@ -263,9 +263,9 @@ registerRouter.post("/delete", async (_req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
-            
+
             const handler = auth.getUserHandler();
             const result = await handler.deleteRegistrationCode(activationCode);
             if (!result) {

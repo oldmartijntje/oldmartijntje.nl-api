@@ -139,7 +139,7 @@ logsRouter.get('/download', async (req, res) => {
 
             // Handle archive errors
             archive.on('error', (err) => {
-                console.error('Archive error:', err);
+                requestLogger.logInternalString("ERROR", `Archive error: ${err}`);
                 if (!res.headersSent) {
                     res.status(500).send({ "message": "Error creating zip archive" });
                 }

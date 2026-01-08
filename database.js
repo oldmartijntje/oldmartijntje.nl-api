@@ -11,6 +11,7 @@ const { quartzForumAccountJsonSchema } = require("./schemas/quartzForumAccount.s
 const { quartzForumForumJsonSchema } = require("./schemas/quartzForumForum.schema");
 const { quartzForumMessageJsonSchema } = require("./schemas/quartzForumMessage.schema");
 const { securityFlagJsonSchema } = require("./schemas/securityFlag.schema");
+const { requestLogger } = require("./helpers/requestLogger")
 
 // This has to be done for all collections that we want to have JSON schema validation on
 const sessionTokenSchema = new mongoose.Schema(sessionTokenJsonSchema);
@@ -68,7 +69,7 @@ async function connectToDatabase(uri) {
         await mongoose.connect(uri);
         return mongoose;
     } catch (error) {
-        console.error('Error while connecting to database:', error);
+        requestLogger.logInternalString("ERROR", `Error while connecting to database: ${error}`);
         return undefined;
     }
 }

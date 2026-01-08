@@ -1,4 +1,5 @@
 const { SecurityFlagHandler } = require('../helpers/securityFlag.handler.js');
+const requestLogger = require('../helpers/requestLogger');
 
 /**
  * Get security flags with filtering options
@@ -57,7 +58,7 @@ async function getSecurityFlags(req, res) {
             appliedFilters: filters
         });
     } catch (error) {
-        console.error('Error getting security flags:', error);
+        requestLogger.logInternalString("ERROR", `Error getting security flags: ${error}`);
         res.status(500).json({
             success: false,
             message: 'Error retrieving security flags'
@@ -131,7 +132,7 @@ async function resolveSecurityFlag(req, res) {
             message: 'Security flag resolved successfully'
         });
     } catch (error) {
-        console.error('Error resolving security flag:', error);
+        requestLogger.logInternalString("ERROR", `Error resolving security flag: ${error}`);
         res.status(500).json({
             success: false,
             message: 'Error resolving security flag'

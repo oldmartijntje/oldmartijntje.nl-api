@@ -337,7 +337,7 @@ class QuartzForumsApp {
                 this.populateImplementationKeyDropdown(keyDetails);
             }
         } catch (error) {
-            console.error('Failed to load implementation keys:', error);
+            requestLogger.logInternalString("ERROR", `Failed to load implementation keys: ${error}`);
         }
     }
 
@@ -974,7 +974,7 @@ class QuartzForumsApp {
                 container.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
             }
         } catch (error) {
-            console.error('Profile load error:', error);
+            requestLogger.logInternalString("ERROR", `Profile load error: ${error}`);
             container.innerHTML = '<div class="alert alert-danger">Failed to load profile</div>';
         }
     } renderUserProfile(profile, container, isOtherUser = false) {
@@ -1258,7 +1258,7 @@ class QuartzForumsApp {
                 this.showToast(data.message || 'Failed to add user to limbo', 'error');
             }
         } catch (error) {
-            console.error('Admin add to limbo error:', error);
+            requestLogger.logInternalString("ERROR", `Admin add to limbo error: ${error}`);
             this.showToast('Network error occurred', 'error');
         }
     }

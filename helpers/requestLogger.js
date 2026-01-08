@@ -56,8 +56,44 @@ class RequestLogger {
 
             fs.appendFileSync(logFilePath, logEntry, 'utf8');
         } catch (error) {
-            console.error('Error writing to log file:', error);
+            requestLogger.logInternalString("ERROR", `Error writing to log file: ${error}`);
         }
+    }
+
+    logInternalString(logType, message) {
+        const logEntry = {
+            logType: "INTERNAL_LOGGING",
+            timestamp: new Date().toISOString(),
+            level: logType,
+            message: message
+        };
+
+        try {
+            const logFilePath = this.getLogFilePath();
+            fs.appendFileSync(logFilePath, JSON.stringify(logEntry) + '\n', 'utf8');
+        } catch (error) {
+            requestLogger.logInternalString("ERROR", `Error writing to log file: ${error}`);
+        }
+    }
+
+    logUserFlow(data) {
+        data.logType = "USER_FLOW";
+        data.timestamp = new Date().toISOString();
+
+        try {
+            const logFilePath = this.getLogFilePath();
+            fs.appendFileSync(logFilePath, JSON.stringify(data) + '\n', 'utf8');
+        } catch (error) {
+            requestLogger.logInternalString("ERROR", `Error writing to log file: ${error}`);
+        }
+    }
+
+    failedSecurityFlag(error) {
+        this.logInternalString("ERROR", `Error creating security flag: ${error}`);
+    }
+
+    error(error) {
+        this.logInternalString("ERROR", `${error}`);
     }
 
     // Middleware function

@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { checkAccountCreationLimit, markAccountCreation, checkUserMessageLimit, markUserMessage, checkUserDesignLimit, markUserDesignUpdate } = require('../helpers/rateLimitUtils.js');
 const { SecurityFlagHandler } = require('../helpers/securityFlag.handler.js');
+const { requestLogger } = require("../helpers/requestLogger.js");
 
 // Helper function to strip HTML tags from text
 function stripHtml(text) {
@@ -146,7 +147,7 @@ async function createAccount(req, res) {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
             return res.status(400).json({ message: 'Username and password are required' });
         }
@@ -170,7 +171,7 @@ async function createAccount(req, res) {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
             return res.status(429).json({ message: 'You can only create one account per IP address per day' });
         }
@@ -239,7 +240,7 @@ async function createAccount(req, res) {
                 }
             });
         } catch (flagError) {
-            console.error('Error creating security flag:', flagError);
+            requestLogger.failedSecurityFlag(flagError);
         }
 
         // Mark that this IP has created an account
@@ -251,7 +252,7 @@ async function createAccount(req, res) {
             accessKey: newUser.accessKey
         });
     } catch (error) {
-        console.error('Create account error:', error);
+        requestLogger.logInternalString("ERROR", `Create account error: ${error}`);
         res.status(500).json({ message: 'Internal server error' });
     }
 }
@@ -298,7 +299,7 @@ async function validateAccessKey(req, res) {
             }
         });
     } catch (error) {
-        console.error('Validate access key error:', error);
+        requestLogger.logInternalString("ERROR", `Validate access key error: ${error}`);
         res.status(500).json({
             valid: false,
             message: 'Internal server error'
@@ -338,7 +339,7 @@ async function login(req, res) {
             admin: user.admin || false
         });
     } catch (error) {
-        console.error('Login error:', error);
+        requestLogger.logInternalString("ERROR", `Login error: ${error}`);
         res.status(500).json({ message: 'Internal server error' });
     }
 }
@@ -373,7 +374,7 @@ async function resetAccessKey(req, res) {
             accessKey: user.accessKey
         });
     } catch (error) {
-        console.error('Reset access key error:', error);
+        requestLogger.logInternalString("ERROR", `Reset access key error: ${error}`);
         res.status(500).json({ message: 'Internal server error' });
     }
 }
@@ -598,7 +599,7 @@ async function deleteMessage(req, res) {
                 }
             });
         } catch (flagError) {
-            console.error('Error creating security flag:', flagError);
+            requestLogger.failedSecurityFlag(flagError);
         }
 
         res.status(200).json({

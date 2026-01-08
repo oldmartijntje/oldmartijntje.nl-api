@@ -63,7 +63,7 @@ testRouter.get("/visits", async (_req, res) => {
 // });
 
 if (!MONGO_URI) {
-    console.error("No MONGO_URI environment variable has been defined");
+    requestLogger.logInternalString("ERROR", `No MONGO_URI environment variable has been defined`);
     process.exit(1);
 }
 // console.log(encodeURIComponent(''))
@@ -154,7 +154,7 @@ connect(MONGO_URI)
                 }
                 console.log(`[INFO] Flushed ${entriesToFlush.length} 404 entries to the database.`);
             } catch (error) {
-                console.error('[ERROR] Failed to flush 404 buffer:', error);
+                requestLogger.logInternalString("ERROR", `Failted to flush 404 buffer: ${error}`);
             }
         }
 
@@ -179,12 +179,16 @@ connect(MONGO_URI)
                         environment: process.env.NODE_ENV || 'undefined',
                         startupReason: 'server initialization'
                     }
-                }).catch(console.error);
+                }).catch(error => {
+                    requestLogger.logInternalString("ERROR", `Error while writing to database: ${error}`);
+                });
             }
         }).on('error', (err) => {
-            console.error('Server startup error:', err);
+            requestLogger.logInternalString("ERROR", `Error while listenign on port ${port}: ${err}`);
             exit(1);
         });
 
     })
-    .catch(error => console.error(error));
+    .catch(error => {
+        requestLogger.logInternalString("ERROR", `Error while connecting to database: ${error}`);
+    });

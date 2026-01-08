@@ -33,7 +33,7 @@ class SessionHandler {
                             }
                         });
                     } catch (flagError) {
-                        console.error('Error creating security flag:', flagError);
+                        requestLogger.failedSecurityFlag(flagError);
                     }
                     return res.status(429).json({ message: "Rate limit exceeded by a lot. Try again in 24 hours." });
                 }
@@ -56,7 +56,7 @@ class SessionHandler {
                             }
                         });
                     } catch (flagError) {
-                        console.error('Error creating security flag:', flagError);
+                        requestLogger.failedSecurityFlag(flagError);
                     }
                     return res.status(429).json({ message: "Rate limit exceeded by a lot. Try again in 24 hours." });
                 } else if (session.calls >= limit) {
@@ -75,7 +75,7 @@ class SessionHandler {
                             }
                         });
                     } catch (flagError) {
-                        console.error('Error creating security flag:', flagError);
+                        requestLogger.failedSecurityFlag(flagError);
                     }
                     return res.status(429).json({ message: "Rate limit exceeded. Try again in a minute." });
                 }

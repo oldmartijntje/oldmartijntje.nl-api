@@ -5,7 +5,7 @@ async function setupImplementationKeys() {
     try {
         const MONGO_URI = process.env.DB_URL;
         if (!MONGO_URI) {
-            console.error("No MONGO_URI environment variable has been defined");
+            requestLogger.logInternalString("ERROR", "No MONGO_URI environment variable has been defined");
             process.exit(1);
         }
 

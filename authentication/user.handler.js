@@ -2,6 +2,7 @@ const { users, sessionTokens, registrationCodes } = require("../database");
 const { compare } = require('bcrypt');
 const mongodb = require("mongodb");
 const settings = require('../settings.json');
+const requestLogger = require('../helpers/requestLogger');
 
 const sessiontokenExpireTime = settings['sessionTokenExpirationMinutes'];
 
@@ -50,7 +51,7 @@ class UserHandler {
             this.#selectedUsers.push(user);
             return true;
         } catch (error) {
-            console.error('Error creating user:', error);
+            requestLogger.logInternalString("ERROR", `Error creating user: ${error}`);
             return false;
         }
     }

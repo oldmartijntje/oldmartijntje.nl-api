@@ -107,7 +107,7 @@ projectDataRouter.delete("/", async (req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
@@ -131,7 +131,7 @@ projectDataRouter.delete("/", async (req, res) => {
                 }
             });
         } catch (flagError) {
-            console.error('Error creating security flag:', flagError);
+            requestLogger.failedSecurityFlag(flagError);
         }
         projectData.deleteOne({ _id: { $eq: id } }).then((result) => {
             if (result.deletedCount == 0) {
@@ -200,7 +200,7 @@ projectDataRouter.post("/", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError);
                 }
                 res.status(403).send({ "message": "You do not have the required clearance level for this action." });
                 return;
@@ -226,7 +226,7 @@ projectDataRouter.post("/", async (_req, res) => {
                         }
                     });
                 } catch (flagError) {
-                    console.error('Error creating security flag:', flagError);
+                    requestLogger.failedSecurityFlag(flagError);
                 }
             }
             const projectDataData = new projectData(mergdedData);
@@ -309,7 +309,7 @@ projectDataRouter.put("/", async (req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
             res.status(403).send({ "message": "You do not have the required clearance level for this action." });
             return;
@@ -336,7 +336,7 @@ projectDataRouter.put("/", async (req, res) => {
                     }
                 });
             } catch (flagError) {
-                console.error('Error creating security flag:', flagError);
+                requestLogger.failedSecurityFlag(flagError);
             }
         }
         projectData.updateOne({ _id: { $eq: _id } }, mergdedData).then((result) => {
