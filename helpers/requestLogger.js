@@ -34,16 +34,19 @@ class RequestLogger {
     }
 
     formatLogEntry(req, res, responseTime) {
-        const timestamp = new Date().toISOString();
-        const ip = req.ip || req.connection.remoteAddress || 'unknown';
-        const userAgent = req.get('User-Agent') || 'unknown';
-        const method = req.method;
-        const url = req.originalUrl || req.url;
-        const statusCode = res.statusCode;
-        const contentLength = res.get('Content-Length') || '-';
+        const logEntry = {
+            logType: "WEB_REQUEST",
+            timestamp: new Date().toISOString(),
+            ip: req.ip || req.connection.remoteAddress || 'unknown',
+            userAgent: req.get('User-Agent') || 'unknown',
+            method: req.method,
+            url: req.originalUrl || req.url,
+            statusCode: res.statusCode,
+            contentLength: res.get('Content-Length') || '-',
+            responseTime: `${responseTime}ms`
+        };
 
-        // Format: [timestamp] IP "METHOD URL HTTP/1.1" status contentLength "userAgent" responseTimeMs
-        return `[${timestamp}] ${ip} "${method} ${url} HTTP/1.1" ${statusCode} ${contentLength} "${userAgent}" ${responseTime}ms\n`;
+        return JSON.stringify(logEntry) + '\n';
     }
 
     log(req, res, responseTime) {
