@@ -1,0 +1,15 @@
+meta {
+  name: check all projects (live api)
+  type: http
+  seq: 12
+}
+
+post {
+  url: https://api.oldmartijntje.nl/getData/getDisplayItems
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,21 @@
+meta {
+  name: find all active codes
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/register/find
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "sessionToken": "06143101-5bfa-4ab2-9f13-133b85848951"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

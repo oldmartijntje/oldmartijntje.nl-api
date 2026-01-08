@@ -1,0 +1,21 @@
+meta {
+  name: find all projectId's
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/projectData/getAllProjectIds
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "sessionToken": "2b09781a-d3bd-48d1-8bb0-44e11d9cbaa4"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

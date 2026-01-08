@@ -1,0 +1,23 @@
+meta {
+  name: generate an code
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{url}}/register/generate
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "sessionToken": "e5d62069-4bc7-4936-8eb4-02f5e0e802c9",
+      "clearanceLevel": 3,
+      "role": "meow"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

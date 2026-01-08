@@ -1,0 +1,20 @@
+meta {
+  name: get all forums
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{url}}/forums/forums?implementationKey=test-key-123&limit=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  implementationKey: test-key-123
+  limit: 10
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,29 @@
+meta {
+  name: get
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/security-flags/?sessionToken=276ed33d-e72b-4134-8495-b2a40541b65b
+  body: none
+  auth: inherit
+}
+
+params:query {
+  sessionToken: 276ed33d-e72b-4134-8495-b2a40541b65b
+  ~riskLevel: 3
+  ~resolved: false
+  ~limit: 20
+  ~skip: 0
+  ~descriptionFilter: xxx
+  ~userFilter: xxx
+  ~ipFilter: xxx
+  ~fileFilter: xxx
+  ~additionalDataFilter: xxx
+  ~dateTimeFilter: xxx
+}
+
+settings {
+  encodeUrl: true
+}

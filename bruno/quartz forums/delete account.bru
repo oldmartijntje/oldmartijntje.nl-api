@@ -1,0 +1,22 @@
+meta {
+  name: delete account
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{url}}/forums/account
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "username": "henk",
+      "password": "henk"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

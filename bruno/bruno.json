@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "my website",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

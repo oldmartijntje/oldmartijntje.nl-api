@@ -1,0 +1,23 @@
+meta {
+  name: delete message
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{url}}/forums/message/:messageId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  messageId: 692f3b609bfe314873776bdd
+}
+
+headers {
+  x-access-key: 39fc91bca77c8a2b028422f6a862b5ca49004252a5960a5497901074b102c3d6
+}
+
+settings {
+  encodeUrl: true
+}

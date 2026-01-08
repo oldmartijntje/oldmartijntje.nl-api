@@ -1,0 +1,19 @@
+meta {
+  name: get user
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{url}}/forums/account/:userid
+  body: none
+  auth: inherit
+}
+
+params:path {
+  userid: 692f222d9bfe314873776bbd
+}
+
+settings {
+  encodeUrl: true
+}

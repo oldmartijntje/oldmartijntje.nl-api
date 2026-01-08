@@ -1,0 +1,22 @@
+meta {
+  name: validate token
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{url}}/login/validateToken
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "username":"Agent_B6",
+      "sessionToken": "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx-xxxx"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

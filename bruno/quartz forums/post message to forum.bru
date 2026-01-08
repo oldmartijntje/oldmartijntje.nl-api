@@ -1,0 +1,27 @@
+meta {
+  name: post message to forum
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/forums/message
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-access-key: 5b406764236f492f041743872e372e460b5bc808d5ac7438882edaa38e679b2a
+}
+
+body:json {
+  {
+      "implementationKey": "asdf",
+      "subpage": "200-Zettelkasten/QuartzForums",
+      "content": "such empty"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

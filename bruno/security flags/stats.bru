@@ -1,0 +1,25 @@
+meta {
+  name: stats
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{url}}/security-flags/:id/resolve
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 69373fcb3f281aeb5c2ea5fa
+}
+
+body:json {
+  {
+      "sessionToken":"276ed33d-e72b-4134-8495-b2a40541b65b"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

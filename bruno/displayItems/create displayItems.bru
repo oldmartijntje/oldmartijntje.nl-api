@@ -1,0 +1,26 @@
+meta {
+  name: create displayItems
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{url}}/getData/displayItems
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "sessionToken": "9337edd8-eedf-4a94-b825-5ab625c23f2a",
+      "title": "yeet",
+      "infoPages": [{ "title":"main","content": "<h1>YEET</h1>"}],
+      "tumbnailImage": "https://i.imgur.com/OvfIOp0.png",
+      "hidden": false,
+      "displayItemType": "Project"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,24 @@
+meta {
+  name: create projectData
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{url}}/projectData/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "sessionToken": "e26512d6-fcaa-4e8c-9355-160b5aac473c",
+      "projectId": "randomNewsMessages",
+      "attributes": {"1": 2, "joesoef": [1,2,3,4,5,null]},
+      "clearanceLevelNeeded": 0
+  }
+}
+
+settings {
+  encodeUrl: true
+}

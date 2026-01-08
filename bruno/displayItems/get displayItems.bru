@@ -1,0 +1,23 @@
+meta {
+  name: get displayItems
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/getData/getDisplayItems
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "from": 0,
+      "amount": 42,
+      "hidden": true
+  }
+}
+
+settings {
+  encodeUrl: true
+}

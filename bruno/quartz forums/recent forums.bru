@@ -1,0 +1,15 @@
+meta {
+  name: recent forums
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{url}}/forums/forums/recent
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

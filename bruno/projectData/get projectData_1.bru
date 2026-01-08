@@ -1,0 +1,23 @@
+meta {
+  name: get projectData_1
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/projectData/getProjectData
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "from": 0,
+      "amount": 42,
+      "projectId": "randomNewsMessages"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

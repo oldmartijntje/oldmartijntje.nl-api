@@ -1,0 +1,21 @@
+meta {
+  name: validate access key
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{url}}/forums/account/validate-access-key
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "accessKey": "cbe58c8bbdde358a1a144094f101c7db231290ef36426e4cd92a2238174c5bd8"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

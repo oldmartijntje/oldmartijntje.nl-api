@@ -1,0 +1,15 @@
+meta {
+  name: isOnline
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{url}}/test/isOnline
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

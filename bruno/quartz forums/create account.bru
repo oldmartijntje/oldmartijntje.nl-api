@@ -1,0 +1,22 @@
+meta {
+  name: create account
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/forums/account/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "username": "henk",
+      "password": "henk"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

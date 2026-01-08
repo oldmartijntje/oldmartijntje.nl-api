@@ -1,0 +1,24 @@
+meta {
+  name: get a forum
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{url}}/forums/forum?implementationKey=asdf&subpage=404
+  body: none
+  auth: inherit
+}
+
+params:query {
+  implementationKey: asdf
+  subpage: 404
+}
+
+headers {
+  x-access-key: 5b406764236f492f041743872e372e460b5bc808d5ac7438882edaa38e679b2a
+}
+
+settings {
+  encodeUrl: true
+}

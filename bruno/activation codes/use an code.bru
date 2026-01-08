@@ -1,0 +1,23 @@
+meta {
+  name: use an code
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "username": "Oldmartijntje",
+      "password": "maramachtig",
+      "activationCode": "b3992719-d361-482b-9d51-8601d87af45e"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

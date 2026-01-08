@@ -1,0 +1,20 @@
+meta {
+  name: delete projectData
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{url}}/projectData?id=67157b980adc62637546d150&sessionToken=2b09781a-d3bd-48d1-8bb0-44e11d9cbaa4
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: 67157b980adc62637546d150
+  sessionToken: 2b09781a-d3bd-48d1-8bb0-44e11d9cbaa4
+}
+
+settings {
+  encodeUrl: true
+}

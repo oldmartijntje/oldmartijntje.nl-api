@@ -1,0 +1,27 @@
+meta {
+  name: get projectData
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/projectData/getProjectData?projectId=randomNewsMessages
+  body: json
+  auth: inherit
+}
+
+params:query {
+  projectId: randomNewsMessages
+}
+
+body:json {
+  {
+      "from": 0,
+      "amount": 42,
+      "projectId": "randomNewsMessages"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

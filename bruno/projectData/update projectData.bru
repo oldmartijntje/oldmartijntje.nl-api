@@ -1,0 +1,25 @@
+meta {
+  name: update projectData
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{url}}/projectData/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "sessionToken": "2b09781a-d3bd-48d1-8bb0-44e11d9cbaa4",
+      "projectId": "henk",
+      "attributes": {"1": 2, "joesoef": [1,2,3,4,5,null]},
+      "clearanceLevelNeeded": 0,
+      "_id": "67157b980adc62637546d150"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

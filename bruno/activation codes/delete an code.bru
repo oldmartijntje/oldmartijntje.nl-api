@@ -1,0 +1,22 @@
+meta {
+  name: delete an code
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{url}}/register/delete
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "sessionToken": "06143101-5bfa-4ab2-9f13-133b85848951",
+      "activationCode": "48525e6d-0230-4c1c-a5ca-55b8eb33d57f"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
