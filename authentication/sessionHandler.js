@@ -38,7 +38,7 @@ class SessionHandler {
                     return res.status(429).json({ message: "Rate limit exceeded by a lot. Try again in 24 hours." });
                 }
 
-                session = await updateSession(session, now, limit, blacklistLimit, resetMinutes);
+                session = await updateSession(session, now, limit, blacklistLimit, resetMinutes, req);
 
                 if (session.rateLimitedAt) {
                     // Create security flag for new blacklist event (severe rate limit violation)
@@ -60,23 +60,7 @@ class SessionHandler {
                     }
                     return res.status(429).json({ message: "Rate limit exceeded by a lot. Try again in 24 hours." });
                 } else if (session.calls >= limit) {
-                    // Create security flag for regular rate limit violation
-                    try {
-                        await SecurityFlagHandler.createSecurityFlag({
-                            req: req,
-                            riskLevel: 3,
-                            description: `IP exceeded rate limit (${session.calls}/${limit} calls per minute)`,
-                            fileName: 'sessionHandler.js',
-                            additionalData: {
-                                callCount: session.calls,
-                                rateLimit: limit,
-                                attemptedEndpoint: req.originalUrl || req.url,
-                                closeToBlacklist: session.calls >= (blacklistLimit * 0.8)
-                            }
-                        });
-                    } catch (flagError) {
-                        requestLogger.failedSecurityFlag(flagError);
-                    }
+                    // Security flag now created in updateSession with throttling
                     return res.status(429).json({ message: "Rate limit exceeded. Try again in a minute." });
                 }
             }

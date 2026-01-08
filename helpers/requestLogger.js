@@ -25,8 +25,18 @@ class RequestLogger {
 
         // Ensure buffer is flushed on process exit
         process.on('exit', () => this.flushBuffer());
-        process.on('SIGINT', () => {
+        process.on('SIGINT', async () => {
             this.flushBuffer();
+            // Sync rate limit data
+            const { shutdown } = require('./rateLimitUtils');
+            await shutdown();
+            process.exit();
+        });
+        process.on('SIGTERM', async () => {
+            this.flushBuffer();
+            // Sync rate limit data
+            const { shutdown } = require('./rateLimitUtils');
+            await shutdown();
             process.exit();
         });
     }
