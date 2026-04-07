@@ -287,10 +287,13 @@ jsonRouter.put("/displayItems", async (req, res) => {
     if (req.body.description != undefined) {
         data.description = req.body.description;
     }
+    let unsetBlogkey = false;
     if (req.body.blogkey != undefined) {
         const normalizedBlogkey = req.body.blogkey === "" ? undefined : req.body.blogkey;
         if (normalizedBlogkey !== undefined) {
             data.blogkey = normalizedBlogkey;
+        } else {
+            unsetBlogkey = true;
         }
     }
     if (req.body.thumbnailImage != undefined) {
@@ -377,7 +380,15 @@ jsonRouter.put("/displayItems", async (req, res) => {
             requestLogger.failedSecurityFlag(flagError);
         }
 
-        displayItems.updateOne({ _id: { $eq: data._id } }, data).then((result) => {
+        const updateData = { ...data };
+        delete updateData._id;
+        const updatePayload = { $set: updateData };
+        if (unsetBlogkey) {
+            updatePayload.$unset = { blogkey: 1 };
+            delete updatePayload.$set.blogkey;
+        }
+
+        displayItems.updateOne({ _id: { $eq: data._id } }, updatePayload).then((result) => {
             if (!result) {
                 return res.status(404).send({ message: "Project not found" });
             }
