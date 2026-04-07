@@ -56,6 +56,11 @@ const displayItemJsonSchema = {
         required: true,
         description: "'displayItemType' is required and is a string",
     },
+    blogkey: {
+        type: String,
+        required: false,
+        description: "'blogkey' is optional and is a string",
+    },
 
 };
 

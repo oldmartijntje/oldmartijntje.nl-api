@@ -150,6 +150,9 @@ jsonRouter.post("/displayItems", async (_req, res) => {
         if (_req.body.description != undefined) {
             data.description = _req.body.description;
         }
+        if (_req.body.blogkey != undefined) {
+            data.blogkey = _req.body.blogkey === "" ? undefined : _req.body.blogkey;
+        }
         if (_req.body.thumbnailImage != undefined) {
             data.thumbnailImage = _req.body.thumbnailImage;
         }
@@ -280,6 +283,9 @@ jsonRouter.put("/displayItems", async (req, res) => {
     }
     if (req.body.description != undefined) {
         data.description = req.body.description;
+    }
+    if (req.body.blogkey != undefined) {
+        data.blogkey = req.body.blogkey === "" ? undefined : req.body.blogkey;
     }
     if (req.body.thumbnailImage != undefined) {
         data.thumbnailImage = req.body.thumbnailImage;
