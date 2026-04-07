@@ -151,7 +151,10 @@ jsonRouter.post("/displayItems", async (_req, res) => {
             data.description = _req.body.description;
         }
         if (_req.body.blogkey != undefined) {
-            data.blogkey = _req.body.blogkey === "" ? undefined : _req.body.blogkey;
+            const normalizedBlogkey = _req.body.blogkey === "" ? undefined : _req.body.blogkey;
+            if (normalizedBlogkey !== undefined) {
+                data.blogkey = normalizedBlogkey;
+            }
         }
         if (_req.body.thumbnailImage != undefined) {
             data.thumbnailImage = _req.body.thumbnailImage;
@@ -285,7 +288,10 @@ jsonRouter.put("/displayItems", async (req, res) => {
         data.description = req.body.description;
     }
     if (req.body.blogkey != undefined) {
-        data.blogkey = req.body.blogkey === "" ? undefined : req.body.blogkey;
+        const normalizedBlogkey = req.body.blogkey === "" ? undefined : req.body.blogkey;
+        if (normalizedBlogkey !== undefined) {
+            data.blogkey = normalizedBlogkey;
+        }
     }
     if (req.body.thumbnailImage != undefined) {
         data.thumbnailImage = req.body.thumbnailImage;
