@@ -1,0 +1,23 @@
+meta {
+  name: all blogs
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{url}}/getData/blogs?limit=42&skip=0&hidden=true&sessionToken=335c96e2-f8ab-46a7-a048-aaf8c46a9325
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 42
+  skip: 0
+  hidden: true
+  sessionToken: 335c96e2-f8ab-46a7-a048-aaf8c46a9325
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

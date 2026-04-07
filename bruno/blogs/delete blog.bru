@@ -1,0 +1,23 @@
+meta {
+  name: delete blog
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{url}}/getData/blogs
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "sessionToken": "335c96e2-f8ab-46a7-a048-aaf8c46a9325",
+    "_id": "69d55bd5775b9b50c5763da1"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

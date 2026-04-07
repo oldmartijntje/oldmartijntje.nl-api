@@ -1,0 +1,26 @@
+meta {
+  name: edit blog
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{url}}/getData/blogs
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "sessionToken": "335c96e2-f8ab-46a7-a048-aaf8c46a9325",
+    "title": "test",
+    "description": "testo",
+    "_id": "69d55bd5775b9b50c5763da1",
+    "hidden": true
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

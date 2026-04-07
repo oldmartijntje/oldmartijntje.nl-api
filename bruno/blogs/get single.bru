@@ -1,0 +1,20 @@
+meta {
+  name: get single
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{url}}/getData/blogs/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 69d55bbd775b9b50c5763d92
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
