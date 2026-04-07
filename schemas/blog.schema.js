@@ -16,6 +16,12 @@ const blogJsonSchema = {
         trim: true,
         lowercase: true
     },
+    baseURL: {
+        type: String,
+        required: false,
+        trim: true,
+        default: null
+    },
     pubDate: {
         type: Date,
         required: true,

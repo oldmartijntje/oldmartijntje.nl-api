@@ -53,6 +53,34 @@ function normalizeBlogIdentifier(value) {
     return normalized;
 }
 
+function normalizeBaseUrl(value) {
+    if (value === undefined) {
+        return undefined;
+    }
+    if (value === null) {
+        return null;
+    }
+    if (typeof value !== 'string') {
+        return undefined;
+    }
+
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+        return null;
+    }
+
+    return trimmedValue;
+}
+
+function escapeXml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
 async function getBlogs(req, res) {
     try {
         const limit = Number.parseInt(req.query.limit ?? settings.defaultAmountToGet, 10);
@@ -146,12 +174,75 @@ async function getBlog(req, res) {
     }
 }
 
+async function getBlogsRss(req, res) {
+    try {
+        const blogItems = await blogs
+            .find({ hidden: false })
+            .sort({ pubDate: -1 })
+            .limit(50);
+
+        const username = "OldMartijntje"
+        const siteRoot = `${req.protocol}://${req.get('host')}`;
+        const feedUrl = `${siteRoot}/getData/blogs/rss`;
+        const feedDescription = `This is the personal blog of ${username}. I hope that you'll enjoy reading it :3`;
+        const feedTitle = `${username}'s Blogs`;
+
+        const itemsXml = blogItems.map((blog) => {
+            const blogBaseUrl = typeof blog.baseURL === 'string' && blog.baseURL.trim() !== ''
+                ? blog.baseURL.trim()
+                : siteRoot + '/getData/blogs/';
+            const normalizedItemBaseUrl = blogBaseUrl.endsWith('/')
+                ? blogBaseUrl.replace(/\/{2,}$/, '/')
+                : blogBaseUrl;
+            const itemUrl = `${normalizedItemBaseUrl}${encodeURIComponent(blog.blogIdentifier)}`;
+            const title = escapeXml(blog.title || 'Untitled');
+            const description = escapeXml(blog.description || '');
+            const pubDate = new Date(blog.pubDate || blog.editDate || Date.now()).toUTCString();
+            const guid = escapeXml(String(blog._id));
+
+            return [
+                '<item>',
+                `  <title>${title}</title>`,
+                `  <description>${description}</description>`,
+                `  <link>${itemUrl}</link>`,
+                `  <guid>${blog.blogIdentifier}</guid>`,
+                `  <pubDate>${pubDate}</pubDate>`,
+                '</item>'
+            ].join('\n');
+        }).join('\n');
+
+        const rssXml = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<rss version="2.0">',
+            '<channel>',
+            `<title>${feedTitle}</title>`,
+            `<description>${feedDescription}</description>`,
+            `<link>${feedUrl + '.xml'}</link>`,
+            ...[itemsXml],
+            '</channel>',
+            '</rss>'
+        ].join('\n');
+
+        return res
+            .status(200)
+            .set('Content-Type', 'application/rss+xml; charset=utf-8')
+            .send(rssXml);
+    } catch (error) {
+        requestLogger.logInternalString('ERROR', `Error generating blog RSS feed: ${error}`);
+        return res.status(500).json({
+            success: false,
+            message: 'Error generating RSS feed'
+        });
+    }
+}
+
 async function createBlog(req, res) {
     try {
         const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
         const description = typeof req.body.description === 'string' ? req.body.description.trim() : '';
         const rawBlogIdentifier = req.body.blogIdentifier;
         const blogIdentifier = normalizeBlogIdentifier(rawBlogIdentifier);
+        const baseURL = normalizeBaseUrl(req.body.baseURL);
         const hidden = parseBoolean(req.body.hidden) ?? false;
 
         const pubDate = parseDateValue(req.body.pubDate) ?? new Date();
@@ -171,6 +262,13 @@ async function createBlog(req, res) {
             });
         }
 
+        if (req.body.baseURL !== undefined && baseURL === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: 'baseURL must be null or a string'
+            });
+        }
+
         const existingBlog = await blogs.findOne({ blogIdentifier });
         if (existingBlog) {
             return res.status(409).json({
@@ -183,6 +281,7 @@ async function createBlog(req, res) {
             title,
             description,
             blogIdentifier,
+            baseURL: baseURL === undefined ? null : baseURL,
             pubDate,
             editDate,
             hidden
@@ -241,6 +340,17 @@ async function updateBlog(req, res) {
                 });
             }
             updatePayload.description = description;
+        }
+
+        if (req.body.baseURL !== undefined) {
+            const baseURL = normalizeBaseUrl(req.body.baseURL);
+            if (baseURL === undefined) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'baseURL must be null or a string'
+                });
+            }
+            updatePayload.baseURL = baseURL;
         }
 
         if (req.body.hidden !== undefined) {
@@ -364,6 +474,7 @@ async function logDeniedBlogAction(req, user, action, blogData) {
 module.exports = {
     getBlogs,
     getBlog,
+    getBlogsRss,
     createBlog,
     updateBlog,
     deleteBlog,

@@ -4,6 +4,7 @@ const { UserAuthenticator } = require('../authentication/user.authenticator');
 const {
     getBlogs,
     getBlog,
+    getBlogsRss,
     createBlog,
     updateBlog,
     deleteBlog,
@@ -54,6 +55,17 @@ blogsRouter.get('/blogs', async (req, res) => {
                 return;
             }
             await getBlogs(req, res);
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+});
+
+blogsRouter.get('/blogs/rss.xml', async (req, res) => {
+    try {
+        const sessionH = new SessionHandler();
+        sessionH.rateLimitMiddleware(req, res, async () => {
+            await getBlogsRss(req, res);
         });
     } catch (error) {
         res.status(500).send({ message: error.message });
