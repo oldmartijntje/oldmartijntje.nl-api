@@ -61,6 +61,14 @@ const quartzForumMessageSchema = new mongoose.Schema(quartzForumMessageJsonSchem
 const quartzForumMessages = mongoose.model('QuartzForumMessage', quartzForumMessageSchema);
 
 const securityFlagSchema = new mongoose.Schema(securityFlagJsonSchema);
+// Auto-expire low-risk flags (risk level 1) after 14 days.
+securityFlagSchema.index(
+    { dateTime: 1 },
+    {
+        expireAfterSeconds: 60 * 60 * 24 * 14,
+        partialFilterExpression: { riskLevel: 1 }
+    }
+);
 const securityFlags = mongoose.model('SecurityFlag', securityFlagSchema);
 
 async function connectToDatabase(uri) {
