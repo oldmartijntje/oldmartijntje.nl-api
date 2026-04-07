@@ -240,6 +240,7 @@ async function createBlog(req, res) {
     try {
         const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
         const description = typeof req.body.description === 'string' ? req.body.description.trim() : '';
+        const content = req.body.content;
         const rawBlogIdentifier = req.body.blogIdentifier;
         const blogIdentifier = normalizeBlogIdentifier(rawBlogIdentifier);
         const baseURL = normalizeBaseUrl(req.body.baseURL);
@@ -252,6 +253,13 @@ async function createBlog(req, res) {
             return res.status(400).json({
                 success: false,
                 message: 'title, description, and blogIdentifier are required'
+            });
+        }
+
+        if (typeof content !== 'string') {
+            return res.status(400).json({
+                success: false,
+                message: 'content is required and must be a string'
             });
         }
 
@@ -280,6 +288,7 @@ async function createBlog(req, res) {
         const createdBlog = await blogs.create({
             title,
             description,
+            content,
             blogIdentifier,
             baseURL: baseURL === undefined ? null : baseURL,
             pubDate,
@@ -340,6 +349,16 @@ async function updateBlog(req, res) {
                 });
             }
             updatePayload.description = description;
+        }
+
+        if (req.body.content !== undefined) {
+            if (typeof req.body.content !== 'string') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'content must be a string'
+                });
+            }
+            updatePayload.content = req.body.content;
         }
 
         if (req.body.baseURL !== undefined) {
