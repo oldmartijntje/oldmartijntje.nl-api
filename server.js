@@ -16,6 +16,7 @@ const { registerRouter } = require("./routing/register.routes.js");
 const { projectDataRouter } = require("./routing/projectData.routes.js");
 const { quartzforumsRouter } = require("./routing/quartzforums.routes.js");
 const { securityFlagsRouter } = require("./routing/securityFlags.routes.js");
+const { blogsRouter } = require("./routing/blogs.routes.js");
 const { logsRouter } = require("./routing/logs.routes.js");
 
 const MONGO_URI = process.env.DB_URL;
@@ -87,6 +88,7 @@ connect(MONGO_URI)
         app.use("/login", loginRouter);
         app.use("/register", registerRouter);
         app.use("/getData", jsonRouter);
+        app.use("/getData", blogsRouter);
         app.use("/test", testRouter);
         app.use("/projectData", projectDataRouter);
         app.use("/forums", quartzforumsRouter);

@@ -1,0 +1,27 @@
+meta {
+  name: create blog
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/getData/blogs
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "sessionToken": "335c96e2-f8ab-46a7-a048-aaf8c46a9325",
+    "title": "test",
+    "description": "test",
+    "blogIdentifier": "testing-blog-idk",
+    "hidden": false,
+    "baseURL": "https://oldmartijntje.nl/blogs/"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

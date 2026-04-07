@@ -11,6 +11,7 @@ const { quartzForumAccountJsonSchema } = require("./schemas/quartzForumAccount.s
 const { quartzForumForumJsonSchema } = require("./schemas/quartzForumForum.schema");
 const { quartzForumMessageJsonSchema } = require("./schemas/quartzForumMessage.schema");
 const { securityFlagJsonSchema } = require("./schemas/securityFlag.schema");
+const { blogJsonSchema } = require("./schemas/blog.schema");
 const { requestLogger } = require("./helpers/requestLogger")
 
 // This has to be done for all collections that we want to have JSON schema validation on
@@ -71,6 +72,9 @@ securityFlagSchema.index(
 );
 const securityFlags = mongoose.model('SecurityFlag', securityFlagSchema);
 
+const blogSchema = new mongoose.Schema(blogJsonSchema);
+const blogs = mongoose.model('blogs', blogSchema);
+
 async function connectToDatabase(uri) {
     try {
         const mongoose = require('mongoose');
@@ -94,5 +98,6 @@ module.exports = {
     quartzForumAccounts: quartzForumAccounts,
     quartzForumForums: quartzForumForums,
     quartzForumMessages: quartzForumMessages,
-    securityFlags: securityFlags
+    securityFlags: securityFlags,
+    blogs: blogs
 };
