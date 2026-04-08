@@ -41,6 +41,11 @@ const blogJsonSchema = {
         type: Boolean,
         required: true,
         default: false
+    },
+    views: {
+        type: Number,
+        required: false,
+        default: 0
     }
 };
 

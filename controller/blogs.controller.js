@@ -87,6 +87,7 @@ async function getBlogs(req, res) {
         const skip = Number.parseInt(req.query.skip ?? 0, 10);
         const showHiddenRequested = parseBoolean(req.query.hidden) ?? false;
         const showHidden = showHiddenRequested && req.blogCanSeeHidden === true;
+        const hasSessionToken = !!req.query.sessionToken || !!req.body.sessionToken;
 
         if (Number.isNaN(limit) || Number.isNaN(skip)) {
             return res.status(400).json({
@@ -105,9 +106,19 @@ async function getBlogs(req, res) {
             blogs.countDocuments(query)
         ]);
 
+        // Remove views field if user doesn't have sessionToken
+        const itemsToReturn = items.map(item => {
+            if (!hasSessionToken) {
+                const itemData = item.toObject();
+                delete itemData.views;
+                return itemData;
+            }
+            return item;
+        });
+
         return res.json({
             success: true,
-            data: items,
+            data: itemsToReturn,
             pagination: {
                 limit,
                 skip,
@@ -130,6 +141,7 @@ async function getBlog(req, res) {
         const isObjectId = /^[a-fA-F0-9]{24}$/.test(identifierOrId);
         const showHiddenRequested = parseBoolean(req.query.hidden) ?? false;
         const showHidden = showHiddenRequested && req.blogCanSeeHidden === true;
+        const hasSessionToken = !!req.query.sessionToken || !!req.body.sessionToken;
 
         if (!blogIdentifier && !isObjectId) {
             return res.status(400).json({
@@ -161,9 +173,20 @@ async function getBlog(req, res) {
             });
         }
 
+        // Increment views for anonymous users (no sessionToken)
+        if (!hasSessionToken) {
+            await blogs.updateOne({ _id: blog._id }, { $inc: { views: 1 } });
+        }
+
+        // Remove views field if user doesn't have sessionToken
+        const blogData = blog.toObject();
+        if (!hasSessionToken && blogData.views !== undefined) {
+            delete blogData.views;
+        }
+
         return res.json({
             success: true,
-            data: blog
+            data: blogData
         });
     } catch (error) {
         requestLogger.logInternalString('ERROR', `Error getting blog: ${error}`);

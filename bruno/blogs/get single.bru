@@ -5,13 +5,17 @@ meta {
 }
 
 get {
-  url: {{url}}/getData/blogs/:id
+  url: {{url}}/getData/blogs/:id?sessionToken=335c96e2-f8ab-46a7-a048-aaf8c46a9325
   body: none
   auth: inherit
 }
 
+params:query {
+  sessionToken: 335c96e2-f8ab-46a7-a048-aaf8c46a9325
+}
+
 params:path {
-  id: 69d55bbd775b9b50c5763d92
+  id: 69d569f8e77884ac0adf5b1c
 }
 
 settings {
