@@ -241,7 +241,7 @@ async function getBlogsRss(req, res) {
             '<channel>',
             `<title>${feedTitle}</title>`,
             `<description>${feedDescription}</description>`,
-            `<link>${feedUrl + '.xml'}</link>`,
+            `<link>${blogUrl}</link>`,
             ...[itemsXml],
             '</channel>',
             '</rss>'
