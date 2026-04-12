@@ -208,7 +208,7 @@ async function getBlogsRss(req, res) {
         const siteRoot = `${req.protocol}://${req.get('host')}`;
         const blogUrl = `https://oldmartijntje.nl/#/blogs`;
         const feedUrl = `${siteRoot}/getData/blogs/rss`;
-        const feedDescription = `This is the personal blog of ${username}. I hope that you'll enjoy reading it :3`;
+        const feedDescription = `This is the personal blog of ${username} (that's me). I hope that you'll enjoy reading it :3`;
         const feedTitle = `${username}'s Blogs`;
 
         const itemsXml = blogItems.map((blog) => {
