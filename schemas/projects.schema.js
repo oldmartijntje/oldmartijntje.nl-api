@@ -31,6 +31,11 @@ const displayItemJsonSchema = {
         required: false,
         description: "'lastUpdated' is optional and is a date",
     },
+    publishDate: {
+        type: Date,
+        required: false,
+        description: "'publishDate' is optional and is a date",
+    },
     hidden: {
         type: Boolean,
         required: true,

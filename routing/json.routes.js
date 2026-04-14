@@ -35,8 +35,15 @@ jsonRouter.post("/getDisplayItems", async (_req, res) => {
                 if (!result) {
                     res.status(200).send({ message: "No displayItems found", "displayItems": [] });
                 }
+                const displayItemsWithPublishDateFallback = result.map((item) => {
+                    const currentItem = item.toObject ? item.toObject() : item;
+                    if (currentItem.publishDate === undefined && currentItem.lastUpdated !== undefined) {
+                        currentItem.publishDate = currentItem.lastUpdated;
+                    }
+                    return currentItem;
+                });
                 res.status(200).send({
-                    "displayItems": result
+                    "displayItems": displayItemsWithPublishDateFallback
                 });
             }).catch((error) => {
                 res.status(500).send(error.message);
@@ -183,6 +190,15 @@ jsonRouter.post("/displayItems", async (_req, res) => {
                 data.lastUpdated = new Date();
             }
         }
+        if (_req.body.publishDate == undefined || _req.body.publishDate == null) {
+            data.publishDate = new Date();
+        } else {
+            try {
+                data.publishDate = new Date(_req.body.publishDate);
+            } catch (e) {
+                data.publishDate = new Date();
+            }
+        }
         sessionH.rateLimitMiddleware(_req, res, async () => {
             const auth = new UserAuthenticator();
             const mergdedData = { ...requiredData, ...data };
@@ -318,6 +334,15 @@ jsonRouter.put("/displayItems", async (req, res) => {
             data.lastUpdated = new Date();
         }
     }
+    let manuallySetPublishDate = false;
+    if (req.body.publishDate != undefined && req.body.publishDate != null) {
+        manuallySetPublishDate = true;
+        try {
+            data.publishDate = new Date(req.body.publishDate);
+        } catch (e) {
+            data.publishDate = new Date();
+        }
+    }
     console.log(data.lastUpdated)
     const sessionH = new SessionHandler();
     sessionH.rateLimitMiddleware(req, res, async () => {
@@ -386,6 +411,16 @@ jsonRouter.put("/displayItems", async (req, res) => {
         if (unsetBlogkey) {
             updatePayload.$unset = { blogkey: 1 };
             delete updatePayload.$set.blogkey;
+        }
+
+        if (!manuallySetPublishDate) {
+            const existingItem = await displayItems.findOne({ _id: { $eq: data._id } }).select("publishDate").lean();
+            if (!existingItem) {
+                return res.status(404).send({ message: "Project not found" });
+            }
+            if (existingItem.publishDate === undefined || existingItem.publishDate === null) {
+                updatePayload.$set.publishDate = data.lastUpdated;
+            }
         }
 
         displayItems.updateOne({ _id: { $eq: data._id } }, updatePayload).then((result) => {
