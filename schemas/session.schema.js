@@ -25,6 +25,11 @@ const sessionJsonSchema = {
         required: false,
         index: { expires: '24h' }, // Automatically remove the document after 24 hours
     },
+    strikes: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
     lastAccountCreation: {
         type: Date,
         required: false,

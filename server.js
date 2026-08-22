@@ -291,10 +291,10 @@ function setHoneyPot(app) {
         }
 
         const ip = SecurityFlagHandler.extractIpAddress(req);
-        const bannedUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
 
         try {
-            await banIp(ip, bannedUntil);
+            const bannedSession = await banIp(ip);
+            const bannedUntil = bannedSession?.rateLimitedAt;
 
             await SecurityFlagHandler.createSecurityFlag({
                 req: req,
@@ -304,8 +304,9 @@ function setHoneyPot(app) {
                 fileName: 'server.js',
                 additionalData: {
                     requestedPath: req.originalUrl || req.url,
-                    bannedUntil: bannedUntil.toISOString(),
-                    banDurationDays: 90
+                    bannedUntil: bannedUntil?.toISOString(),
+                    banDurationDays: 30 * ((bannedSession?.strikes ?? 1) * (bannedSession?.strikes ?? 1)), // 10 days, also change this in rateLimitUtils.js
+                    strikes: bannedSession?.strikes ?? 0
                 }
             });
         } catch (error) {

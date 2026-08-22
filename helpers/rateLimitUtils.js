@@ -2,7 +2,9 @@
 const { sessions, quartzForumAccounts } = require("../database");
 const { SecurityFlagHandler } = require('./securityFlag.handler.js');
 
-const HONEYPOT_BAN_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
+const HONEYPOT_BAN_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, also change this in server.js
+// the ban time increases factorally:
+// 30 days, 120 days, 270 days....
 
 // In-memory caches for rate limiting
 const sessionCache = new Map();
@@ -50,6 +52,7 @@ const syncCachesToDatabase = async () => {
                         firstCall: session.firstCall,
                         lastCall: session.lastCall,
                         rateLimitedAt: session.rateLimitedAt,
+                        strikes: session.strikes ?? 0,
                         lastAccountCreation: session.lastAccountCreation
                     }
                 },
@@ -79,6 +82,7 @@ const initializeCache = async () => {
                 firstCall: session.firstCall,
                 lastCall: session.lastCall,
                 rateLimitedAt: session.rateLimitedAt,
+                strikes: session.strikes ?? 0,
                 lastAccountCreation: session.lastAccountCreation
             });
         });
@@ -107,6 +111,7 @@ const getSession = async (ip) => {
                 firstCall: dbSession.firstCall,
                 lastCall: dbSession.lastCall,
                 rateLimitedAt: dbSession.rateLimitedAt,
+                strikes: dbSession.strikes ?? 0,
                 lastAccountCreation: dbSession.lastAccountCreation
             };
             sessionCache.set(ip, session);
@@ -121,7 +126,8 @@ const createSession = async (ip) => {
         ipAddress: ip,
         calls: 1,
         firstCall: new Date(),
-        lastCall: new Date()
+        lastCall: new Date(),
+        strikes: 0
     };
 
     sessionCache.set(ip, newSession);
@@ -187,7 +193,7 @@ const updateSession = async (session, now, rateLimitPerMinute, blacklistLimitPer
     return session;
 };
 
-const banIp = async (ip, bannedUntil = new Date(Date.now() + HONEYPOT_BAN_DURATION_MS)) => {
+const banIp = async (ip) => {
     if (!ip) return null;
 
     const now = new Date();
@@ -197,10 +203,15 @@ const banIp = async (ip, bannedUntil = new Date(Date.now() + HONEYPOT_BAN_DURATI
         calls: 1,
         firstCall: now,
         lastCall: now,
+        strikes: 0,
     };
 
-    session.rateLimitedAt = bannedUntil;
-    session.lastCall = bannedUntil;
+    const currentStrikes = Number.isInteger(session.strikes) ? session.strikes : 0;
+    session.strikes = currentStrikes + 1;
+
+    const banDurationMs = HONEYPOT_BAN_DURATION_MS * session.strikes * session.strikes;
+    session.rateLimitedAt = new Date(Date.now() + banDurationMs);
+    session.lastCall = session.rateLimitedAt;
 
     sessionCache.set(ip, session);
     dirtySessionIps.add(ip);
