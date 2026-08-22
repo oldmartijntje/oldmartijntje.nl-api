@@ -2,6 +2,8 @@
 const { sessions, quartzForumAccounts } = require("../database");
 const { SecurityFlagHandler } = require('./securityFlag.handler.js');
 
+const HONEYPOT_BAN_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
+
 // In-memory caches for rate limiting
 const sessionCache = new Map();
 const accountCreationCache = new Map();
@@ -138,7 +140,7 @@ const updateSession = async (session, now, rateLimitPerMinute, blacklistLimitPer
     } else if (session.calls >= rateLimitPerMinute) {
         if (session.calls >= blacklistLimitPerMinute) {
             // Blacklist logic - immediately sync to DB
-            session.rateLimitedAt = now;
+            session.rateLimitedAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
             dirtySessionIps.add(session.ipAddress);
             // Force immediate DB sync for blacklist events
             await syncCachesToDatabase();
@@ -147,7 +149,7 @@ const updateSession = async (session, now, rateLimitPerMinute, blacklistLimitPer
     } else {
         session.calls++;
     }
-    session.lastCall = now;
+    session.lastCall = session.rateLimitedAt && session.rateLimitedAt > now ? session.rateLimitedAt : now;
 
     // Update in cache
     sessionCache.set(session.ipAddress, session);
@@ -181,6 +183,29 @@ const updateSession = async (session, now, rateLimitPerMinute, blacklistLimitPer
             }
         }
     }
+
+    return session;
+};
+
+const banIp = async (ip, bannedUntil = new Date(Date.now() + HONEYPOT_BAN_DURATION_MS)) => {
+    if (!ip) return null;
+
+    const now = new Date();
+    const existingSession = await getSession(ip);
+    const session = existingSession ? { ...existingSession } : {
+        ipAddress: ip,
+        calls: 1,
+        firstCall: now,
+        lastCall: now,
+    };
+
+    session.rateLimitedAt = bannedUntil;
+    session.lastCall = bannedUntil;
+
+    sessionCache.set(ip, session);
+    dirtySessionIps.add(ip);
+
+    await syncCachesToDatabase();
 
     return session;
 };
@@ -377,6 +402,7 @@ module.exports = {
     markUserMessage,
     checkUserDesignLimit,
     markUserDesignUpdate,
+    banIp,
     shutdown,
     syncCachesToDatabase
 };

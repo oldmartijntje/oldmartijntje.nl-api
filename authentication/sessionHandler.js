@@ -18,7 +18,9 @@ class SessionHandler {
             if (!session) {
                 session = await createSession(ip);
             } else {
-                if (session.rateLimitedAt) {
+                const banUntil = session.rateLimitedAt ? new Date(session.rateLimitedAt) : null;
+
+                if (banUntil && banUntil > now) {
                     // Create security flag for blacklisted IP attempting access
                     try {
                         await SecurityFlagHandler.createSecurityFlag({
@@ -38,9 +40,15 @@ class SessionHandler {
                     return res.status(429).json({ message: "Rate limit exceeded by a lot. Try again in 24 hours." });
                 }
 
+                if (banUntil && banUntil <= now) {
+                    session.rateLimitedAt = undefined;
+                }
+
                 session = await updateSession(session, now, limit, blacklistLimit, resetMinutes, req);
 
-                if (session.rateLimitedAt) {
+                const updatedBanUntil = session.rateLimitedAt ? new Date(session.rateLimitedAt) : null;
+
+                if (updatedBanUntil && updatedBanUntil > now) {
                     // Create security flag for new blacklist event (severe rate limit violation)
                     try {
                         await SecurityFlagHandler.createSecurityFlag({

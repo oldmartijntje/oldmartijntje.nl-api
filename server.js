@@ -8,8 +8,12 @@ const { exit } = require("process");
 const settings = require("./settings");
 const { requestLogger } = require("./helpers/requestLogger.js");
 const { SecurityFlagHandler } = require("./helpers/securityFlag.handler.js");
-require('dotenv').config();
-
+const { banIp, getSession } = require("./helpers/rateLimitUtils.js");
+try {
+    require('dotenv').config()
+} catch (e) {
+    console.log("no .env found!");
+}
 const { loginRouter } = require("./authentication/login.routes.js");
 const { jsonRouter } = require("./routing/json.routes.js");
 const { registerRouter } = require("./routing/register.routes.js");
@@ -83,6 +87,29 @@ connect(MONGO_URI)
         // Add request logging middleware (before other middlewares)
         app.use(requestLogger.middleware());
 
+        setHoneyPot(app);
+
+        app.use(async (req, res, next) => {
+            const ip = SecurityFlagHandler.extractIpAddress(req);
+            const session = await getSession(ip);
+            const now = new Date();
+
+            if (session?.rateLimitedAt) {
+                const banUntil = new Date(session.rateLimitedAt);
+
+                if (banUntil > now) {
+                    return res.status(403).json({
+                        message: "This IP is temporarily blocked.",
+                        blockedUntil: banUntil.toISOString()
+                    });
+                }
+
+                session.rateLimitedAt = undefined;
+            }
+
+            next();
+        });
+
         app.use(cors());
         app.use(expressStatic(staticHtmlPath));
         app.use("/login", loginRouter);
@@ -94,7 +121,6 @@ connect(MONGO_URI)
         app.use("/forums", quartzforumsRouter);
         app.use("/security-flags", securityFlagsRouter);
         app.use("/logs", logsRouter);
-
         // Serve QuartzForums frontend
         app.use('/forums', express.static(path.join(__dirname, 'homepage/quartzforums')));
 
@@ -194,3 +220,72 @@ connect(MONGO_URI)
     .catch(error => {
         requestLogger.logInternalString("ERROR", `Error while connecting to database: ${error}`);
     });
+
+function setHoneyPot(app) {
+    const honey = [
+        "/gcp-service-account.json",
+        "/google-credentials.json",
+        "/google-cloud-key.json",
+        "/firebase-credentials.json",
+        "/sse",
+        "/api/v1/users",
+        "/readme.html",
+        "/admin",
+        "/wp-login.php",
+        "/laravel/.env",
+        "/.git/config",
+        "/debug/vars",
+        "/storage/framework/.env",
+        "/root/.config/gcloud/credentials.db",
+        "/secrets.yml",
+        "/api/config",
+        "/api/env",
+        "/config.yml",
+        "/appsettings.json",
+        "/secrets.py",
+        "/config.py",
+        "/dist/app.js",
+        "/app.js",
+        "/main.js",
+        "/dist/main.js",
+        "/dist/bundle.js",
+        "/docker-compose.yml",
+    ]
+
+    app.use(async (req, res, next) => {
+        const requestPath = req.path || req.originalUrl.split('?')[0];
+        const matchedHoneyPath = honey.find((honeyPath) => {
+            return requestPath === honeyPath || requestPath.startsWith(`${honeyPath}/`);
+        });
+
+        if (!matchedHoneyPath) {
+            return next();
+        }
+
+        const ip = SecurityFlagHandler.extractIpAddress(req);
+        const bannedUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+
+        try {
+            await banIp(ip, bannedUntil);
+
+            await SecurityFlagHandler.createSecurityFlag({
+                req: req,
+                ipAddress: ip,
+                riskLevel: 5,
+                description: `Honey pot path requested: ${matchedHoneyPath}`,
+                fileName: 'server.js',
+                additionalData: {
+                    requestedPath: req.originalUrl || req.url,
+                    bannedUntil: bannedUntil.toISOString(),
+                    banDurationDays: 90
+                }
+            });
+        } catch (error) {
+            requestLogger.logInternalString("ERROR", `Failed to ban honeypot IP: ${error}`);
+        }
+
+        return res.status(403).json({
+            message: "Forbidden"
+        });
+    });
+}
