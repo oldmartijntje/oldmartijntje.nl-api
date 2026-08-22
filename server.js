@@ -299,7 +299,7 @@ function setHoneyPot(app) {
             await SecurityFlagHandler.createSecurityFlag({
                 req: req,
                 ipAddress: ip,
-                riskLevel: 5,
+                riskLevel: 4,
                 description: `Honey pot path requested: ${matchedHoneyPath || matchedHoneySuffix || matchedHoneyStartsWith}`,
                 fileName: 'server.js',
                 additionalData: {
