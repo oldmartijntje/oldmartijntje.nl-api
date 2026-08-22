@@ -222,7 +222,7 @@ connect(MONGO_URI)
     });
 
 function setHoneyPot(app) {
-    const honey = [
+    const honeyContains = [
         "/gcp-service-account.json",
         "/google-credentials.json",
         "/google-cloud-key.json",
@@ -250,15 +250,43 @@ function setHoneyPot(app) {
         "/dist/main.js",
         "/dist/bundle.js",
         "/docker-compose.yml",
+        "/user/login",
+        "/user/register",
+        "/account/login",
+        "/account/register",
+        "/login",
+        "/register"
     ]
+
+    const honeyEndsWith = [
+        ".php"
+    ];
+
+    const honeyStartsWith = [
+        "/root",
+        "/.",
+        "/home",
+        "/app",
+        "/config",
+        "/old",
+        "/backup",
+        "/wp-",
+    ];
 
     app.use(async (req, res, next) => {
         const requestPath = req.path || req.originalUrl.split('?')[0];
-        const matchedHoneyPath = honey.find((honeyPath) => {
-            return requestPath === honeyPath || requestPath.startsWith(`${honeyPath}/`);
+        const normalizedPath = requestPath.toLowerCase();
+        const matchedHoneyPath = honeyContains.find((honeyPath) => {
+            const normalizedHoneyPath = honeyPath.toLowerCase();
+            return normalizedPath === normalizedHoneyPath || normalizedPath.startsWith(`${normalizedHoneyPath}/`);
+        });
+        const matchedHoneySuffix = honeyEndsWith.find((suffix) => normalizedPath.endsWith(suffix.toLowerCase()));
+        const matchedHoneyStartsWith = honeyStartsWith.find((prefix) => {
+            const normalizedPrefix = prefix.toLowerCase();
+            return normalizedPath === normalizedPrefix || normalizedPath.startsWith(`${normalizedPrefix}/`) || normalizedPath.startsWith(normalizedPrefix);
         });
 
-        if (!matchedHoneyPath) {
+        if (!matchedHoneyPath && !matchedHoneySuffix && !matchedHoneyStartsWith) {
             return next();
         }
 
@@ -272,7 +300,7 @@ function setHoneyPot(app) {
                 req: req,
                 ipAddress: ip,
                 riskLevel: 5,
-                description: `Honey pot path requested: ${matchedHoneyPath}`,
+                description: `Honey pot path requested: ${matchedHoneyPath || matchedHoneySuffix || matchedHoneyStartsWith}`,
                 fileName: 'server.js',
                 additionalData: {
                     requestedPath: req.originalUrl || req.url,
