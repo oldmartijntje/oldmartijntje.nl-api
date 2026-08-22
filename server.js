@@ -98,9 +98,9 @@ connect(MONGO_URI)
                 const banUntil = new Date(session.rateLimitedAt);
 
                 if (banUntil > now) {
-                    return res.status(403).json({
-                        message: "This IP is temporarily blocked.",
-                        blockedUntil: banUntil.toISOString()
+                    return res.status(404).json({
+                        message: "404 Not Found",
+                        details: "This page wandered off for a coffee break."
                     });
                 }
 
@@ -284,8 +284,9 @@ function setHoneyPot(app) {
             requestLogger.logInternalString("ERROR", `Failed to ban honeypot IP: ${error}`);
         }
 
-        return res.status(403).json({
-            message: "Forbidden"
+        return res.status(404).json({
+            message: "404 Not Found",
+            details: "This page wandered off for a coffee break."
         });
     });
 }
