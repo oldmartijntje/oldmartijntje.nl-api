@@ -18,7 +18,7 @@ securityFlagsRouter.use(express.json());
 // &minRiskLevel=true - Treat riskLevel as minimum value instead of exact match
 // Text filtering options:
 // &descriptionFilter=xxx - Filter by description content
-// &userFilter=xxx - Filter by user names (username/quartzforum name)
+// &userFilter=xxx - Filter by user names (username)
 // &ipFilter=xxx - Filter by IP address content
 // &fileFilter=xxx - Filter by filename content
 // &additionalDataFilter=xxx - Filter by additional data content

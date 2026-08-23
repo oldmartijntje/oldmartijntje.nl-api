@@ -5,7 +5,7 @@ const path = require('path');
 const express = require("express");
 const expressStatic = require('express').static;
 const helmet = require("helmet");
-const { connect, users, sessionTokens, implementationKeys, quartzForumAccounts, quartzForumForums, quartzForumMessages } = require("./database.js");
+const { connect, users, sessionTokens } = require("./database.js");
 const { exit } = require("process");
 const settings = require("./settings");
 const { requestLogger } = require("./helpers/requestLogger.js");
@@ -20,7 +20,6 @@ const { loginRouter } = require("./authentication/login.routes.js");
 const { jsonRouter } = require("./routing/json.routes.js");
 const { registerRouter } = require("./routing/register.routes.js");
 const { projectDataRouter } = require("./routing/projectData.routes.js");
-const { quartzforumsRouter } = require("./routing/quartzforums.routes.js");
 const { securityFlagsRouter } = require("./routing/securityFlags.routes.js");
 const { blogsRouter } = require("./routing/blogs.routes.js");
 const { logsRouter } = require("./routing/logs.routes.js");
@@ -120,11 +119,8 @@ connect(MONGO_URI)
         app.use("/getData", blogsRouter);
         app.use("/test", testRouter);
         app.use("/projectData", projectDataRouter);
-        app.use("/forums", quartzforumsRouter);
         app.use("/security-flags", securityFlagsRouter);
         app.use("/logs", logsRouter);
-        // Serve QuartzForums frontend
-        app.use('/forums', express.static(path.join(__dirname, 'homepage/quartzforums')));
 
         // In-memory buffer for 404 requests
         const notFoundBuffer = [];

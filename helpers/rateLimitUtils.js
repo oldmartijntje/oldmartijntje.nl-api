@@ -1,5 +1,5 @@
 // rateLimitUtils.js
-const { sessions, quartzForumAccounts } = require("../database");
+const { sessions } = require("../database");
 const { SecurityFlagHandler } = require('./securityFlag.handler.js');
 
 const HONEYPOT_BAN_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, also change this in server.js
@@ -277,72 +277,6 @@ const markAccountCreation = async (ip) => {
     return session;
 };
 
-// Check if a user has posted a message in the last minute
-const checkUserMessageLimit = async (userId) => {
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-
-    // Check in-memory cache first
-    const cachedTime = userMessageCache.get(userId);
-    if (cachedTime && cachedTime >= oneMinuteAgo) {
-        return true;
-    }
-
-    // Fall back to database
-    const user = await quartzForumAccounts.findById(userId);
-    if (!user) return false;
-
-    const hasLimit = user.lastMessagePost && user.lastMessagePost >= oneMinuteAgo;
-    if (hasLimit) {
-        userMessageCache.set(userId, user.lastMessagePost);
-    }
-
-    return hasLimit;
-};
-
-// Mark that a user has posted a message
-const markUserMessage = async (userId) => {
-    const now = new Date();
-    userMessageCache.set(userId, now);
-
-    // Update database asynchronously (don't await)
-    quartzForumAccounts.findByIdAndUpdate(userId, {
-        lastMessagePost: now
-    }).catch(err => console.error('Error updating user message timestamp:', err));
-};
-
-// Check if a user has updated their design in the last minute
-const checkUserDesignLimit = async (userId) => {
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-
-    // Check in-memory cache first
-    const cachedTime = userDesignCache.get(userId);
-    if (cachedTime && cachedTime >= oneMinuteAgo) {
-        return true;
-    }
-
-    // Fall back to database
-    const user = await quartzForumAccounts.findById(userId);
-    if (!user) return false;
-
-    const hasLimit = user.lastDesignUpdate && user.lastDesignUpdate >= oneMinuteAgo;
-    if (hasLimit) {
-        userDesignCache.set(userId, user.lastDesignUpdate);
-    }
-
-    return hasLimit;
-};
-
-// Mark that a user has updated their design
-const markUserDesignUpdate = async (userId) => {
-    const now = new Date();
-    userDesignCache.set(userId, now);
-
-    // Update database asynchronously (don't await)
-    quartzForumAccounts.findByIdAndUpdate(userId, {
-        lastDesignUpdate: now
-    }).catch(err => console.error('Error updating user design timestamp:', err));
-};
-
 // Cleanup old cache entries periodically
 const cleanupCache = () => {
     const now = Date.now();
@@ -409,10 +343,6 @@ module.exports = {
     updateSession,
     checkAccountCreationLimit,
     markAccountCreation,
-    checkUserMessageLimit,
-    markUserMessage,
-    checkUserDesignLimit,
-    markUserDesignUpdate,
     banIp,
     shutdown,
     syncCachesToDatabase

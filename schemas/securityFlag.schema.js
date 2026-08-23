@@ -42,11 +42,6 @@ const securityFlagJsonSchema = {
         required: false,
         ref: 'user'
     },
-    quartzUserId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: false,
-        ref: 'QuartzForumAccount'
-    },
     implementationKey: {
         type: String,
         required: false,

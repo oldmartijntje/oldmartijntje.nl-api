@@ -151,7 +151,6 @@ async function createSecurityFlag(req, res) {
             description,
             fileName = 'manual-creation',
             userId,
-            quartzUserId,
             implementationKey,
             additionalData = {}
         } = req.body;
@@ -176,7 +175,6 @@ async function createSecurityFlag(req, res) {
             description,
             fileName,
             userId,
-            quartzUserId,
             implementationKey,
             additionalData
         });
