@@ -5,12 +5,18 @@ const { SecurityFlagHandler } = require('./securityFlag.handler.js');
 const HONEYPOT_BAN_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, also change this in server.js
 // the ban time increases factorally:
 // 30 days, 120 days, 270 days....
+const MISSING_SESSION_TTL_MS = 5 * 60 * 1000;
+const GLOBAL_WINDOW_MS = 10 * 1000;
+const GLOBAL_MAX_REQUESTS_PER_WINDOW = Number(process.env.GLOBAL_RATE_LIMIT_REQUESTS || 200);
+const GLOBAL_BLOCK_DURATION_MS = 5 * 60 * 1000;
 
 // In-memory caches for rate limiting
 const sessionCache = new Map();
 const accountCreationCache = new Map();
 const userMessageCache = new Map();
 const userDesignCache = new Map();
+const missingSessionCache = new Map();
+const globalTrafficCache = new Map();
 
 // Track which sessions need DB sync
 const dirtySessionIps = new Set();
@@ -36,35 +42,40 @@ const syncCachesToDatabase = async () => {
     if (dirtySessionIps.size === 0) return;
 
     const ipsToSync = Array.from(dirtySessionIps);
-    dirtySessionIps.clear();
+    const ipsThisRun = ipsToSync.slice(0, 1000);
+    ipsThisRun.forEach((ip) => dirtySessionIps.delete(ip));
 
     try {
-        // Batch update sessions
-        const updatePromises = ipsToSync.map(async (ip) => {
+        const operations = [];
+        for (const ip of ipsThisRun) {
             const session = sessionCache.get(ip);
-            if (!session) return;
+            if (!session) continue;
 
-            await sessions.findOneAndUpdate(
-                { ipAddress: ip },
-                {
-                    $set: {
-                        calls: session.calls,
-                        firstCall: session.firstCall,
-                        lastCall: session.lastCall,
-                        rateLimitedAt: session.rateLimitedAt,
-                        strikes: session.strikes ?? 0,
-                        lastAccountCreation: session.lastAccountCreation
-                    }
-                },
-                { upsert: true }
-            );
-        });
+            operations.push({
+                updateOne: {
+                    filter: { ipAddress: ip },
+                    update: {
+                        $set: {
+                            calls: session.calls,
+                            firstCall: session.firstCall,
+                            lastCall: session.lastCall,
+                            rateLimitedAt: session.rateLimitedAt,
+                            strikes: session.strikes ?? 0,
+                            lastAccountCreation: session.lastAccountCreation
+                        }
+                    },
+                    upsert: true
+                }
+            });
+        }
 
-        await Promise.all(updatePromises);
+        if (operations.length > 0) {
+            await sessions.bulkWrite(operations, { ordered: false });
+        }
     } catch (error) {
         console.error('Error syncing sessions to database:', error);
         // Re-add failed IPs to dirty set
-        ipsToSync.forEach(ip => dirtySessionIps.add(ip));
+        ipsThisRun.forEach(ip => dirtySessionIps.add(ip));
     }
 };
 
@@ -72,7 +83,10 @@ const syncCachesToDatabase = async () => {
 const initializeCache = async () => {
     try {
         const recentSessions = await sessions.find({
-            lastCall: { $gte: new Date(Date.now() - 60 * 60000) } // Last hour
+            $or: [
+                { lastCall: { $gte: new Date(Date.now() - 60 * 60000) } }, // Last hour
+                { rateLimitedAt: { $gt: new Date() } },
+            ]
         }).limit(10000);
 
         recentSessions.forEach(session => {
@@ -98,8 +112,27 @@ initializeCache();
 startPeriodicSync();
 
 const getSession = async (ip) => {
+    return getSessionInternal(ip, { skipDatabase: false });
+};
+
+const getSessionFromCache = (ip) => {
+    return sessionCache.get(ip) || null;
+};
+
+const getSessionInternal = async (ip, options = {}) => {
+    const { skipDatabase = false } = options;
+
     // Check in-memory cache first
     let session = sessionCache.get(ip);
+
+    if (session || skipDatabase) {
+        return session || null;
+    }
+
+    const missingUntil = missingSessionCache.get(ip);
+    if (missingUntil && missingUntil > Date.now()) {
+        return null;
+    }
 
     if (!session) {
         // Not in cache, check database
@@ -115,10 +148,13 @@ const getSession = async (ip) => {
                 lastAccountCreation: dbSession.lastAccountCreation
             };
             sessionCache.set(ip, session);
+            missingSessionCache.delete(ip);
+        } else {
+            missingSessionCache.set(ip, Date.now() + MISSING_SESSION_TTL_MS);
         }
     }
 
-    return session;
+    return session || null;
 };
 
 const createSession = async (ip) => {
@@ -131,6 +167,7 @@ const createSession = async (ip) => {
     };
 
     sessionCache.set(ip, newSession);
+    missingSessionCache.delete(ip);
     dirtySessionIps.add(ip);
 
     return newSession;
@@ -145,11 +182,9 @@ const updateSession = async (session, now, rateLimitPerMinute, blacklistLimitPer
         session.firstCall = now;
     } else if (session.calls >= rateLimitPerMinute) {
         if (session.calls >= blacklistLimitPerMinute) {
-            // Blacklist logic - immediately sync to DB
+            // Blacklist logic - keep this in-memory fast path and persist in periodic sync.
             session.rateLimitedAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
             dirtySessionIps.add(session.ipAddress);
-            // Force immediate DB sync for blacklist events
-            await syncCachesToDatabase();
         }
         session.calls++;
     } else {
@@ -197,7 +232,7 @@ const banIp = async (ip) => {
     if (!ip) return null;
 
     const now = new Date();
-    const existingSession = await getSession(ip);
+    const existingSession = await getSessionInternal(ip, { skipDatabase: true });
     const session = existingSession ? { ...existingSession } : {
         ipAddress: ip,
         calls: 1,
@@ -214,11 +249,85 @@ const banIp = async (ip) => {
     session.lastCall = session.rateLimitedAt;
 
     sessionCache.set(ip, session);
+    missingSessionCache.delete(ip);
     dirtySessionIps.add(ip);
 
-    await syncCachesToDatabase();
+    return session;
+};
+
+const clearExpiredBan = (ip, now = new Date()) => {
+    const session = sessionCache.get(ip);
+    if (!session?.rateLimitedAt) {
+        return session || null;
+    }
+
+    const banUntil = new Date(session.rateLimitedAt);
+    if (banUntil <= now) {
+        session.rateLimitedAt = undefined;
+        session.lastCall = now;
+        sessionCache.set(ip, session);
+        dirtySessionIps.add(ip);
+    }
 
     return session;
+};
+
+const consumeGlobalRequestToken = (ip) => {
+    const now = Date.now();
+    const state = globalTrafficCache.get(ip) || {
+        windowStart: now,
+        count: 0,
+        blockedUntil: 0,
+        lastFlaggedAt: 0,
+    };
+
+    if (state.blockedUntil > now) {
+        return {
+            allowed: false,
+            retryAfterSeconds: Math.ceil((state.blockedUntil - now) / 1000),
+            reason: 'global_block',
+        };
+    }
+
+    if (now - state.windowStart >= GLOBAL_WINDOW_MS) {
+        state.windowStart = now;
+        state.count = 0;
+    }
+
+    state.count += 1;
+
+    if (state.count > GLOBAL_MAX_REQUESTS_PER_WINDOW) {
+        state.blockedUntil = now + GLOBAL_BLOCK_DURATION_MS;
+        globalTrafficCache.set(ip, state);
+
+        const oneMinuteAgo = now - 60 * 1000;
+        if (state.lastFlaggedAt < oneMinuteAgo) {
+            state.lastFlaggedAt = now;
+            Promise.resolve(SecurityFlagHandler.createSecurityFlag({
+                ipAddress: ip,
+                riskLevel: 4,
+                description: `Global flood guard triggered for IP (${state.count} requests in ${GLOBAL_WINDOW_MS / 1000}s)`,
+                fileName: 'rateLimitUtils.js',
+                additionalData: {
+                    count: state.count,
+                    windowMs: GLOBAL_WINDOW_MS,
+                    blockedForMs: GLOBAL_BLOCK_DURATION_MS,
+                    guard: 'global-flood-protection',
+                }
+            })).catch((error) => {
+                console.error('Error creating global flood guard security flag:', error);
+            });
+        }
+
+        return {
+            allowed: false,
+            retryAfterSeconds: Math.ceil(GLOBAL_BLOCK_DURATION_MS / 1000),
+            reason: 'global_limit_exceeded',
+        };
+    }
+
+    globalTrafficCache.set(ip, state);
+    return { allowed: true, retryAfterSeconds: 0, reason: 'ok' };
 };
 
 // Check if an IP has created an account in the last 24 hours
@@ -265,13 +374,15 @@ const markAccountCreation = async (ip) => {
             calls: 1,
             firstCall: new Date(),
             lastCall: new Date(),
-            lastAccountCreation: now
+            lastAccountCreation: now,
+            strikes: 0,
         };
     } else {
         session.lastAccountCreation = now;
     }
 
     sessionCache.set(ip, session);
+    missingSessionCache.delete(ip);
     dirtySessionIps.add(ip);
 
     return session;
@@ -322,6 +433,21 @@ const cleanupCache = () => {
             lastSecurityFlagCache.delete(ip);
         }
     }
+
+    // Cleanup missing-session cache
+    for (const [ip, expiresAt] of missingSessionCache.entries()) {
+        if (expiresAt < now) {
+            missingSessionCache.delete(ip);
+        }
+    }
+
+    // Cleanup global traffic cache
+    const staleGlobalEntryThreshold = now - (GLOBAL_BLOCK_DURATION_MS + GLOBAL_WINDOW_MS);
+    for (const [ip, state] of globalTrafficCache.entries()) {
+        if (state.blockedUntil < now && state.windowStart < staleGlobalEntryThreshold) {
+            globalTrafficCache.delete(ip);
+        }
+    }
 };
 
 // Run cleanup every 5 minutes
@@ -339,11 +465,14 @@ const shutdown = async () => {
 
 module.exports = {
     getSession,
+    getSessionFromCache,
     createSession,
     updateSession,
     checkAccountCreationLimit,
     markAccountCreation,
     banIp,
+    clearExpiredBan,
+    consumeGlobalRequestToken,
     shutdown,
     syncCachesToDatabase
 };

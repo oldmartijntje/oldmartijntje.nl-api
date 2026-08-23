@@ -10,7 +10,12 @@ const { exit } = require("process");
 const settings = require("./settings");
 const { requestLogger } = require("./helpers/requestLogger.js");
 const { SecurityFlagHandler } = require("./helpers/securityFlag.handler.js");
-const { banIp, getSession } = require("./helpers/rateLimitUtils.js");
+const {
+    banIp,
+    getSessionFromCache,
+    clearExpiredBan,
+    consumeGlobalRequestToken,
+} = require("./helpers/rateLimitUtils.js");
 try {
     require('dotenv').config()
 } catch (e) {
@@ -81,6 +86,23 @@ connect(MONGO_URI)
         // Trust all proxies - adjust this in production for better security
         app.set('trust proxy', true);
 
+        // Fast in-memory flood guard. Keeps abusive traffic away from the DB and heavy middleware.
+        app.use((req, res, next) => {
+            const ip = SecurityFlagHandler.extractIpAddress(req);
+            const limiterResult = consumeGlobalRequestToken(ip);
+            if (!limiterResult.allowed) {
+                if (limiterResult.retryAfterSeconds > 0) {
+                    res.set('Retry-After', String(limiterResult.retryAfterSeconds));
+                }
+                return res.status(429).json({
+                    message: 'Too Many Requests',
+                    details: 'Traffic from this IP is temporarily blocked.'
+                });
+            }
+
+            return next();
+        });
+
         // Alternative: Trust specific proxy hops (uncomment and adjust as needed)
         // app.set('trust proxy', 1); // trust first proxy
         // app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // trust local ranges
@@ -90,9 +112,9 @@ connect(MONGO_URI)
 
         setHoneyPot(app);
 
-        app.use(async (req, res, next) => {
+        app.use((req, res, next) => {
             const ip = SecurityFlagHandler.extractIpAddress(req);
-            const session = await getSession(ip);
+            const session = getSessionFromCache(ip);
             const now = new Date();
 
             if (session?.rateLimitedAt) {
@@ -105,10 +127,10 @@ connect(MONGO_URI)
                     });
                 }
 
-                session.rateLimitedAt = undefined;
+                clearExpiredBan(ip, now);
             }
 
-            next();
+            return next();
         });
 
         app.use(cors());
@@ -122,26 +144,35 @@ connect(MONGO_URI)
         app.use("/security-flags", securityFlagsRouter);
         app.use("/logs", logsRouter);
 
-        // In-memory buffer for 404 requests
-        const notFoundBuffer = [];
-        const BUFFER_LIMIT = 50; // Maximum number of entries before flushing
+        // In-memory aggregation for 404 requests
+        const notFoundBuffer = new Map();
+        const BUFFER_LIMIT = 200; // Maximum number of unique entries before flushing
+        const MAX_TRACKED_404_KEYS = 2000; // Prevent unbounded memory usage during floods
         const FLUSH_INTERVAL = 60000; // Flush every 60 seconds
 
         // Middleware to capture 404 requests
         app.use((req, res, next) => {
             res.status(404);
 
-            // Collect request details
-            const notFoundEntry = {
-                url: req.originalUrl,
-                ip: req.ip,
-                method: req.method,
-                headers: req.headers,
-                timestamp: new Date().toISOString(),
-            };
+            const ip = SecurityFlagHandler.extractIpAddress(req);
+            const requestPath = req.path || req.originalUrl || req.url;
+            const key = `${ip}|${req.method}|${requestPath}`;
 
-            // Add to buffer
-            notFoundBuffer.push(notFoundEntry);
+            // Aggregate repeated 404s so scans don't become one DB write per request.
+            const existing = notFoundBuffer.get(key);
+            if (existing) {
+                existing.count += 1;
+                existing.lastSeen = new Date().toISOString();
+            } else if (notFoundBuffer.size < MAX_TRACKED_404_KEYS) {
+                notFoundBuffer.set(key, {
+                    url: requestPath,
+                    ip,
+                    method: req.method,
+                    count: 1,
+                    firstSeen: new Date().toISOString(),
+                    lastSeen: new Date().toISOString(),
+                });
+            }
 
             // Respond to the client
             res.json({
@@ -150,7 +181,7 @@ connect(MONGO_URI)
             });
 
             // Check if buffer needs to be flushed
-            if (notFoundBuffer.length >= BUFFER_LIMIT) {
+            if (notFoundBuffer.size >= BUFFER_LIMIT) {
                 flushNotFoundBuffer();
             }
         });
@@ -160,21 +191,23 @@ connect(MONGO_URI)
 
         // Function to flush the buffer to the database
         async function flushNotFoundBuffer() {
-            if (notFoundBuffer.length === 0) return;
+            if (notFoundBuffer.size === 0) return;
 
-            const entriesToFlush = notFoundBuffer.splice(0, notFoundBuffer.length);
+            const entriesToFlush = Array.from(notFoundBuffer.values());
+            notFoundBuffer.clear();
 
             try {
                 for (const entry of entriesToFlush) {
                     await SecurityFlagHandler.createSecurityFlag({
                         ipAddress: entry.ip,
                         riskLevel: 1, // Low risk for 404 tracking
-                        description: `404 Not Found: ${entry.url}`,
+                        description: `404 Not Found: ${entry.url} (${entry.count} hits)`,
                         fileName: 'server.js',
                         additionalData: {
                             method: entry.method,
-                            headers: entry.headers,
-                            timestamp: entry.timestamp,
+                            count: entry.count,
+                            firstSeen: entry.firstSeen,
+                            lastSeen: entry.lastSeen,
                         }
                     });
                 }
@@ -288,7 +321,7 @@ function setHoneyPot(app) {
         }
 
         const ip = SecurityFlagHandler.extractIpAddress(req);
-        const session = await getSession(ip);
+        const session = getSessionFromCache(ip);
         if (session?.rateLimitedAt) {
             return res.status(404).json({
                 message: "404 Not Found",
