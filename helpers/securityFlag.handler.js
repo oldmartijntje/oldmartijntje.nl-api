@@ -17,7 +17,6 @@ class SecurityFlagHandler {
      * @param {string} [options.userAgent] - User agent string
      * @param {string} [options.sessionToken] - Session token if available
      * @param {string} [options.userId] - User ID if available
-     * @param {string} [options.quartzUserId] - QuartzForum user ID if available
      * @param {string} [options.implementationKey] - Implementation key if available
      * @param {Object} [options.additionalData] - Additional security data
      * @returns {Promise<Object>} The created security flag
@@ -33,7 +32,6 @@ class SecurityFlagHandler {
                 userAgent,
                 sessionToken,
                 userId,
-                quartzUserId,
                 implementationKey,
                 additionalData = {}
             } = options;
@@ -71,7 +69,6 @@ class SecurityFlagHandler {
                 userAgent: userAgent || extractedData.userAgent,
                 sessionToken,
                 userId,
-                quartzUserId,
                 implementationKey,
                 requestMethod: extractedData.requestMethod,
                 requestUrl: extractedData.requestUrl,
@@ -275,14 +272,6 @@ class SecurityFlagHandler {
                 },
                 {
                     $lookup: {
-                        from: 'quartzforumaccounts',
-                        localField: 'quartzUserId',
-                        foreignField: '_id',
-                        as: 'quartzUserId'
-                    }
-                },
-                {
-                    $lookup: {
                         from: 'users',
                         localField: 'resolvedBy',
                         foreignField: '_id',
@@ -297,8 +286,7 @@ class SecurityFlagHandler {
                     userText: {
                         $concat: [
                             { $ifNull: [{ $arrayElemAt: ["$userId.username", 0] }, ""] },
-                            " ",
-                            { $ifNull: [{ $arrayElemAt: ["$quartzUserId.name", 0] }, ""] }
+                            " "
                         ]
                     },
                     additionalDataText: {
@@ -363,7 +351,6 @@ class SecurityFlagHandler {
                     userAgent: 1,
                     sessionToken: 1,
                     userId: { $arrayElemAt: ["$userId", 0] },
-                    quartzUserId: { $arrayElemAt: ["$quartzUserId", 0] },
                     implementationKey: 1,
                     requestMethod: 1,
                     requestUrl: 1,

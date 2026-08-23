@@ -6,10 +6,6 @@ const { displayItemJsonSchema } = require("./schemas/projects.schema");
 const { sessionJsonSchema } = require("./schemas/session.schema");
 const { registrationCodeJsonSchema } = require("./schemas/registrationCode.schema");
 const { projectDataJsonSchema } = require("./schemas/projectsData.schema");
-const { implementationKeyJsonSchema } = require("./schemas/implementationKey.schema");
-const { quartzForumAccountJsonSchema } = require("./schemas/quartzForumAccount.schema");
-const { quartzForumForumJsonSchema } = require("./schemas/quartzForumForum.schema");
-const { quartzForumMessageJsonSchema } = require("./schemas/quartzForumMessage.schema");
 const { securityFlagJsonSchema } = require("./schemas/securityFlag.schema");
 const { blogJsonSchema } = require("./schemas/blog.schema");
 const { requestLogger } = require("./helpers/requestLogger")
@@ -40,26 +36,6 @@ userSchema.pre('save', async function () {
     }
 });
 const users = mongoose.model('user', userSchema);
-
-// QuartzForums schemas
-const implementationKeySchema = new mongoose.Schema(implementationKeyJsonSchema);
-const implementationKeys = mongoose.model('ImplementationKey', implementationKeySchema);
-
-const quartzForumAccountSchema = new mongoose.Schema(quartzForumAccountJsonSchema);
-quartzForumAccountSchema.pre('save', async function () {
-    if (this.isModified('password')) {
-        const hashedPassword = await hash(this.password, 12);
-        this.password = hashedPassword;
-    }
-});
-const quartzForumAccounts = mongoose.model('QuartzForumAccount', quartzForumAccountSchema);
-
-const quartzForumForumSchema = new mongoose.Schema(quartzForumForumJsonSchema);
-quartzForumForumSchema.index({ implementationKey: 1, subpage: 1 }, { unique: true });
-const quartzForumForums = mongoose.model('QuartzForumForum', quartzForumForumSchema);
-
-const quartzForumMessageSchema = new mongoose.Schema(quartzForumMessageJsonSchema);
-const quartzForumMessages = mongoose.model('QuartzForumMessage', quartzForumMessageSchema);
 
 const securityFlagSchema = new mongoose.Schema(securityFlagJsonSchema);
 // Auto-expire low-risk flags (risk level 1) after 14 days.
@@ -94,10 +70,6 @@ module.exports = {
     sessions: sessions,
     registrationCodes: registrationCodes,
     projectData: projectData,
-    implementationKeys: implementationKeys,
-    quartzForumAccounts: quartzForumAccounts,
-    quartzForumForums: quartzForumForums,
-    quartzForumMessages: quartzForumMessages,
     securityFlags: securityFlags,
     blogs: blogs
 };
