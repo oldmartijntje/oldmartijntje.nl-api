@@ -1,4 +1,4 @@
-const ARBITRARY_VERSION_NUMBER = "v1.5.1";
+const ARBITRARY_VERSION_NUMBER = "v1.5.2";
 
 const cors = require("cors");
 const path = require('path');
@@ -288,9 +288,16 @@ function setHoneyPot(app) {
         }
 
         const ip = SecurityFlagHandler.extractIpAddress(req);
+        const session = await getSession(ip);
+        if (session?.rateLimitedAt) {
+            return res.status(404).json({
+                message: "404 Not Found",
+                details: "This page wandered off for a coffee break."
+            });
+        }
+        const bannedSession = await banIp(ip);
 
         try {
-            const bannedSession = await banIp(ip);
             const bannedUntil = bannedSession?.rateLimitedAt;
 
             await SecurityFlagHandler.createSecurityFlag({
