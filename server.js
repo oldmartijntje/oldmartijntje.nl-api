@@ -1,3 +1,5 @@
+const ARBITRARY_VERSION_NUMBER = "v1.5";
+
 const cors = require("cors");
 const path = require('path');
 const express = require("express");
@@ -188,6 +190,7 @@ connect(MONGO_URI)
 
         // start the Express server
         const server = app.listen(port, async () => {
+            console.log(`API cersion: ${ARBITRARY_VERSION_NUMBER}`)
             console.log(`Server running at http://localhost:${port}...`);
 
             // Create security flag for server startup (skip if running with nodemon/dev mode)

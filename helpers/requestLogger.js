@@ -86,15 +86,16 @@ class RequestLogger {
             contentLength: res.get('Content-Length') || '-',
             responseTime: `${responseTime}ms`
         };
+        const stringified = JSON.stringify(logEntry) + '\n';
+        this.logToConsole(stringified, logEntry);
 
-        return JSON.stringify(logEntry) + '\n';
+        return stringified;
     }
 
     log(req, res, responseTime) {
         try {
             const logFilePath = this.getLogFilePath();
             const logEntry = this.formatLogEntry(req, res, responseTime);
-
             fs.appendFileSync(logFilePath, logEntry, 'utf8');
         } catch (error) {
             requestLogger.logInternalString("ERROR", `Error writing to log file: ${error}`);
@@ -108,8 +109,22 @@ class RequestLogger {
             level: logType,
             message: message
         };
+        const stringified = JSON.stringify(logEntry) + '\n';
+        this.logBuffer.push(stringified);
+        this.logToConsole(stringified, logEntry);
+    }
 
-        this.logBuffer.push(JSON.stringify(logEntry) + '\n');
+    logToConsole(stringified, jsonVersion) {
+        let metARequirement = false;
+        if (["ERROR"].includes(jsonVersion.level)) {
+            metARequirement = true;
+        }
+        if (["INTERNAL_LOGGING"].includes(jsonVersion.logType)) {
+            metARequirement = true;
+        }
+        if (metARequirement) {
+            console.log(stringified);
+        }
     }
 
     logUserFlow(data) {
