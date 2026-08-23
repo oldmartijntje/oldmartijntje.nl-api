@@ -1,4 +1,4 @@
-const ARBITRARY_VERSION_NUMBER = "v1.5";
+const ARBITRARY_VERSION_NUMBER = "v1.5.1";
 
 const cors = require("cors");
 const path = require('path');
@@ -256,9 +256,7 @@ function setHoneyPot(app) {
         "/user/login",
         "/user/register",
         "/account/login",
-        "/account/register",
-        "/login",
-        "/register"
+        "/account/register"
     ]
 
     const honeyEndsWith = [
