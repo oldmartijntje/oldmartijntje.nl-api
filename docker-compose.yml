@@ -1,8 +1,9 @@
 version: '3'
 services:
-  api:
+
+  node-api:
     image: ghcr.io/oldmartijntje/oldmartijntje.nl-api:main
+    env_file: .env
     ports:
       - "3000:3000"
-    # Enable better IP forwarding in Docker
-    network_mode: "bridge"
+    restart: unless-stopped
