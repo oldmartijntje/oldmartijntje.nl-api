@@ -1,4 +1,4 @@
-const ARBITRARY_VERSION_NUMBER = "v1.5.2";
+const ARBITRARY_VERSION_NUMBER = "v1.5.3";
 
 const cors = require("cors");
 const path = require('path');
@@ -252,7 +252,8 @@ function setHoneyPot(app) {
         "/user/login",
         "/user/register",
         "/account/login",
-        "/account/register"
+        "/account/register",
+        "/super-cool-file.md"
     ]
 
     const honeyEndsWith = [
