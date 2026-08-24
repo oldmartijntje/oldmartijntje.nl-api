@@ -309,7 +309,7 @@ function setHoneyPot(app) {
                 additionalData: {
                     requestedPath: req.originalUrl || req.url,
                     bannedUntil: bannedUntil?.toISOString(),
-                    banDurationDays: 30 * ((bannedSession?.strikes ?? 1) * (bannedSession?.strikes ?? 1)), // 10 days, also change this in rateLimitUtils.js
+                    banDurationDays: 93 * ((bannedSession?.strikes ?? 1) * (bannedSession?.strikes ?? 1)), // 10 days, also change this in rateLimitUtils.js
                     strikes: bannedSession?.strikes ?? 0
                 }
             });

@@ -2,7 +2,7 @@
 const { sessions } = require("../database");
 const { SecurityFlagHandler } = require('./securityFlag.handler.js');
 
-const HONEYPOT_BAN_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, also change this in server.js
+const HONEYPOT_BAN_DURATION_MS = 93 * 24 * 60 * 60 * 1000; // 90 days, also change this in server.js
 // the ban time increases factorally:
 // 30 days, 120 days, 270 days....
 
